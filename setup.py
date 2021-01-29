@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
+# From https://github.com/navdeep-G/setup.py/blob/master/setup.py
 DESCRIPTION = 'A docassemble extension that handles EFSP Functionality'
 
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
