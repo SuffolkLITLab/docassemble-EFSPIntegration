@@ -4,6 +4,23 @@ import zeep
 
 from deprecated import deprecated
 
+# Bunch of junk code to work into objects later:
+# Works!
+# xmlsec.Key.from_memory(all_bytes, xmlsec.KeyFormat.PKCS12_PEM, os.getenv('x509_password'))
+# Doesn't work, maybe not needed?
+# key.load_cert_from_memory(all_bytes, xmlsec.KeyFormat.PKCS12_PEM)
+"""func=xmlSecOpenSSLAppCertLoadBIO:file=app.c:line=1057:obj=unknown:subj=unknown:error=17:invalid format:format=6
+func=xmlSecOpenSSLAppKeyCertLoadBIO:file=app.c:line=477:obj=x509:subj=xmlSecOpenSSLAppCertLoad:error=1:xmlsec library function failed: 
+func=xmlSecOpenSSLAppKeyCertLoadMemory:file=app.c:line=424:obj=unknown:subj=xmlSecOpenSSLAppKeyCertLoadBIO:error=1:xmlsec library function failed: 
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+xmlsec.InternalError: (-1, 'cannot load cert')
+"""
+# https://github.com/mvantellingen/python-zeep/blob/master/src/zeep/wsse/signature.py
+# https://github.com/lsh123/xmlsec/commit/97b14cbc1100a53bd79c10194f33e95e755760ab
+# https://www.aleksey.com/xmlsec/api/xmlsec-examples-sign-x509.html
+# https://github.com/mehcode/python-xmlsec/blob/18cbae111e2d1afff99687211aadb49c33c4a8f5/src/constants.c#L402
+
 
 class EFMFirmConnection(object):
     def __init__(self, url):

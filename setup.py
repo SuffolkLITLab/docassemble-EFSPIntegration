@@ -54,7 +54,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 
-setup(name='docassemble.TylerEFSP',
+setup(name='docassemble.EFSPIntegration',
       version='0.0.1',
       description=DESCRIPTION,
       long_description=long_description,
@@ -63,10 +63,10 @@ setup(name='docassemble.TylerEFSP',
       author_email='bwilley@suffolk.edu',
       license='The MIT Lecense (MIT)',
       python_requires='>=3.6.0',
-      url='https://github.com/SuffolkLITLab/docassemble-TylerEFSP',
+      url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_packages(),
       namespace_packages=['docassemble'],
       install_requires=['zeep'],
       zip_safe=False,
-      package_data=find_package_data(where='docassemble/TylerEFSP/', package='docassemble.TylerEFSP'),
+      package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
       ) 
