@@ -9,14 +9,14 @@ import logging
 import datetime
 
 class CodeRetrival(object):
-    def __init__(self, base_url, signer):
+    def __init__(self, base_url: str, signer: HeaderSigner):
         """base_url should not contain the trailing slash"""
         self.base_url = base_url
         self.signer = signer
 
     
     @staticmethod
-    def verbose_logging(turn_on):
+    def verbose_logging(turn_on: bool):
         http_client.HTTPConnection.debuglevel = 1
         logging.basicConfig()
         logging.getLogger().setLevel(logging.DEBUG)
@@ -32,3 +32,11 @@ class CodeRetrival(object):
         print(resp.request)
         return resp
 
+if __name__ == '__main__':
+    signer = HeaderSigner('../x509_stuff/Suffolk.pfx', os.environ['x509_password'])
+    code_ret = CodeRetrival(os.environ['base_url'], signer)
+    code_ret.verbose_logging(True)
+    resp = code_ret.get_location_codes()
+    with open('test.zip', 'wb') as f:
+        f.write(resp.content)
+    

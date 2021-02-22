@@ -24,5 +24,5 @@ class HeaderSigner(object):
         ).add_signer(
             self._certificate, self._private_key, hashes.SHA256()
         ).sign(
-            serialization.Encoding.SMIME, options
+            serialization.Encoding.PEM, options
         )
