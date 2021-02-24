@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import zeep
+from zeep.wsse.signature import Signature
 
 from deprecated import deprecated
 
@@ -23,13 +24,22 @@ xmlsec.InternalError: (-1, 'cannot load cert')
 
 
 class EFMFirmConnection(object):
-    def __init__(self, url):
-        self.soap_client = zeep.Client(wsdl=url)
+    def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
+        self.soap_client = zeep.Client(
+            wsdl=url,
+            wsse=Signature(private_key_fn, public_key_fn, password))
+
+
+    def send_message(self, service_name: str, obj_to_send):
+        if self.verbose:
+            node = self.soap_client.create_message(soap_client.service, service_name, obj_to_send)
+            print(etree.tostring(node, pretty_print=True).decode())
+        return self.soap_client.service[service_name](obj_to_send)
 
     def RegisterUser(self, person_to_reg, password):
         # Rely on DA to answer the Address and phone questions if necessary
         factory = self.soap_client.type_factory('urn:tyler:efm:services:schema:RegistrationRequest')
-        reg_obj = factory.RegistrationRequest(
+        reg_obj = factory.RegistrationRequestType(
             RegistrationType='Individual',
             Email=person_to_reg.email,
             FirstName=person_to_reg.name.first,
@@ -45,7 +55,7 @@ class EFMFirmConnection(object):
             # only grabs the first 10 digits of the phone number
             PhoneNumber=person_to_reg.sms_number()[-10:])
 
-        return self.soap_client.service.RegisterUser(reg_obj)
+        return self.send_message('RegisterUser', reg_obj)
 
     # TODO(brycew): fill these in as we progress
     # Managing Firm Users

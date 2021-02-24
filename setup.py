@@ -66,7 +66,7 @@ setup(name='docassemble.EFSPIntegration',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['zeep'],
+      install_requires=['zeep', 'xmlsec', 'requests', 'cryptography'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
       ) 
