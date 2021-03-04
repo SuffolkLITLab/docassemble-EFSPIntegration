@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
 import zeep
-from zeep.wsse.signature import Signature
+import datetime
+from zeep.wsse.username import UsernameToken
+from zeep.wsse.utils import WSU
+from zeep.wsse.signature import BinarySignature
+import os
+from lxml import etree
 
 from deprecated import deprecated
 
@@ -22,19 +27,50 @@ xmlsec.InternalError: (-1, 'cannot load cert')
 # https://www.aleksey.com/xmlsec/api/xmlsec-examples-sign-x509.html
 # https://github.com/mehcode/python-xmlsec/blob/18cbae111e2d1afff99687211aadb49c33c4a8f5/src/constants.c#L402
 
+"""
+>>> soap_client.service.RegisterUser(reg_obj)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/brycew/Developer/LITLab/litlab_venv/lib/python3.6/site-packages/zeep/proxy.py", line 51, in __call__
+    kwargs,
+  File "/home/brycew/Developer/LITLab/litlab_venv/lib/python3.6/site-packages/zeep/wsdl/bindings/soap.py", line 135, in send
+    return self.process_reply(client, operation_obj, response)
+  File "/home/brycew/Developer/LITLab/litlab_venv/lib/python3.6/site-packages/zeep/wsdl/bindings/soap.py", line 219, in process_reply
+    client.wsse.verify(doc)
+  File "/home/brycew/Developer/LITLab/litlab_venv/lib/python3.6/site-packages/zeep/wsse/signature.py", line 73, in verify
+    _verify_envelope_with_key(envelope, key)
+  File "/home/brycew/Developer/LITLab/litlab_venv/lib/python3.6/site-packages/zeep/wsse/signature.py", line 310, in _verify_envelope_with_key
+    raise SignatureVerificationFailed()
+zeep.exceptions.SignatureVerificationFailed
+"""
+
 
 class EFMFirmConnection(object):
     def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
+        # From https://docs.python-zeep.org/en/master/wsse.html#usernametoken-with-timestamp-token
+        timestamp_token = WSU.Timestamp()
+        today_datetime = datetime.datetime.now()
+        expires_datetime = today_datetime + datetime.timedelta(minutes=10)
+        timestamp_elements = [
+            WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            WSU.Expires(expires_datetime.strftime("%F-%m-%dT%H:%M:%S.%fZ"))
+        ]
+        timestamp_token.extend(timestamp_elements)
+        user_name_token = UsernameToken('TODOusername', 'TODOpassword', timestamp_token=timestamp_token)
+        signature = BinarySignature(private_key_fn, public_key_fn, password)
+
         self.soap_client = zeep.Client(
             wsdl=url,
-            wsse=Signature(private_key_fn, public_key_fn, password))
+            wsse=[user_name_token, signature])
+        self.verbose = True
 
 
     def send_message(self, service_name: str, obj_to_send):
         if self.verbose:
-            node = self.soap_client.create_message(soap_client.service, service_name, obj_to_send)
+            node = self.soap_client.create_message(self.soap_client.service, service_name, obj_to_send)
             print(etree.tostring(node, pretty_print=True).decode())
-        return self.soap_client.service[service_name](obj_to_send)
+        with self.soap_client.settings(raw_response=True):
+            return self.soap_client.service[service_name](obj_to_send)
 
     def RegisterUser(self, person_to_reg, password):
         # Rely on DA to answer the Address and phone questions if necessary
@@ -51,7 +87,7 @@ class EFMFirmConnection(object):
             City=person_to_reg.address.city,
             StateCode=person_to_reg.address.state,
             ZipCode=person_to_reg.address.zip_code,
-            CountryCode=person_to_reg.address.county,
+            CountryCode=person_to_reg.address.country,
             # only grabs the first 10 digits of the phone number
             PhoneNumber=person_to_reg.sms_number()[-10:])
 
@@ -207,3 +243,36 @@ class EFMUserServiceConnection(object):
 
     def GetUser(self):
         pass
+
+class MockPerson(object):
+    def __init__(self):
+        self.email = 'bwilley@suffolk.edu'
+        # Neat trick: https://stackoverflow.com/a/24448351/11416267
+        self.name = type('', (), {})()
+        self.name.first = 'Bryce'
+        self.name.middle = 'Steven'
+        self.name.last = 'Willey'
+        self.address = type('', (), {})()
+        self.address.address = '123 Fakestreet Ave'
+        self.address.unit = 'Apt 1'
+        self.address.city = 'Boston'
+        self.address.state = 'MA'
+        self.address.zip_code = '12345'
+        self.address.country = 'US'
+
+    def sms_number(self) -> str:
+        return '1234567890'
+
+
+if __name__ == '__main__':
+    client = EFMFirmConnection(os.getenv('firm_url'), 
+                               '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.encrypted.priv.key', 
+                               '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.pem',
+                               os.getenv('x509_password'))
+    x = MockPerson()
+    client.verbose = True
+    response = client.RegisterUser(x, 'TestPassword1')
+    print(response.status_code)
+    print(response.text)
+    print(response.content)
+
