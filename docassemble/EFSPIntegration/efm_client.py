@@ -215,12 +215,39 @@ class EFMFirmConnection(object):
 
 
 class EFMUserServiceConnection(object):
-    def __init__(self, url):
-        self.soap_client = zeep.Client(wsdl=url)
+    def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
+        timestamp_token = WSU.Timestamp()
+        today_datetime = datetime.datetime.now()
+        expires_datetime = today_datetime + datetime.timedelta(minutes=10)
+        timestamp_elements = [
+            WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            WSU.Expires(expires_datetime.strftime("%F-%m-%dT%H:%M:%S.%fZ"))
+        ]
+        timestamp_token.extend(timestamp_elements)
+        user_name_token = UsernameToken('bwilley', timestamp_token=timestamp_token)
+        signature = BinarySignature(private_key_fn, public_key_fn, password)
+
+        self.soap_client = zeep.Client(
+            wsdl=url,
+            wsse=[user_name_token, signature])
+        self.verbose = True
+
+    def send_message(self, service_name: str, obj_to_send):
+        if self.verbose:
+            node = self.soap_client.create_message(self.soap_client.service, service_name, obj_to_send)
+            print(etree.tostring(node, pretty_print=True).decode())
+        with self.soap_client.settings(raw_response=True):
+            return self.soap_client.service[service_name](obj_to_send)
+
 
     # TODO(brycew): is there a req for users to have access to these?
-    def AuthenticateUser(self):
-        pass
+    def AuthenticateUser(self, email, password):
+        factory = self.soap_client.type_factory('urn:tyler:efm:services:schema:AuthenticateRequest')
+        reg_obj = factory.AuthenticateRequestType(
+            Email=email,
+            Password=password)
+
+        return self.send_message('AuthenticateUser', reg_obj)
 
     def ChangePassword(self):
         pass
@@ -265,13 +292,14 @@ class MockPerson(object):
 
 
 if __name__ == '__main__':
-    client = EFMFirmConnection(os.getenv('firm_url'), 
+    client = EFMUserServiceConnection(os.getenv('user_service_url'), 
                                '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.encrypted.priv.key', 
                                '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.pem',
                                os.getenv('x509_password'))
     x = MockPerson()
     client.verbose = True
-    response = client.RegisterUser(x, 'TestPassword1')
+    #response = client.RegisterUser(x, 'TestPassword1')
+    response = client.AuthenticateUser('bwilley@suffolk.edu', os.getenv('bryce_user_password'))
     print(response.status_code)
     print(response.text)
     print(response.content)
