@@ -3,10 +3,17 @@
 import zeep
 import datetime
 from zeep.wsse.username import UsernameToken
-from zeep.wsse.utils import WSU
+from zeep.wsse.utils import WSU, get_timestamp
 from zeep.wsse.signature import BinarySignature
 import os
 from lxml import etree
+
+import requests
+import base64
+from .x509_signer import HeaderSigner
+import http.client as http_client
+import logging
+
 
 from deprecated import deprecated
 
@@ -45,32 +52,76 @@ zeep.exceptions.SignatureVerificationFailed
 """
 
 
-class EFMFirmConnection(object):
+class EFMConnection(object):
     def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
         # From https://docs.python-zeep.org/en/master/wsse.html#usernametoken-with-timestamp-token
         timestamp_token = WSU.Timestamp()
         today_datetime = datetime.datetime.now()
-        expires_datetime = today_datetime + datetime.timedelta(minutes=10)
+        expires_datetime = today_datetime + datetime.timedelta(minutes=5)
         timestamp_elements = [
-            WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
-            WSU.Expires(expires_datetime.strftime("%F-%m-%dT%H:%M:%S.%fZ"))
+            WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%S") + '.000Z'),
+            WSU.Expires(expires_datetime.strftime("%Y-%m-%dT%H:%M:%S") + '.000Z')
         ]
+        # TODO(brycew): ???
+        #timestamp_elements = [
+        #    WSU.Created(get_timestamp(timestamp=today_datetime, zulu_timestamp=True)),
+        #    WSU.Expires(get_timestamp(timestamp=expires_datetime, zulu_timestamp=True))
+        #]
         timestamp_token.extend(timestamp_elements)
-        user_name_token = UsernameToken('TODOusername', 'TODOpassword', timestamp_token=timestamp_token)
+        # username= 'bwilley'
+        user_name_token = UsernameToken(timestamp_token=timestamp_token)
         signature = BinarySignature(private_key_fn, public_key_fn, password)
+        self.url = url
 
         self.soap_client = zeep.Client(
-            wsdl=url,
-            wsse=[user_name_token, signature])
-        self.verbose = True
+            wsdl=url#,
+            )#wsse=[user_name_token, signature])
+        self.verbose = False
+        self.set_verbose_logging(True)
+        self.send_method = 'zeep' 
 
+
+    @staticmethod
+    def verbose_logging(turn_on: bool):
+        if turn_on:
+            http_client.HTTPConnection.debuglevel = 1
+            logging.basicConfig()
+            logging.getLogger().setLevel(logging.DEBUG)
+            requests_log = logging.getLogger("requests.packages.urllib3")
+            requests_log.setLevel(logging.DEBUG)
+            requests_log.propagate = True
+
+    def set_verbose_logging(self, turn_on: bool): 
+        if self.verbose != turn_on:
+            EFMConnection.verbose_logging(turn_on)
+        self.verbose = turn_on
 
     def send_message(self, service_name: str, obj_to_send):
         if self.verbose:
             node = self.soap_client.create_message(self.soap_client.service, service_name, obj_to_send)
-            print(etree.tostring(node, pretty_print=True).decode())
-        with self.soap_client.settings(raw_response=True):
-            return self.soap_client.service[service_name](obj_to_send)
+            print(etree.tostring(node, pretty_print=False).decode())
+        if self.send_method == 'zeep':
+            with self.soap_client.settings(raw_response=True):
+                return self.soap_client.service[service_name](obj_to_send)
+        
+        if self.send_method == 'curl':
+            with self.soap_client.settings(raw_response=True):
+                response = self.soap_client.service[service_name](obj_to_send)
+                out_filename = 'tmp_data_request.xml'
+                headers_txt = ' '.join(['-H "{}: {}"'.format(header[0], header[1].replace('"', '\\"')) for header in response.request.headers.items()] + ['-H Expect:'])
+                tmp_str = 'curl -i --verbose -X POST {url} {headers} --data "@{out_filename}"'.format(
+                    url = self.url,
+                    headers=headers_txt,
+                    out_filename=out_filename
+                )
+                print(tmp_str)
+                with open(out_filename, 'w') as f:
+                    f.write(response.request.body.decode())
+                return response
+
+class EFMFirmConnection(EFMConnection):
+    def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
+        super().__init__(url, private_key_fn, public_key_fn, password)
 
     def RegisterUser(self, person_to_reg, password):
         # Rely on DA to answer the Address and phone questions if necessary
@@ -214,31 +265,9 @@ class EFMFirmConnection(object):
         pass
 
 
-class EFMUserServiceConnection(object):
+class EFMUserServiceConnection(EFMConnection):
     def __init__(self, url: str, private_key_fn: str, public_key_fn: str, password: str):
-        timestamp_token = WSU.Timestamp()
-        today_datetime = datetime.datetime.now()
-        expires_datetime = today_datetime + datetime.timedelta(minutes=10)
-        timestamp_elements = [
-            WSU.Created(today_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
-            WSU.Expires(expires_datetime.strftime("%F-%m-%dT%H:%M:%S.%fZ"))
-        ]
-        timestamp_token.extend(timestamp_elements)
-        user_name_token = UsernameToken('bwilley', timestamp_token=timestamp_token)
-        signature = BinarySignature(private_key_fn, public_key_fn, password)
-
-        self.soap_client = zeep.Client(
-            wsdl=url,
-            wsse=[user_name_token, signature])
-        self.verbose = True
-
-    def send_message(self, service_name: str, obj_to_send):
-        if self.verbose:
-            node = self.soap_client.create_message(self.soap_client.service, service_name, obj_to_send)
-            print(etree.tostring(node, pretty_print=True).decode())
-        with self.soap_client.settings(raw_response=True):
-            return self.soap_client.service[service_name](obj_to_send)
-
+        super().__init__(url, private_key_fn, public_key_fn, password)
 
     # TODO(brycew): is there a req for users to have access to these?
     def AuthenticateUser(self, email, password):
@@ -249,6 +278,14 @@ class EFMUserServiceConnection(object):
 
         return self.send_message('AuthenticateUser', reg_obj)
 
+    @staticmethod
+    def verbose_logging(turn_on: bool):
+        http_client.HTTPConnection.debuglevel = 1
+        logging.basicConfig()
+        logging.getLogger().setLevel(logging.DEBUG)
+        requests_log = logging.getLogger("requests.packages.urllib3")
+        requests_log.setLevel(logging.DEBUG)
+        requests_log.propagate = True
     def ChangePassword(self):
         pass
 
@@ -293,14 +330,16 @@ class MockPerson(object):
 
 if __name__ == '__main__':
     client = EFMUserServiceConnection(os.getenv('user_service_url'), 
-                               '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.encrypted.priv.key', 
-                               '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.pem',
+                               None,
+                               '/home/brycew/Developer/LITLab/x509_stuff/Suffolk.pfx',
+                               #'/home/brycew/Developer/LITLab/x509_stuff/Suffolk.encrypted.priv.key', 
+                               #'/home/brycew/Developer/LITLab/x509_stuff/Suffolk.pem',
                                os.getenv('x509_password'))
+    client.send_method = 'curl'
     x = MockPerson()
-    client.verbose = True
     #response = client.RegisterUser(x, 'TestPassword1')
-    response = client.AuthenticateUser('bwilley@suffolk.edu', os.getenv('bryce_user_password'))
-    print(response.status_code)
-    print(response.text)
-    print(response.content)
+    response = client.AuthenticateUser('bwilley@suffolk.edu', 'wrong_password') # os.getenv('bryce_user_password'))
+    #print(response.status_code)
+    #print(response.text)
+    #print(response.content)
 

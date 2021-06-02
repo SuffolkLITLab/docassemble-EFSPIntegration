@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.primitives.serialization import pkcs7 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from . import __version__
 
 
 class HeaderSigner(object):
