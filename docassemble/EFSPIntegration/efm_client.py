@@ -2,10 +2,12 @@
 
 import os
 import json
+import sys
 
 import requests
 import http.client as http_client
 import logging
+from typing import List
 
 class ProxyConnection(object):
     def __init__(self, url: str):
@@ -13,6 +15,7 @@ class ProxyConnection(object):
         self.proxy_client = requests.Session()
         self.proxy_client.headers = {'Content-type': 'text/json', 'Accept': 'application/json'}
         self.verbose = False
+        self.authed_user_id = None
         self.set_verbose_logging(True)
 
     @staticmethod
@@ -31,55 +34,116 @@ class ProxyConnection(object):
             ProxyConnection.verbose_logging(turn_on)
         self.verbose = turn_on
 
-    def RegisterUser(self, person_to_reg, password):
-        # Rely on DA to answer the Address and phone questions if necessary
-        pass
+    @staticmethod
+    def user_visible_resp(resp):
+        try:
+            return resp.json()
+        except:
+            return str(resp.status_code) + resp.text
 
-        reg_obj = factory.RegistrationRequestType(
-            RegistrationType='Individual',
-            Email=person_to_reg.email,
-            FirstName=person_to_reg.name.first,
-            MiddleName=person_to_reg.name.middle,
-            LastName=person_to_reg.name.last,
-            Password=password,
-            StreetAddressLine1=person_to_reg.address.address,
-            StreetAddressLine2=person_to_reg.address.unit,
-            City=person_to_reg.address.city,
-            StateCode=person_to_reg.address.state,
-            ZipCode=person_to_reg.address.zip_code,
-            CountryCode=person_to_reg.address.country,
+    def AuthenticateUser(self, email: str, password: str):
+        auth_obj = {'username': email, 'password': password} 
+        resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', data=json.dumps(auth_obj))
+        if resp.status_code == requests.codes.ok:
+            data = resp.json()
+            if data['error']['errorCode'] == '0':
+                self.proxy_client.auth = (email, data['passwordHash'])
+                self.authed_user_id = data['userID']
+        print(resp.status_code)
+        print(resp.text)
+        print(resp.reason)
+        print(resp.content)
+        return ProxyConnection.user_visible_resp(resp)
+
+    def RegisterUser(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
+        reg_obj = {
+            'registrationType': registration_type,
+            'email': person_to_reg.email,
+            'firstName': person_to_reg.name.first,
+            'middleName': person_to_reg.name.middle,
+            'lastName': person_to_reg.name.last,
+            'password': password,
+            'streetAddressLine1': person_to_reg.address.address,
+            'streetAddressLine2': person_to_reg.address.unit,
+            'city': person_to_reg.address.city,
+            'stateCode': person_to_reg.address.state,
+            'zipCode': person_to_reg.address.zip_code,
+            'countryCode': person_to_reg.address.country,
             # only grabs the first 10 digits of the phone number
-            PhoneNumber=person_to_reg.sms_number()[-10:])
+            'phoneNumber': person_to_reg.sms_number()[-10:]
+        }
 
-        return self.send_message('RegisterUser', reg_obj)
+        resp = self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
+        print(resp.status_code)
+        print(resp.text)
+        print(resp.reason)
+        return ProxyConnection.user_visible_resp(resp)
 
-    # TODO(brycew): fill these in as we progress
     # Managing Firm Users
+
     def GetUserList(self):
+        resp = self.proxy_client.get(self.base_url + 'adminusers/users') 
+        return ProxyConnection.user_visible_resp(resp)
+
+    def GetUser(self, id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
+        return ProxyConnection.user_visible_resp(resp)
+
+    def GetUserRole(self, id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.get(self.base_url + f'adminuser/users/{id}/roles')
+        return ProxyConnection.user_visible_resp(resp)
+
+    def AddUserRole(self, roles:List[dict], id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', data=json.dumps(roles))
+        return ProxyConnection.user_visible_resp(resp)
+
+    def RemoveUserRole(self, roles:List[dict], id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.delete(self.base_url + f'adminuser/users/{id}/roles')
+        return ProxyConnection.user_visible_resp(resp)
+
+    def ChangePassword(self):
         pass
 
-    def GetUser(self):
+    def SelfResendActivationEmail(self, email: str):
+        resend_obj = {'email': email}
+        resp = self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email', 
+            data=json.dumps(resend_obj))
+        return ProxyConnection.user_visible_resp(resp)
+
+    def ResendActivitationEmail(self, id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend_activation_email')
+        return ProxyConnection.user_visible_resp(resp)
+
+    def UpdateNotificationPreferences(self):
         pass
 
-    def AddUserRole(self):
-        pass
+    def GetNoficitationPreferenceOptions(self):
+        return self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
 
-    def RemoveUserRole(self):
-        pass
+    def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str=None):
+        updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}')
+        return ProxyConnection.user_visible_resp(resp)
 
-    def UpdateUser(self):
-        pass
-
-    def RemoveUser(self):
-        pass
+    def RemoveUser(self, id:str=None):
+        if id is None:
+            id = self.authed_user_id
+        resp = self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
+        return ProxyConnection.user_visible_resp(resp)
 
     def ResetUserPassword(self):
-        pass
-
-    def ResendActivitationEmail(self):
-        pass
-
-    def GetNotificationPreferencesList(self):
         pass
 
     # Managing a Firm
@@ -173,52 +237,39 @@ class ProxyConnection(object):
     def RemoveGlobalPaymentAccount(self):
         pass
 
-    def AuthenticateUser(self, email: str, password: str):
-        auth_obj = {'username': email, 'password': password} 
-        resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', data=json.dumps(auth_obj))
-        if resp.status_code == requests.codes.ok:
-            data = resp.json()
-            if data['error']['errorCode'] == '0':
-                self.proxy_client.auth = (email, data['passwordHash'])
-                self.authed_user_id = data['userID']
-        return resp
+    def GetCourts(self):
+        resp = self.proxy_client.get(self.base_url + f'filingreview/courts')
+        return ProxyConnection.user_visible_resp(resp)
 
-    @staticmethod
-    def verbose_logging(turn_on: bool):
-        http_client.HTTPConnection.debuglevel = 1
-        logging.basicConfig()
-        logging.getLogger().setLevel(logging.DEBUG)
-        requests_log = logging.getLogger("requests.packages.urllib3")
-        requests_log.setLevel(logging.DEBUG)
-        requests_log.propagate = True
+    def GetFilingList(self, court_id:str):
+        resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filings')
+        return ProxyConnection.user_visible_resp(resp)
 
-    def ChangePassword(self):
-        pass
+    def GetFiling(self, court_id:str, filing_id:str):
+        resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
+        return ProxyConnection.user_visible_resp(resp)
 
-    def SelfResendActivationEmail(self, email: str):
-        resend_obj = {'email': email}
-        return self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email')
+    def GetFilingStatus(self, court_id:str, filing_id:str):
+        resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}/status')
+        return ProxyConnection.user_visible_resp(resp)
 
-    def UpdateNotificationPreferences(self):
-        pass
+    def CancelFilingStatus(self, court_id:str, filing_id:str):
+        resp = self.proxy_client.delete(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
+        return ProxyConnection.user_visible_resp(resp)
 
-    def GetNoficitationPreferences(self):
-        pass
-
-    def UpdateUser(self):
-        pass
-
-    def GetUser(self):
-        pass
+    def DummyJeffersonFile(self, court_id:str):
+        resp = self.proxy_client.put(self.base_url + f'filingreview/court/{court_id}/filing')
+        return ProxyConnection.user_visible_resp(resp)
+        
 
 class MockPerson(object):
     def __init__(self):
-        self.email = 'bwilley@suffolk.edu'
+        self.email = 'thesurferdude@comcast.net' 
         # Neat trick: https://stackoverflow.com/a/24448351/11416267
         self.name = type('', (), {})()
-        self.name.first = 'Bryce'
-        self.name.middle = 'Steven'
-        self.name.last = 'Willey'
+        self.name.first = 'B'
+        self.name.middle = 'S'
+        self.name.last = 'W'
         self.address = type('', (), {})()
         self.address.address = '123 Fakestreet Ave'
         self.address.unit = 'Apt 1'
@@ -232,10 +283,11 @@ class MockPerson(object):
 
 
 if __name__ == '__main__':
-    client = ProxyConnection(os.getenv('proxy_url'))
+    client = ProxyConnection(sys.argv[1]) # os.getenv('proxy_url'))
     x = MockPerson()
     #response = client.RegisterUser(x, 'TestPassword1')
-    response = client.AuthenticateUser('bwilley@suffolk.edu', os.getenv('bryce_user_password'))
-    print(response.status_code)
-    print(response.text)
+    response = client.AuthenticateUser('thesurferdude@comcast.net', 'Password1') #os.getenv('bryce_user_password'))
+    x = MockPerson()
+    resp = client.RemoveUser() 
+    print(resp)
 

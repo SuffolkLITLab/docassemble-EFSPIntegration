@@ -1,0 +1,176 @@
+---
+modules:
+  - .efm_client
+---
+objects:
+  person_to_reg: Individual
+---
+code: |
+  proxy_conn = ProxyConnection(url='http://efspjava:9000/')
+---
+question: | 
+  What to do?
+subquestion: |
+  Logged in as ${ proxy_conn.authed_user_id }
+
+  ## User Administration
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['reauth', 'show_resp']}]), 
+      label='Login') }
+      
+  ${ action_button_html(url_ask(
+      [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
+      label='Register') }
+    
+  ${ action_button_html(url_ask(
+      [{'recompute': ['rm_user', 'show_resp']}]),
+      label='Remove User') }
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['get_user_list', 'show_resp']}]),
+      label='Get All Users') }
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['get_user', 'show_resp']}]),
+      label='Get User') }
+
+  ## Filing
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_courts', 'show_resp']}]),
+    label='See All Courts') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_filings', 'show_resp']}]),
+    label='See Filings') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_filing_status', 'show_resp']}]),
+    label='See Filing Status') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_filing', 'show_resp']}]),
+    label='See Filing Info') }
+    
+  ${ action_button_html(url_ask(
+    [{'recompute': ['dummy_filing', 'show_resp']}]),
+    label='Dummy File') }
+
+continue button field: all_done
+---
+question: |
+  Login info?
+fields:
+  - email: my_username
+  - password: my_password
+    datatype: password
+---
+generic object: Individual
+question: |
+  Name?
+fields:
+  - First Name: x.name.first
+  - Middle Name: x.name.middle
+  - Last Name: x.name.last
+---
+generic object: Individual
+question: |
+  Address?
+fields:
+  - Street: x.address.address
+  - Unit: x.address.unit
+  - City: x.address.city
+  - State: x.address.state
+  - Zip: x.address.zip_code
+  - Country: x.address.country
+---
+generic object: Individual
+question: |
+  Contact Info?
+fields:
+  - Phone Number: x.mobile_number
+  - email: x.email
+    datatype: email
+---
+question: |
+  Password?
+fields:
+  - Password: new_password
+    datatype: password
+---
+question: |
+  User ID?
+fields:
+  - User ID: user_id
+---
+question: |
+  Court Id?
+fields:
+  - Court ID: court_id
+---
+question: |
+  Filing id?
+fields:
+  - Filing id: filing_id
+---
+sets: proxy_conn.authed_user_id
+code: |
+  resp = proxy_conn.AuthenticateUser(email=my_username, password=my_password)
+  del my_username, my_password
+  reauth = True
+---
+code: |
+  resp = proxy_conn.RegisterUser(person_to_reg, password=new_password)
+  del new_password
+  register = True
+---
+code: |
+  resp = proxy_conn.RemoveUser(id=user_id) 
+  del user_id
+  rm_user = True
+---
+code : |
+  resp = proxy_conn.GetUserList()
+  get_user_list = True
+---
+code: |
+  resp = proxy_conn.GetUser(id=user_id)
+  del user_id
+  get_user = True
+---
+code: |
+  resp = proxy_conn.GetCourts()
+  get_courts = True
+---
+code: |
+  resp = proxy_conn.GetFilingList(court_id)
+  del court_id
+  get_filings = True
+---
+code: |
+  resp = proxy_conn.GetFilingStatus(court_id, filing_id)
+  del court_id
+  del filing_id
+  get_filing_status = True
+---
+code: |
+  resp = proxy_conn.GetFiling(court_id, filing_id)
+  del court_id
+  del filing_id
+  get_filing = True
+---
+code: |
+  resp = proxy_conn.DummyJeffersonFile(court_id)
+  del court_id
+  dummy_filing = True
+---
+question: |
+  show resp:
+subquestion: |
+  ${ resp }
+continue button field: show_resp
+---
+mandatory: True
+code: |
+  all_done
