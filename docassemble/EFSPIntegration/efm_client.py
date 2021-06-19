@@ -8,12 +8,14 @@ import requests
 import http.client as http_client
 import logging
 from typing import List
+from docassemble.base.functions import all_variables 
+from docassemble.base.util import log 
 
 class ProxyConnection(object):
     def __init__(self, url: str):
         self.base_url = url
         self.proxy_client = requests.Session()
-        self.proxy_client.headers = {'Content-type': 'text/json', 'Accept': 'application/json'}
+        self.proxy_client.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         self.verbose = False
         self.authed_user_id = None
         self.set_verbose_logging(True)
@@ -113,28 +115,31 @@ class ProxyConnection(object):
         pass
 
     def SelfResendActivationEmail(self, email: str):
-        resend_obj = {'email': email}
         resp = self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email', 
-            data=json.dumps(resend_obj))
+            data=email)
         return ProxyConnection.user_visible_resp(resp)
 
+    # TODO(brycew): not tested
     def ResendActivitationEmail(self, id:str=None):
         if id is None:
             id = self.authed_user_id
         resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend_activation_email')
         return ProxyConnection.user_visible_resp(resp)
 
+    # TODO(brycew): not tested
     def UpdateNotificationPreferences(self):
         pass
 
+    # TODO(brycew): not tested
     def GetNoficitationPreferenceOptions(self):
         return self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
 
+    # TODO(brycew): not tested
     def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str=None):
         updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
         if id is None:
             id = self.authed_user_id
-        resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}')
+        resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
         return ProxyConnection.user_visible_resp(resp)
 
     def RemoveUser(self, id:str=None):
@@ -143,8 +148,10 @@ class ProxyConnection(object):
         resp = self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
         return ProxyConnection.user_visible_resp(resp)
 
-    def ResetUserPassword(self):
-        pass
+    # TODO(brycew): not tested
+    def ResetUserPassword(self, email:str):
+        resp = self.proxy_client.post(self.base_url + 'adminusers/user/reset_password', data=email)
+        return ProxyConnection.user_visible_resp(resp)
 
     # Managing a Firm
     def GetFirm(self):
@@ -257,8 +264,11 @@ class ProxyConnection(object):
         resp = self.proxy_client.delete(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
         return ProxyConnection.user_visible_resp(resp)
 
-    def DummyJeffersonFile(self, court_id:str):
-        resp = self.proxy_client.put(self.base_url + f'filingreview/court/{court_id}/filing')
+    def FileForReview(self, court_id:str):
+        all_vars = json.dumps(all_variables())
+        log(all_vars, 'console')
+        resp = self.proxy_client.put(self.base_url + f'filingreview/court/{court_id}/filing', 
+            data=all_vars)
         return ProxyConnection.user_visible_resp(resp)
         
 
