@@ -10,6 +10,7 @@ import logging
 from typing import List
 from docassemble.base.functions import all_variables 
 from docassemble.base.util import log 
+from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
 class ProxyConnection(object):
     def __init__(self, url: str):
@@ -264,10 +265,17 @@ class ProxyConnection(object):
         resp = self.proxy_client.delete(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
         return ProxyConnection.user_visible_resp(resp)
 
-    def FileForReview(self, court_id:str):
+    def FileForReview(self, court_id:str, al_court_bundle:ALDocumentBundle):
+        def recursive_give_data_url(bundle):
+            for doc in bundle:
+                if isinstance(doc, ALDocumentBundle):
+                    recursive_give_data_url(doc)
+                else:
+                    doc.data_url = doc.as_pdf().url_for(temporary=True)
+
+        recursive_give_data_url(al_court_bundle)
         all_vars = json.dumps(all_variables())
-        log(all_vars, 'console')
-        resp = self.proxy_client.put(self.base_url + f'filingreview/court/{court_id}/filing', 
+        resp = self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing', 
             data=all_vars)
         return ProxyConnection.user_visible_resp(resp)
         
