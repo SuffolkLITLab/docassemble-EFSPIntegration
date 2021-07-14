@@ -1,7 +1,8 @@
-# docassemble-TylerEFSP
+# docassemble-EFSPIntegration
 
-A docassemble extension that easily lets you integrate as an EFSP to Tyler Tech's Odyssey Serve and
-File platform according to the ECF standard.
+A docassemble extension that talks to [a proxy e-filing server](https://github.com/SuffolkLITLab/EfileProxyServer/) easily within a docassemble interview.
+
+In progress!
 
 ## Author
 

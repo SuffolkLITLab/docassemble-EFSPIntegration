@@ -265,6 +265,18 @@ class ProxyConnection(object):
         resp = self.proxy_client.delete(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
         return ProxyConnection.user_visible_resp(resp)
 
+    def CheckFiling(self, court_id:str, al_court_bundle:ALDocumentBundle):
+        def recursive_give_data_url(bundle):
+            for doc in bundle:
+                if isinstance(doc, ALDocumentBundle):
+                    recursive_give_data_url(doc)
+                else:
+                    doc.data_url = doc.as_pdf().url_for(temporary=True)
+        recursive_give_data_url(al_court_bundle)
+        all_vars = json.dumps(all_variables())
+        resp = self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
+        return ProxyConnection.user_visible_resp(resp)
+
     def FileForReview(self, court_id:str, al_court_bundle:ALDocumentBundle):
         def recursive_give_data_url(bundle):
             for doc in bundle:

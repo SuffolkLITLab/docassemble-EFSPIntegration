@@ -1,0 +1,146 @@
+---
+modules:
+  - .efm_client
+  - .conversions
+---
+code: |
+  proxy_conn = ProxyConnection(url='http://efspjava:9000/')
+---
+need:
+  - comments_to_clerk
+  - package_version_number
+id: ready to efile
+question: |
+  Final Review With Cover Page
+subquestion: |
+  
+  Below is your ${comma_and_list(al_download_titles)} document with the 
+  cover page that we will deliver to ${trial_court}.
+  
+  Click "Back" if you need to make any changes.  
+  Click "Send to court" to deliver it.
+  
+  Here is what the clerk at ${trial_court} will get:
+  ${ all_final_forms_combined }  
+  [:file-download: Download this form with cover page](${all_final_forms_combined.url_for(attachment=True)})
+  % if found_email:
+  We will deliver it securely. Please allow up to 15 minutes for the email to
+  arrive.
+  % else:
+  There was a problem delivering this to the ${trial_court}. We couldn't
+  locate the contact information for this court.
+  % endif
+ 
+  Press below to deliver the form.
+fields:
+  - Send me a copy: should_cc_user
+    datatype: yesno
+  - Email address: cc_email
+    datatype: email
+    show if: should_cc_user
+    default: ${users[0].email if defined('users[0].email') else ''}
+continue button field: ready_to_efile
+continue button label: Send to court
+---
+comment: |
+  To integrate with other interviews, go to the last page, and add the below:
+    
+  ${ action_button_html(url_ask([{'recompute': ['e_file', 'show_resp']}]),
+     label='E-file') }
+---
+question: |
+  Missing fields
+subquestion: |
+  You are lacking in the following fields:
+  % if isinstance(remaining_to_check, str):
+  ${ remaining_to_check }
+  % elif len(remaining_to_check["optional_vars"]) == 0 and len(remaining_to_check["required_vars"]) == 0:
+  All in!
+  % else:
+
+  ${ remaining_to_check["optional_vars"] }
+
+  ${ remaining_to_check["required_vars"] }
+
+  % endif
+
+continue button field: show_remaining
+---
+objects:
+  - fill_me: DADict
+---
+code: |
+  fill_me.there_are_any = True
+  for var in remaining_to_check["required_vars"]:
+    newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
+    fill_me.initializeObject(newName, DAObject)
+    fill_me[newName].name = var["name"]
+    fill_me[newName].description = var["description"]
+  fill_me.there_is_another = False
+  fill_me.gathered = True
+  fill_me_done = True
+---
+code: |
+  # Ask for the clerk comments, they'll go in the lead filing doc comments
+  court_id = convert_court_to_id(trial_court)
+  remaining_to_check = proxy_conn.CheckFiling(court_id, al_court_bundle)
+  show_remaining
+  fill_me_done
+  for key in fill_me.keys():
+    log(str(key), 'console')
+    define(fill_me[key].name, fill_me[key].value)
+
+  comments_to_clerk
+  ready_to_efile
+  prevent_going_back()
+  resp = proxy_conn.FileForReview(court_id, al_court_bundle)
+  e_file = True
+---
+generic object: DAObject
+question: |
+  Missing Field: ${ x[i].name }
+subquestion: |
+  Description: ${ x[i].description }
+fields:
+  - no label: x[i].value
+---
+generic object: DAObject
+question: | 
+  Test
+fields:
+  - test: x.test
+---
+question: |
+  % if resp == '200':
+  Your form was submitted!
+  % else:
+  Something went wrong delivering your form
+  % endif
+subquestion: |
+  % if resp == '200':
+  If you do not hear from the court in 1 business day, call the Trial Court’s
+  Emergency HelpLine 833-91-COURT (833-912-6878). 
+  
+  The Emergency HelpLine is open:  
+  8:30am - 4:30pm,   
+  Monday - Friday.  
+
+  % else:
+  Something went wrong delivering your form to the ${trial_court}.  
+  Try again later or call the Trial Court’s Emergency HelpLine 833-91-COURT (833-912-6878). 
+  
+  The Emergency HelpLine is open:  
+  8:30am - 4:30pm,  
+  Monday - Friday.  
+
+  % endif
+
+help:
+  label: |
+    Debug Info
+  content: |
+    Some debugging information:
+
+    ${ resp }
+continue button field: show_resp
+continue button label: Back to download screen
