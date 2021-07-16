@@ -6,109 +6,9 @@ modules:
 code: |
   proxy_conn = ProxyConnection(url='http://efspjava:9000/')
 ---
-need:
-  - comments_to_clerk
-  - package_version_number
-id: ready to efile
-question: |
-  Final Review With Cover Page
-subquestion: |
-  
-  Below is your ${comma_and_list(al_download_titles)} document with the 
-  cover page that we will deliver to ${trial_court}.
-  
-  Click "Back" if you need to make any changes.  
-  Click "Send to court" to deliver it.
-  
-  Here is what the clerk at ${trial_court} will get:
-  ${ all_final_forms_combined }  
-  [:file-download: Download this form with cover page](${all_final_forms_combined.url_for(attachment=True)})
-  % if found_email:
-  We will deliver it securely. Please allow up to 15 minutes for the email to
-  arrive.
-  % else:
-  There was a problem delivering this to the ${trial_court}. We couldn't
-  locate the contact information for this court.
-  % endif
- 
-  Press below to deliver the form.
-fields:
-  - Send me a copy: should_cc_user
-    datatype: yesno
-  - Email address: cc_email
-    datatype: email
-    show if: should_cc_user
-    default: ${users[0].email if defined('users[0].email') else ''}
-continue button field: ready_to_efile
-continue button label: Send to court
----
-comment: |
-  To integrate with other interviews, go to the last page, and add the below:
-    
-  ${ action_button_html(url_ask([{'recompute': ['e_file', 'show_resp']}]),
-     label='E-file') }
----
-question: |
-  Missing fields
-subquestion: |
-  You are lacking in the following fields:
-  % if isinstance(remaining_to_check, str):
-  ${ remaining_to_check }
-  % elif len(remaining_to_check["optional_vars"]) == 0 and len(remaining_to_check["required_vars"]) == 0:
-  All in!
-  % else:
-
-  ${ remaining_to_check["optional_vars"] }
-
-  ${ remaining_to_check["required_vars"] }
-
-  % endif
-
-continue button field: show_remaining
----
-objects:
-  - fill_me: DADict
----
+# You can override this value in your own interview
 code: |
-  fill_me.there_are_any = True
-  for var in remaining_to_check["required_vars"]:
-    newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
-    fill_me.initializeObject(newName, DAObject)
-    fill_me[newName].name = var["name"]
-    fill_me[newName].description = var["description"]
-  fill_me.there_is_another = False
-  fill_me.gathered = True
-  fill_me_done = True
----
-code: |
-  # Ask for the clerk comments, they'll go in the lead filing doc comments
-  court_id = convert_court_to_id(trial_court)
-  remaining_to_check = proxy_conn.CheckFiling(court_id, al_court_bundle)
-  show_remaining
-  fill_me_done
-  for key in fill_me.keys():
-    log(str(key), 'console')
-    define(fill_me[key].name, fill_me[key].value)
-
-  comments_to_clerk
-  ready_to_efile
-  prevent_going_back()
-  resp = proxy_conn.FileForReview(court_id, al_court_bundle)
-  e_file = True
----
-generic object: DAObject
-question: |
-  Missing Field: ${ x[i].name }
-subquestion: |
-  Description: ${ x[i].description }
-fields:
-  - no label: x[i].value
----
-generic object: DAObject
-question: | 
-  Test
-fields:
-  - test: x.test
+  efile_author_mode = True
 ---
 question: |
   % if resp == '200':
@@ -118,16 +18,15 @@ question: |
   % endif
 subquestion: |
   % if resp == '200':
-  If you do not hear from the court in 1 business day, call the Trial Court’s
-  Emergency HelpLine 833-91-COURT (833-912-6878). 
+  You should receive a confirmation email within 10-15 minutes, and
+  you should receive an update from the ${ trial_court } clerk on your filing 
+  within 2 weeks.
   
-  The Emergency HelpLine is open:  
-  8:30am - 4:30pm,   
-  Monday - Friday.  
+  We recommend you continue down below to download the form for your own records.
 
   % else:
   Something went wrong delivering your form to the ${trial_court}.  
-  Try again later or call the Trial Court’s Emergency HelpLine 833-91-COURT (833-912-6878). 
+  Try again later or call the Court’s Emergency HelpLine 833-91-COURT (833-912-6878). 
   
   The Emergency HelpLine is open:  
   8:30am - 4:30pm,  
@@ -137,10 +36,204 @@ subquestion: |
 
 help:
   label: |
-    Debug Info
+    ${ 'What went wrong?' if resp != '200' else 'Details' }
   content: |
     Some debugging information:
 
     ${ resp }
 continue button field: show_resp
 continue button label: Back to download screen
+---
+need:
+  - comments_to_clerk
+  - package_version_number
+id: ready to efile
+question: |
+  Final Review With Cover Page
+subquestion: |
+  
+  % if could_efile:
+  Below is your ${comma_and_list(al_download_titles)} document with the 
+  cover page that we will deliver to ${trial_court}.
+
+  We will deliver it securely. Please allow up to 15 minutes for the filing to
+  arrive. We will email with a confirmation that it was delivered, and some additional
+  information that you should hang on to.
+  
+  Click "Back" if you need to make any changes.  
+  Click "Send to court" to deliver it.
+  
+  Here is what the clerk at ${trial_court} will get:
+  % else:
+
+  We ran into some technical problems and there was a problem delivering this to the ${trial_court}.
+  You can download the form below to print and submit.
+
+  % endif
+
+  ${ all_final_forms_combined }  
+  [:file-download: Download this form with cover page](${all_final_forms_combined.url_for(attachment=True)})
+
+  % if could_efile:
+  Press below to deliver the form.
+  % endif
+fields:
+  - Send me a copy: should_cc_user
+    datatype: yesno
+  - Email address: cc_email
+    datatype: email
+    show if: should_cc_user
+    default: ${users[0].email if defined('users[0].email') else ''}
+continue button field: efile_user_reviewed
+continue button label: Send to court
+---
+comment: |
+  To integrate with other interviews, go to the last page, and add the below:
+    
+  ${ action_button_html(url_ask([{'recompute': ['efile', 'show_resp']}]),
+     label='E-file') }
+---
+question: |
+  Something went wrong when submitting
+subquestion: |
+  We ran into some technical problems and there was a problem delivering this to the ${trial_court}.
+
+  You have a few options:
+
+  * You can download the form to print and submit
+  * You can save [this URL]() and come back after we have fixed things
+  * We can email you when we've fixed things, no need to save the URL
+
+  Which would you prefer to do?
+fields:
+  - no label: fallback_user_choice
+    choices:
+      - Download form now: download form
+      - Save URL: save url
+      - Email me at ${ user[0].email }: email me
+---
+question: |
+  Missing fields
+subquestion: |
+  Notice: you are in interview author mode!
+
+  To efile using the proxy server, you need to fix some problems in your interview.
+
+  % if isinstance(remaining_to_check, str):
+  Something went wrong when processing your interview:  
+
+  ${ remaining_to_check }
+
+  % elif len(remaining_to_check["optional_vars"]) > 0 or len(remaining_to_check["required_vars"]) > 0:
+  
+  You need to add some more questions to fill these variables:
+
+  ## Required
+
+  % for var in remaining_to_check["required_vars"]:
+  * ${ var["name"] }: ${ var["description"] }. Should be a ${ var["datatype"] }
+    % if len(var["choices"]) > 0:
+    and have these choices:
+    % for choice in var["choices"]:
+      * ${ choice }
+    % endfor
+    % endif
+  % endfor
+
+  ## Optional
+
+  % for var in remaining_to_check["optional_vars"]:
+  * ${ var["name"] }: ${ var["description"] }. Should be a ${ var["datatype"] }
+    % if len(var["choices"]) > 0:
+    and have these choices:
+    % for choice in var["choices"]:
+      * ${ choice }
+    % endfor
+    % endif
+  % endfor
+
+  % endif
+
+continue button field: show_remaining
+---
+question: |
+  Do you want to efile this document directly with the court?
+subquestion: |
+  This means you don't have to print out the document. The court
+  will communicate with you through your email or phone.
+yesno: will_efile
+---
+objects:
+  - follow_up_vars: DADict
+---
+id: follow up setup
+code: |
+  follow_up_vars.there_are_any = True
+  for var in remaining_to_check["required_vars"]:
+    newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
+    follow_up_vars.initializeObject(newName, DAObject)
+    follow_up_vars[newName].name = var["name"]
+    follow_up_vars[newName].description = var["description"]
+  follow_up_vars.there_is_another = False
+  follow_up_vars.gathered = True
+  follow_up_setup = True
+---
+id: could_efile
+code: |
+  # Ask for the clerk comments, they'll go in the lead filing doc comments
+  court_id = convert_court_to_id(trial_court)
+  if will_efile:
+    remaining_to_check = proxy_conn.CheckFiling(court_id, al_court_bundle)
+    if "error" in remaining_to_check:
+      could_efile = False
+      if efile_author_mode:
+        show_remaining
+      
+    elif len(remaining_to_check["required_vars"]) == 0:
+      could_efile = True
+    else:
+      if efile_author_mode:
+        show_remaining
+        follow_up_setup 
+        for key in follow_up_vars.keys():
+          define(follow_up_vars[key].name, follow_up_vars[key].value)
+        could_efile = True
+      else:
+        could_efile = False
+        fallback_user_choice
+        act_on_user_choice
+        show_user_choice
+        command('exit')
+  else:
+    could_efile = False
+---
+code: |
+  if fallback_user_choice == 'download form':
+    efile_user_reviewed
+    # TODO(brycew): don't restart here
+    command('restart')
+  elif fallback_user_choice == 'email me':
+    # TODO(brycew): send an email
+    pass
+  else: # save url
+    # TODO(brycew): show the URL
+    pass
+  act_on_user_choice = True
+---
+id: actually efile
+code: |
+  efile_user_reviewed
+  prevent_going_back()
+  resp = proxy_conn.FileForReview(court_id, al_court_bundle)
+
+  show_resp
+
+  efile = True
+---
+generic object: DAObject
+question: |
+  Missing Field: ${ x[i].name }
+subquestion: |
+  ${ x[i].description }
+fields:
+  - no label: x[i].value
