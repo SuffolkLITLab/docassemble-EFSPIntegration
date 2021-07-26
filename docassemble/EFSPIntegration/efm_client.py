@@ -12,8 +12,22 @@ from docassemble.base.functions import all_variables
 from docassemble.base.util import log 
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
+class ApiResponse(object):
+  def __init__(self, response_code, error_msg, data):
+    self.response_code = response_code
+    self.error_msg = error_msg
+    self.data = data
+
+  def __str__(self):
+    if self.error_msg:
+      return f'response_code: {self.response_code}, error_msg: {self.error_msg}, data: {data}'
+    else:
+      return f'response_code: {self.response_code}, data: {self.data}'
+
 class ProxyConnection(object):
     def __init__(self, url: str):
+        if not url.endswith('/'):
+          url = url + '/'
         self.base_url = url
         self.proxy_client = requests.Session()
         self.proxy_client.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -39,10 +53,15 @@ class ProxyConnection(object):
 
     @staticmethod
     def user_visible_resp(resp):
-        try:
-            return resp.json()
-        except:
-            return str(resp.status_code) + resp.text
+      """By default, the responses from `requests` aren't pickable, which causes
+         some issues in Docassemble if you are using this in interviews. This function
+         takes the essentials of a response and puts in into a simple object.
+      """
+      try:
+        data = resp.json()
+        return ApiResponse(resp.status_code, None, data)
+      except:
+        return ApiResponse(resp.status_code, resp.text, None)
 
     def AuthenticateUser(self, email: str, password: str):
         auth_obj = {'username': email, 'password': password} 
@@ -151,15 +170,16 @@ class ProxyConnection(object):
 
     # TODO(brycew): not tested
     def ResetUserPassword(self, email:str):
-        resp = self.proxy_client.post(self.base_url + 'adminusers/user/reset_password', data=email)
-        return ProxyConnection.user_visible_resp(resp)
+      resp = self.proxy_client.post(self.base_url + 'adminusers/user/reset_password', data=email)
+      return ProxyConnection.user_visible_resp(resp)
 
     # Managing a Firm
     def GetFirm(self):
-        pass
+      resp = self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
+      return ProxyConnection.user_visible_resp(resp)
 
     def UpdateFirm(self):
-        pass
+      pass
 
     # Managing Attorneys
     def GetAttorneyList(self):
