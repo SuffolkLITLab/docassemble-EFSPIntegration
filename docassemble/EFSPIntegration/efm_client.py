@@ -62,6 +62,8 @@ class ProxyConnection(object):
          some issues in Docassemble if you are using this in interviews. This function
          takes the essentials of a response and puts in into a simple object.
       """
+      if resp is None:
+        return ApiResponse(200, 'Not yet implemented', None)
       try:
         data = resp.json()
         return ApiResponse(resp.status_code, None, data)
@@ -139,7 +141,7 @@ class ProxyConnection(object):
         return ProxyConnection.user_visible_resp(resp)
 
     def ChangePassword(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def SelfResendActivationEmail(self, email: str):
         resp = self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email', 
@@ -155,7 +157,8 @@ class ProxyConnection(object):
 
     # TODO(brycew): not tested
     def UpdateNotificationPreferences(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
+
 
     # TODO(brycew): not tested
     def GetNoficitationPreferenceOptions(self):
@@ -186,91 +189,91 @@ class ProxyConnection(object):
       return ProxyConnection.user_visible_resp(resp)
 
     def UpdateFirm(self):
-      pass
+        return ProxyConnection.user_visible_resp(None)
 
     # Managing Attorneys
     def GetAttorneyList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetAttorney(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def UpdateAttorney(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def CreateAttorney(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def RemoveAttorney(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     # Managing Payment Accounts
     def GetPaymentAccountTypeList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetPaymentAccountList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetPaymountAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def UpdatePaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def CreatePaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def RemovePaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     # TODO(brycew): there is no documentation for these two calls...
     def GetVitalChekPaymentAccountId(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def CreateInactivePaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     # Managing Service Contacts
     def GetServiceContactList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def UpdateServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def CreateServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def RemoveServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     # Using Service Contacts
     def AttachServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def DetachServiceContact(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetPublicList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     # Global Payment Accounts
     def GetGlobalPaymentAccountList(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetGlobalPaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def UpdateGlobalPaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def CreateGlobalPaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def RemoveGlobalPaymentAccount(self):
-        pass
+        return ProxyConnection.user_visible_resp(None)
 
     def GetCourts(self):
         resp = self.proxy_client.get(self.base_url + f'filingreview/courts')
