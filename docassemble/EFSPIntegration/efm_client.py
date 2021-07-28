@@ -63,7 +63,7 @@ class ProxyConnection(object):
          takes the essentials of a response and puts in into a simple object.
       """
       if resp is None:
-        return ApiResponse(200, 'Not yet implemented', None)
+        return ApiResponse(501, 'Not yet implemented', None)
       try:
         data = resp.json()
         return ApiResponse(resp.status_code, None, data)
@@ -350,4 +350,3 @@ if __name__ == '__main__':
     x = MockPerson()
     resp = client.RemoveUser() 
     print(resp)
-
