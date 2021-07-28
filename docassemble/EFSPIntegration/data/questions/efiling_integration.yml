@@ -90,7 +90,7 @@ continue button label: Send to court
 comment: |
   To integrate with other interviews, go to the last page, and add the below:
     
-  ${ action_button_html(url_ask([{'recompute': ['efile', 'show_resp']}]),
+  ${ action_button_html(url_ask([{'recompute': ['efile']}]),
      label='E-file') }
 ---
 question: |
@@ -182,6 +182,7 @@ id: could_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
   court_id = convert_court_to_id(trial_court)
+  
   if will_efile:
     remaining_to_check = proxy_conn.CheckFiling(court_id, al_court_bundle)
     if "error" in remaining_to_check:
@@ -222,11 +223,12 @@ code: |
 ---
 id: actually efile
 code: |
-  efile_user_reviewed
-  prevent_going_back()
-  resp = proxy_conn.FileForReview(court_id, al_court_bundle)
+  if will_efile and could_efile:
+    efile_user_reviewed
+    prevent_going_back()
+    resp = proxy_conn.FileForReview(court_id, al_court_bundle)
 
-  show_resp
+    show_resp
 
   efile = True
 ---
