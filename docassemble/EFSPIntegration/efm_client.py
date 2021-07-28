@@ -25,12 +25,17 @@ class ApiResponse(object):
       return f'response_code: {self.response_code}, data: {self.data}'
 
 class ProxyConnection(object):
-    def __init__(self, url: str):
+    def __init__(self, url: str, api_token: str):
         if not url.endswith('/'):
           url = url + '/'
         self.base_url = url
+        self.api_token = api_token
         self.proxy_client = requests.Session()
-        self.proxy_client.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        self.proxy_client.headers = {
+          'Content-type': 'application/json', 
+          'Accept': 'application/json',
+          'X-API-KEY': self.api_token,
+        }
         self.verbose = False
         self.authed_user_id = None
         self.set_verbose_logging(True)
@@ -63,19 +68,21 @@ class ProxyConnection(object):
       except:
         return ApiResponse(resp.status_code, resp.text, None)
 
-    def AuthenticateUser(self, email: str, password: str):
-        auth_obj = {'username': email, 'password': password} 
-        resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', data=json.dumps(auth_obj))
-        if resp.status_code == requests.codes.ok:
-            data = resp.json()
-            if data['error']['errorCode'] == '0':
-                self.proxy_client.auth = (email, data['passwordHash'])
-                self.authed_user_id = data['userID']
-        print(resp.status_code)
-        print(resp.text)
-        print(resp.reason)
-        print(resp.content)
-        return ProxyConnection.user_visible_resp(resp)
+    def AuthenticateUser(self, email:str=None, password:str=None, jeffnet_token:str=None):
+      auth_obj = {}
+      if jeffnet_token:
+        auth_obj['jeffnet'] = {'token': jeffnet_token}
+      if email and password:
+        auth_obj['tyler'] = {'username': email, 'password': password}
+      resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', data=json.dumps(auth_obj))
+      if resp.status_code == requests.codes.ok:
+        self.proxy_client.headers['X-API-KEY'] = resp.text
+        # self.authed_user_id = data['userID']
+      print(resp.status_code)
+      print(resp.text)
+      print(resp.reason)
+      print(resp.content)
+      return ProxyConnection.user_visible_resp(resp)
 
     def RegisterUser(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
         reg_obj = {
@@ -107,27 +114,27 @@ class ProxyConnection(object):
         resp = self.proxy_client.get(self.base_url + 'adminusers/users') 
         return ProxyConnection.user_visible_resp(resp)
 
-    def GetUser(self, id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def GetUser(self, id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
         return ProxyConnection.user_visible_resp(resp)
 
-    def GetUserRole(self, id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def GetUserRole(self, id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.get(self.base_url + f'adminuser/users/{id}/roles')
         return ProxyConnection.user_visible_resp(resp)
 
-    def AddUserRole(self, roles:List[dict], id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def AddUserRole(self, roles:List[dict], id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', data=json.dumps(roles))
         return ProxyConnection.user_visible_resp(resp)
 
-    def RemoveUserRole(self, roles:List[dict], id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def RemoveUserRole(self, roles:List[dict], id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.delete(self.base_url + f'adminuser/users/{id}/roles')
         return ProxyConnection.user_visible_resp(resp)
 
@@ -140,9 +147,9 @@ class ProxyConnection(object):
         return ProxyConnection.user_visible_resp(resp)
 
     # TODO(brycew): not tested
-    def ResendActivitationEmail(self, id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def ResendActivitationEmail(self, id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend_activation_email')
         return ProxyConnection.user_visible_resp(resp)
 
@@ -155,16 +162,16 @@ class ProxyConnection(object):
         return self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
 
     # TODO(brycew): not tested
-    def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str=None):
+    def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str):
         updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
-        if id is None:
-            id = self.authed_user_id
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
         return ProxyConnection.user_visible_resp(resp)
 
-    def RemoveUser(self, id:str=None):
-        if id is None:
-            id = self.authed_user_id
+    def RemoveUser(self, id:str):
+        #if id is None:
+        #    id = self.authed_user_id
         resp = self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
         return ProxyConnection.user_visible_resp(resp)
 
