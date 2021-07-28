@@ -7,7 +7,7 @@ import sys
 import requests
 import http.client as http_client
 import logging
-from typing import List
+from typing import Dict, List
 from docassemble.base.functions import all_variables 
 from docassemble.base.util import log 
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
@@ -184,95 +184,98 @@ class ProxyConnection(object):
       return ProxyConnection.user_visible_resp(resp)
 
     # Managing a Firm
-    def GetFirm(self):
+    def GetFirm(self, firm_id):
       resp = self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
       return ProxyConnection.user_visible_resp(resp)
 
-    def UpdateFirm(self):
+    def UpdateFirm(self, firm_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
     # Managing Attorneys
-    def GetAttorneyList(self):
+    def GetAttorneyList(self, firm_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetAttorney(self):
+    def GetAttorney(self, firm_id, attorney_id),:
         return ProxyConnection.user_visible_resp(None)
 
-    def UpdateAttorney(self):
+    def UpdateAttorney(self, firm_id, attorney_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def CreateAttorney(self):
+    def CreateAttorney(self, firm_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def RemoveAttorney(self):
+    def RemoveAttorney(self, firm_id, attorney_id):
         return ProxyConnection.user_visible_resp(None)
 
     # Managing Payment Accounts
     def GetPaymentAccountTypeList(self):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetPaymentAccountList(self):
+    def GetPaymentAccountList(self, firm_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetPaymountAccount(self):
+    def GetPaymountAccount(self, firm_id, payment_account_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def UpdatePaymentAccount(self):
+    def UpdatePaymentAccount(self, firm_id, payment_account_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def CreatePaymentAccount(self):
+    def CreatePaymentAccount(self, firm_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def RemovePaymentAccount(self):
+    def RemovePaymentAccount(self, firm_id, payment_account_id):
         return ProxyConnection.user_visible_resp(None)
 
     # TODO(brycew): there is no documentation for these two calls...
-    def GetVitalChekPaymentAccountId(self):
+    # QS: VitalCheck is a background check service from Lexis
+    def GetVitalChekPaymentAccountId(self, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def CreateInactivePaymentAccount(self):
+    def CreateInactivePaymentAccount(self, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
     # Managing Service Contacts
-    def GetServiceContactList(self):
+    # Service contacts are part of the `firm` hierarchy
+    def GetServiceContactList(self, firm_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetServiceContact(self):
+    def GetServiceContact(self, firm_id, service_contact_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def UpdateServiceContact(self):
+    def UpdateServiceContact(self, firm_id, service_contact_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def CreateServiceContact(self):
+    def CreateServiceContact(self, firm_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def RemoveServiceContact(self):
+    def RemoveServiceContact(self, firm_id, service_contact_id):
         return ProxyConnection.user_visible_resp(None)
 
     # Using Service Contacts
-    def AttachServiceContact(self):
+    def AttachServiceContact(self, firm_id, service_contact_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def DetachServiceContact(self):
+    def DetachServiceContact(self, firm_id, service_contact_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetPublicList(self):
+    # TODO(QS): should this name include ServiceContact?
+    def GetPublicList(self, firm_id):
         return ProxyConnection.user_visible_resp(None)
 
     # Global Payment Accounts
     def GetGlobalPaymentAccountList(self):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetGlobalPaymentAccount(self):
+    def GetGlobalPaymentAccount(self, global_payment_account_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def UpdateGlobalPaymentAccount(self):
+    def UpdateGlobalPaymentAccount(self, global_payment_account_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def CreateGlobalPaymentAccount(self):
+    def CreateGlobalPaymentAccount(self, **kwargs):
         return ProxyConnection.user_visible_resp(None)
 
-    def RemoveGlobalPaymentAccount(self):
+    def RemoveGlobalPaymentAccount(self, global_payment_account_id):
         return ProxyConnection.user_visible_resp(None)
 
     def GetCourts(self):
