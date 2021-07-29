@@ -9,32 +9,30 @@ import http.client as http_client
 import logging
 from typing import List
 from docassemble.base.functions import all_variables 
-from docassemble.base.util import log 
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
 class ApiResponse(object):
-  def __init__(self, response_code, error_msg, data):
+  def __init__(self, response_code, error_msg:str, data):
     self.response_code = response_code
     self.error_msg = error_msg
     self.data = data
 
   def __str__(self):
     if self.error_msg:
-      return f'response_code: {self.response_code}, error_msg: {self.error_msg}, data: {data}'
+      return f'response_code: {self.response_code}, error_msg: {self.error_msg}, data: {self.data}'
     else:
       return f'response_code: {self.response_code}, data: {self.data}'
 
 class ProxyConnection(object):
-    def __init__(self, url: str, api_token: str):
+    def __init__(self, url: str, api_key: str):
         if not url.endswith('/'):
           url = url + '/'
         self.base_url = url
-        self.api_token = api_token
+        self.api_key = api_key
         self.proxy_client = requests.Session()
         self.proxy_client.headers = {
           'Content-type': 'application/json', 
           'Accept': 'application/json',
-          'X-API-KEY': self.api_token,
         }
         self.verbose = False
         self.authed_user_id = None
@@ -70,15 +68,17 @@ class ProxyConnection(object):
       except:
         return ApiResponse(resp.status_code, resp.text, None)
 
-    def AuthenticateUser(self, email:str=None, password:str=None, jeffnet_token:str=None):
+    def AuthenticateUser(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
       auth_obj = {}
-      if jeffnet_token:
-        auth_obj['jeffnet'] = {'token': jeffnet_token}
-      if email and password:
-        auth_obj['tyler'] = {'username': email, 'password': password}
+      auth_obj['api_key'] = self.api_key
+      if jeffnet_key:
+        auth_obj['jeffnet'] = {'key': jeffnet_key}
+      if tyler_email and tyler_password:
+        auth_obj['tyler'] = {'username': tyler_email, 'password': tyler_password}
       resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', data=json.dumps(auth_obj))
       if resp.status_code == requests.codes.ok:
-        self.proxy_client.headers['X-API-KEY'] = resp.text
+        self.active_token = resp.text
+        self.proxy_client.headers['X-API-KEY'] = self.active_token
         # self.authed_user_id = data['userID']
       print(resp.status_code)
       print(resp.text)
