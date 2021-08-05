@@ -4,7 +4,7 @@ modules:
   - .conversions
 ---
 code: |
-  proxy_conn = ProxyConnection(url=get_config('efile proxy url'), api_key=get_config('efile proxy api key'))
+  proxy_conn = ProxyConnection()  # Uses default configs in the python module
 ---
 # You can override this value in your own interview
 code: |
@@ -207,9 +207,7 @@ code: |
 ---
 id: get available_courts 
 code: |
-  resp = proxy_conn.AuthenticateUser(tyler_email=get_config('tyler email'), 
-      tyler_password=get_config('tyler password'), 
-      jeffnet_key=get_config('jeffnet api token'))
+  resp = proxy_conn.AuthenticateUser()  # Uses default config keys
   if resp.response_code == 200:
     available_courts = proxy_conn.GetCourts().data
   else:

@@ -8,7 +8,7 @@ import requests
 import http.client as http_client
 import logging
 from typing import List
-from docassemble.base.functions import all_variables 
+from docassemble.base.functions import all_variables, get_config 
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
 class ApiResponse(object):
@@ -24,7 +24,9 @@ class ApiResponse(object):
       return f'response_code: {self.response_code}, data: {self.data}'
 
 class ProxyConnection(object):
-    def __init__(self, url: str, api_key: str):
+    def __init__(self, 
+                 url:str=get_config('efile proxy').get('url'), 
+                 api_key:str=get_config('efile proxy').get('api key')):
         if not url.endswith('/'):
           url = url + '/'
         self.base_url = url
@@ -68,7 +70,10 @@ class ProxyConnection(object):
       except:
         return ApiResponse(resp.status_code, resp.text, None)
 
-    def AuthenticateUser(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
+    def AuthenticateUser(self, 
+        tyler_email:str=get_config('efile proxy').get('tyler email'), 
+        tyler_password:str=get_config('efile proxy').get('tyler password'), 
+        jeffnet_key:str=get_config('efile proxy').get('jeffnet api token')):
       auth_obj = {}
       auth_obj['api_key'] = self.api_key
       if jeffnet_key:
@@ -104,7 +109,12 @@ class ProxyConnection(object):
             'phoneNumber': person_to_reg.sms_number()[-10:]
         }
 
-        resp = self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
+        send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
+        resp = send()
+        if resp.status_code == 401:
+          auth_resp = self.AuthenticateUser()
+          if auth_resp.status_code == 200:
+            resp = send()
         print(resp.status_code)
         print(resp.text)
         print(resp.reason)
@@ -279,7 +289,12 @@ class ProxyConnection(object):
         return ProxyConnection.user_visible_resp(None)
 
     def GetCourts(self):
-        resp = self.proxy_client.get(self.base_url + f'filingreview/courts')
+        send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
+        resp = send()
+        if resp.status_code == 401:
+          auth_resp = self.AuthenticateUser()
+          if auth_resp.status_code == 200:
+            resp = send()
         return ProxyConnection.user_visible_resp(resp)
 
     def GetFilingList(self, court_id:str):
@@ -307,7 +322,12 @@ class ProxyConnection(object):
                     doc.data_url = doc.as_pdf().url_for(temporary=True)
         recursive_give_data_url(al_court_bundle)
         all_vars = json.dumps(all_variables())
-        resp = self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
+        send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
+        resp = send() 
+        if resp.status_code == 401:
+          auth_resp = self.AuthenticateUser()
+          if auth_resp.status_code == 200:
+            resp = send()
         return ProxyConnection.user_visible_resp(resp)
 
     def FileForReview(self, court_id:str, al_court_bundle:ALDocumentBundle):
@@ -320,8 +340,13 @@ class ProxyConnection(object):
 
         recursive_give_data_url(al_court_bundle)
         all_vars = json.dumps(all_variables())
-        resp = self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing', 
+        send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing', 
             data=all_vars)
+        resp = send() 
+        if resp.status_code == 401:
+          auth_resp = self.AuthenticateUser()
+          if auth_resp.status_code == 200:
+            resp = send()
         return ProxyConnection.user_visible_resp(resp)
         
 
