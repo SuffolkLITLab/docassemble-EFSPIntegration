@@ -4,7 +4,7 @@ modules:
   - .conversions
 ---
 code: |
-  proxy_conn = ProxyConnection(url='http://efspjava:9000/', api_key=get_config('efile proxy api key'))
+  proxy_conn = ProxyConnection(url=get_config('efile proxy url'), api_key=get_config('efile proxy api key'))
 ---
 # You can override this value in your own interview
 code: |
@@ -205,11 +205,8 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
-id: could_efile
+id: get available_courts 
 code: |
-  # Ask for the clerk comments, they'll go in the lead filing doc comments
-  court_id = convert_court_to_id(trial_court)
-
   resp = proxy_conn.AuthenticateUser(tyler_email=get_config('tyler email'), 
       tyler_password=get_config('tyler password'), 
       jeffnet_key=get_config('jeffnet api token'))
@@ -218,7 +215,12 @@ code: |
   else:
     log("Couldn't login to the proxy server! " + str(resp))
     available_courts = [] 
-  
+---
+id: could_efile
+code: |
+  # Ask for the clerk comments, they'll go in the lead filing doc comments
+  court_id = convert_court_to_id(trial_court)
+
   if court_id in available_courts and will_efile:
     check_resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
@@ -262,7 +264,7 @@ id: actually efile
 code: |
   if could_efile and will_efile:
     efile_user_reviewed
-    prevent_going_back()
+    # prevent_going_back()
     resp = proxy_conn.FileForReview(court_id, al_court_bundle)
 
     show_resp
