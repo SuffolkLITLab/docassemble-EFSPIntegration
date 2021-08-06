@@ -168,7 +168,7 @@ class ProxyConnection:
     resp = self.proxy_client.get(self.base_url + f'adminuser/users/{id}/roles')
     return ProxyConnection.user_visible_resp(resp)
 
-  def AddUserRole(self, roles:List[dict], id:str):
+  def add_user_role(self, roles:List[dict], id:str):
     #if id is None:
     #    id = self.authed_user_id
     resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', 
@@ -182,46 +182,50 @@ class ProxyConnection:
       return ProxyConnection.user_visible_resp(resp)
 
   def ChangePassword(self):
-      return ProxyConnection.user_visible_resp(None)
+    # TODO
+    resp = self.proxy_client.post(self.base_url + f'adminuser/users/{id}/password')
+    return ProxyConnection.user_visible_resp(None)
 
-  def SelfResendActivationEmail(self, email: str):
-      resp = self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email',
-          data=email)
-      return ProxyConnection.user_visible_resp(resp)
+  def self_resend_activation_email(self, email: str):
+    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email',
+        data=email)
+    return self._call_proxy(send) 
 
   # TODO(brycew): not tested
-  def ResendActivitationEmail(self, id:str):
+  def resend_activation_email(self, id:str):
       #if id is None:
       #    id = self.authed_user_id
       resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend_activation_email')
       return ProxyConnection.user_visible_resp(resp)
 
   # TODO(brycew): not tested
-  def UpdateNotificationPreferences(self):
-      return ProxyConnection.user_visible_resp(None)
-
+  def update_notification_preferences(self, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/update_notification_preferences', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
   # TODO(brycew): not tested
-  def GetNoficitationPreferenceOptions(self):
+  def get_notification_preference_options(self):
     send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
     return self._call_proxy(send)
 
   # TODO(brycew): not tested
-  def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str):
-      updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
-      #if id is None:
-      #    id = self.authed_user_id
-      resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
-      return ProxyConnection.user_visible_resp(resp)
+  def update_user(self, email:str, first_name:str, middle_name:str, last_name:str, id:str):
+    updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
+    #if id is None:
+    #    id = self.authed_user_id
+    # TODO: qs: should this method be PUT, not POST?
+    resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
+    return ProxyConnection.user_visible_resp(resp)
 
-  def RemoveUser(self, id:str):
+  def remove_user(self, id:str):
       #if id is None:
       #    id = self.authed_user_id
       resp = self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
       return ProxyConnection.user_visible_resp(resp)
 
   # TODO(brycew): not tested
-  def ResetUserPassword(self, email:str):
+  def reset_user_password(self, email:str):
     resp = self.proxy_client.post(self.base_url + 'adminusers/user/reset_password', data=email)
     return ProxyConnection.user_visible_resp(resp)
 
@@ -230,122 +234,166 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
     return self._call_proxy(send)
 
-  def UpdateFirm(self, firm_id, **kwargs):
+  def update_firm(self, firm_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/update', data=json.dumps(kwargs))
     return ProxyConnection.user_visible_resp(None)
 
   # Managing Attorneys
-  def GetAttorneyList(self, firm_id):
+  def get_attorney_list(self, firm_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys')
     return ProxyConnection.user_visible_resp(None)
 
-  def GetAttorney(self, firm_id, attorney_id):
+  def get_attorney(self, firm_id, attorney_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}')
     return ProxyConnection.user_visible_resp(None)
 
-  def UpdateAttorney(self, firm_id, attorney_id):
-      return ProxyConnection.user_visible_resp(None)
+  def update_attorney(self, firm_id, attorney_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def CreateAttorney(self, firm_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def create_attorney(self, firm_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def RemoveAttorney(self, firm_id, attorney_id):
-      return ProxyConnection.user_visible_resp(None)
+  def remove_attorney(self, firm_id, attorney_id):
+    # TODO
+    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}')
+    return ProxyConnection.user_visible_resp(None)
 
   # Managing Payment Accounts
-  def GetPaymentAccountTypeList(self):
-      return ProxyConnection.user_visible_resp(None)
+  def get_payment_account_type_list(self, firm_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/types')
+    return ProxyConnection.user_visible_resp(None)
 
-  def GetPaymentAccountList(self, firm_id):
-      return ProxyConnection.user_visible_resp(None)
+  def get_payment_account_list(self, firm_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts')
+    return ProxyConnection.user_visible_resp(None)
 
-  def GetPaymountAccount(self, firm_id, payment_account_id):
-      return ProxyConnection.user_visible_resp(None)
+  def get_payment_account(self, firm_id, payment_account_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/{payment_account_id}')
+    return ProxyConnection.user_visible_resp(None)
 
-  def UpdatePaymentAccount(self, firm_id, payment_account_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def update_payment_account(self, firm_id, payment_account_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def CreatePaymentAccount(self, firm_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def create_payment_account(self, firm_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def RemovePaymentAccount(self, firm_id, payment_account_id):
-      return ProxyConnection.user_visible_resp(None)
-
-  # TODO(brycew): there is no documentation for these two calls...
-  # QS: VitalCheck is a background check service from Lexis
-  def GetVitalChekPaymentAccountId(self, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
-
-  def CreateInactivePaymentAccount(self, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def remove_payment_account(self, firm_id, payment_account_id):
+    # TODO
+    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/{payment_account_id}')
+    return ProxyConnection.user_visible_resp(None)
 
   # Managing Service Contacts
   # Service contacts are part of the `firm` hierarchy
-  def GetServiceContactList(self, firm_id):
-      return ProxyConnection.user_visible_resp(None)
+  def get_service_contact_list(self, firm_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts')
+    return ProxyConnection.user_visible_resp(None)
 
-  def GetServiceContact(self, firm_id, service_contact_id):
-      return ProxyConnection.user_visible_resp(None)
+  def get_service_contact(self, firm_id, service_contact_id):
+    # TODO
+    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}')
+    return ProxyConnection.user_visible_resp(None)
 
-  def UpdateServiceContact(self, firm_id, service_contact_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def update_service_contact(self, firm_id, service_contact_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def CreateServiceContact(self, firm_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def create_service_contact(self, firm_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts')
+    return ProxyConnection.user_visible_resp(None)
 
-  def RemoveServiceContact(self, firm_id, service_contact_id):
-      return ProxyConnection.user_visible_resp(None)
+  def remove_service_contact(self, firm_id, service_contact_id):
+    # TODO
+    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}')
+    return ProxyConnection.user_visible_resp(None)
 
   # Using Service Contacts
-  def AttachServiceContact(self, firm_id, service_contact_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def attach_service_contact(self, firm_id, service_contact_id, **kwargs):
+    # TODO
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/attach/{service_contact_id}')
+    return ProxyConnection.user_visible_resp(None)
 
-  def DetachServiceContact(self, firm_id, service_contact_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def detach_service_contact(self, firm_id, service_contact_id, **kwargs):
+    # TODO
+    send = lambda: self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/detach/{service_contact_id}')
+    return ProxyConnection.user_visible_resp(None)
 
   # TODO(QS): should this name include ServiceContact?
-  def GetPublicList(self, firm_id):
-      return ProxyConnection.user_visible_resp(None)
+  def get_public_list(self, firm_id):
+    # TODO
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/public_list')
+    return ProxyConnection.user_visible_resp(None)
 
   # Global Payment Accounts
-  def GetGlobalPaymentAccountList(self):
-    send = lambda: self.proxy_client.get(self.base_url + 'payments/global_payment')
-    return self._call_proxy(send)
+  def get_global_payment_account_list(self):
+    # TODO
+    send = lambda: self.proxy_client.get(self.base_url + f'payments/global-accounts')
+    return ProxyConnection.user_visible_resp(None)
 
-  def GetGlobalPaymentAccount(self, global_payment_account_id):
-    send = lambda: self.proxy_client.get(self.base_url + f'payments/global_payment/{global_payment_account_id}')
-    return self._call_proxy(send)
+  def get_global_payment_account(self, global_payment_account_id):
+    # TODO
+    send = lambda: self.proxy_client.get(self.base_url + f'payments/global-accounts/{global_payment_account_id}')
+    return self._call_proxy(send) 
 
-  def UpdateGlobalPaymentAccount(self, global_payment_account_id, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def update_global_payment_account(self, global_payment_account_id, **kwargs):
+    # TODO
+    send = lambda: self.proxy_client.put(self.base_url + f'payments/global-accounts/{global_payment_account_id}', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def CreateGlobalPaymentAccount(self, **kwargs):
-      return ProxyConnection.user_visible_resp(None)
+  def create_global_payment_account(self, **kwargs):
+    # TODO
+    send = lambda: self.proxy_client.post(self.base_url + f'payments/global-accounts', data=json.dumps(kwargs))
+    return ProxyConnection.user_visible_resp(None)
 
-  def RemoveGlobalPaymentAccount(self, global_payment_account_id):
-      return ProxyConnection.user_visible_resp(None)
+  def remove_global_payment_account(self, global_payment_account_id):
+    # TODO
+    send = lambda: self.proxy_client.delete(self.base_url + f'payments/global-accounts/{global_payment_account_id}')
+    return ProxyConnection.user_visible_resp(None)
 
-  def GetCourts(self):
+  # TODO(QS): should this name include ServiceContact?
+  def get_public_list(self, firm_id):
+    return ProxyConnection.user_visible_resp(None)
+
+  def get_courts(self):
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
     return self._call_proxy(send)
 
-  def GetFilingList(self, court_id:str):
-      resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filings')
-      return ProxyConnection.user_visible_resp(resp)
+  def get_filing_list(self, court_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings')
+    return self._call_proxy(send) 
 
-  def GetFiling(self, court_id:str, filing_id:str):
-      resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
-      return ProxyConnection.user_visible_resp(resp)
+  def get_filing(self, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
+    return self._call_proxy(send) 
 
-  def GetFilingStatus(self, court_id:str, filing_id:str):
-      resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}/status')
-      return ProxyConnection.user_visible_resp(resp)
+  def get_filing_status(self, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}/status')
+    return self._call_proxy(send)
 
-  def CancelFilingStatus(self, court_id:str, filing_id:str):
-      resp = self.proxy_client.delete(self.base_url + f'filingreview/court/{court_id}/filing/{filing_id}')
-      return ProxyConnection.user_visible_resp(resp)
+  def cancel_filing_status(self, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.delete(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
+    return self._call_proxy(send) 
 
-  def CheckFiling(self, court_id:str, al_court_bundle:ALDocumentBundle):
+  def check_filing(self, court_id:str, al_court_bundle:ALDocumentBundle):
     _recursive_give_data_url(al_court_bundle)
     all_vars = json.dumps(all_variables())
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/check_filing', data=all_vars)
     return self._call_proxy(send)
 
   def file_for_review(self, court_id:str, al_court_bundle:ALDocumentBundle):
@@ -353,7 +401,7 @@ class ProxyConnection:
     all_vars_obj = all_variables()
     all_vars_obj['tyler_payment_id'] = get_config('efile proxy').get('tyler payment id')
     all_vars = json.dumps(all_vars_obj)
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing',
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
 
@@ -406,4 +454,3 @@ class MockPerson:
   def sms_number(self) -> str:
     return '1234567890'
 """
-
