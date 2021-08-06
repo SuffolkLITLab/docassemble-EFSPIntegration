@@ -22,7 +22,9 @@ fields:
     required: False
   - Email address: users[0].email    
     datatype: email
-    required: could_efile and will_efile
+    # Email is required if the user wants to efile,
+    # and we have to be able to attempt efiling, meaning the court has to be right
+    required: court_id in available_courts and will_efile
   - Other ways to reach you: users[0].other_contact_method
     input type: area
     required: False
@@ -137,7 +139,7 @@ fields:
     choices:
       - Download form now: download form
       - Save URL: save url
-      - Email me at ${ user[0].email }: email me
+      - Email me at ${ users[0].email }: email me
 ---
 question: |
   Missing fields
@@ -212,13 +214,12 @@ code: |
     available_courts = proxy_conn.GetCourts().data
   else:
     log("Couldn't login to the proxy server! " + str(resp))
-    available_courts = [] 
+    available_courts = []
+  court_id = convert_court_to_id(trial_count)
 ---
 id: could_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
-  court_id = convert_court_to_id(trial_court)
-
   if court_id in available_courts and will_efile:
     check_resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
@@ -266,8 +267,8 @@ code: |
     resp = proxy_conn.FileForReview(court_id, al_court_bundle)
 
     show_resp
-
-  efile = True
+    efile = True
+  efile = False
 ---
 generic object: DAObject
 question: |
