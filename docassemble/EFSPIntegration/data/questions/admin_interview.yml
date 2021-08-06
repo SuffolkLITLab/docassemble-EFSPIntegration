@@ -65,6 +65,129 @@ subquestion: |
     [{'recompute': ['dummy_filing', 'show_resp']}]),
     label='Dummy File') }
 
+  ${ action_button_html(url_ask(
+    [{'recompute': ['cancel_filing', 'show_resp']}]),
+    label='Cancel Filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['check_filing', 'show_resp']}]),
+    label='Check filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['cancel_filing', 'show_resp']}]),
+    label='Cancel filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_firm', 'show_resp']}]),
+    label='Get firm') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_firm', 'show_resp']}]),
+    label='Update firm') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_attorney_list', 'show_resp']}]),
+    label='Get attorney list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_attorney', 'show_resp']}]),
+    label='Get attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_attorney', 'show_resp']}]),
+    label='Update attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_attorney', 'show_resp']}]),
+    label='Remove attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
+    label='Get payment account type list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_list', 'show_resp']}]),
+    label='Get payment account list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account', 'show_resp']}]),
+    label='Get payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_payment_account', 'show_resp']}]),
+    label='Update payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_payment_account', 'show_resp']}]),
+    label='Create payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_payment_account', 'show_resp']}]),
+    label='Remove payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_vitalcheck_payment_account_id', 'show_resp']}]),
+    label='Get VitalCheck payment account id') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_inactive_payment_account', 'show_resp']}]),
+    label='Create inactive payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_service_contact_list', 'show_resp']}]),
+    label='Get service contact list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_service_contact', 'show_resp']}]),
+    label='Get service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_service_contact', 'show_resp']}]),
+    label='Create service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_service_contact', 'show_resp']}]),
+    label='Update service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_service_contact', 'show_resp']}]),
+    label='Remove service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['attach_service_contact', 'show_resp']}]),
+    label='Attach service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['detach_service_contact', 'show_resp']}]),
+    label='Detach service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_global_payment_account_list', 'show_resp']}]),
+    label='Get global payment account list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_global_payment_account', 'show_resp']}]),
+    label='Get global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_global_payment_account', 'show_resp']}]),
+    label='Update global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_global_payment_account', 'show_resp']}]),
+    label='Create global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
+    label='Remove global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_password', 'show_resp']}]),
+    label='Update password') }
+
+
+
+
 continue button field: all_done
 ---
 question: |
@@ -166,6 +289,12 @@ fields:
   - Global payment account id: global_payment_account_id
 ---
 question: |
+  New password?
+fields:
+  - Password: new_user_password
+    datatype: password      
+---
+question: |
   Service contact id?
 fields:
   - Service contact id: service_contact_id
@@ -253,7 +382,7 @@ code: |
   get_firm = True
 ---
 code: |
-  resp = proxy_conn.UpdateFirm(firm_id, {})
+  resp = proxy_conn.UpdateFirm(firm_id)
   del firm_id
   update_firm = True
 ---
@@ -397,7 +526,12 @@ code: |
   resp = proxy_conn.RemoveGlobalPaymentAccount(global_payment_account_id)
   del global_payment_account_id
   remove_global_payment_account = True
-
+---
+code: |
+  resp = proxy_conn.UpdatePassword(user_id, new_user_password)
+  del user_id
+  del new_user_password
+  update_password = True
 
 ---
 question: |

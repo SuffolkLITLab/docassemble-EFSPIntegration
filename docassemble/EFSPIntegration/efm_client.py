@@ -195,7 +195,7 @@ class ProxyConnection(object):
     def GetAttorneyList(self, firm_id):
         return ProxyConnection.user_visible_resp(None)
 
-    def GetAttorney(self, firm_id, attorney_id),:
+    def GetAttorney(self, firm_id, attorney_id):
         return ProxyConnection.user_visible_resp(None)
 
     def UpdateAttorney(self, firm_id, attorney_id):
