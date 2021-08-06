@@ -7,7 +7,7 @@ import sys
 import requests
 import http.client as http_client
 import logging
-from typing import Dict, List
+from typing import List
 from docassemble.base.functions import all_variables 
 from docassemble.base.util import log 
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
