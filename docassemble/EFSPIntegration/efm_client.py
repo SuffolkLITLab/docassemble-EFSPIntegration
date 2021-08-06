@@ -201,7 +201,7 @@ class ProxyConnection:
   # TODO(brycew): not tested
   def update_notification_preferences(self, **kwargs):
     # TODO
-    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/update_notification_preferences', data=json.dumps(kwargs))
+    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/notification_preferences', data=json.dumps(kwargs))
     return ProxyConnection.user_visible_resp(None)
 
   # TODO(brycew): not tested
@@ -236,7 +236,7 @@ class ProxyConnection:
 
   def update_firm(self, firm_id, **kwargs):
     # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/update', data=json.dumps(kwargs))
+    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}', data=json.dumps(kwargs))
     return ProxyConnection.user_visible_resp(None)
 
   # Managing Attorneys
