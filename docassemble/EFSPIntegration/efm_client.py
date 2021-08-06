@@ -24,9 +24,12 @@ class ApiResponse(object):
       return f'response_code: {self.response_code}, data: {self.data}'
 
 class ProxyConnection(object):
-    def __init__(self, 
-                 url:str=get_config('efile proxy').get('url'), 
-                 api_key:str=get_config('efile proxy').get('api key')):
+    def __init__(self, url:str=None, api_key:str=None):
+        if url is None:
+          url = get_config('efile proxy').get('url')
+        if api_key is None:
+          api_key = get_config('efile proxy').get('api key')
+
         if not url.endswith('/'):
           url = url + '/'
         self.base_url = url
@@ -70,10 +73,13 @@ class ProxyConnection(object):
       except:
         return ApiResponse(resp.status_code, resp.text, None)
 
-    def AuthenticateUser(self, 
-        tyler_email:str=get_config('efile proxy').get('tyler email'), 
-        tyler_password:str=get_config('efile proxy').get('tyler password'), 
-        jeffnet_key:str=get_config('efile proxy').get('jeffnet api token')):
+    def AuthenticateUser(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
+      if tyler_email is None:
+        tyler_email = get_config('efile proxy').get('tyler email')
+      if tyler_password is None:
+        tyler_password = get_config('efile proxy').get('tyler password')
+      if jeffnet_key is None:
+        jeffnet_key = get_config('efile proxy').get('jeffnet api token')
       auth_obj = {}
       auth_obj['api_key'] = self.api_key
       if jeffnet_key:
