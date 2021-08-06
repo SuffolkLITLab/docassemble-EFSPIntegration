@@ -65,6 +65,129 @@ subquestion: |
     [{'recompute': ['dummy_filing', 'show_resp']}]),
     label='Dummy File') }
 
+  ${ action_button_html(url_ask(
+    [{'recompute': ['cancel_filing', 'show_resp']}]),
+    label='Cancel Filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['check_filing', 'show_resp']}]),
+    label='Check filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['cancel_filing', 'show_resp']}]),
+    label='Cancel filing') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_firm', 'show_resp']}]),
+    label='Get firm') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_firm', 'show_resp']}]),
+    label='Update firm') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_attorney_list', 'show_resp']}]),
+    label='Get attorney list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_attorney', 'show_resp']}]),
+    label='Get attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_attorney', 'show_resp']}]),
+    label='Update attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_attorney', 'show_resp']}]),
+    label='Remove attorney') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
+    label='Get payment account type list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_list', 'show_resp']}]),
+    label='Get payment account list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account', 'show_resp']}]),
+    label='Get payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_payment_account', 'show_resp']}]),
+    label='Update payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_payment_account', 'show_resp']}]),
+    label='Create payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_payment_account', 'show_resp']}]),
+    label='Remove payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_vitalcheck_payment_account_id', 'show_resp']}]),
+    label='Get VitalCheck payment account id') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_inactive_payment_account', 'show_resp']}]),
+    label='Create inactive payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_service_contact_list', 'show_resp']}]),
+    label='Get service contact list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_service_contact', 'show_resp']}]),
+    label='Get service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_service_contact', 'show_resp']}]),
+    label='Create service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_service_contact', 'show_resp']}]),
+    label='Update service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_service_contact', 'show_resp']}]),
+    label='Remove service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['attach_service_contact', 'show_resp']}]),
+    label='Attach service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['detach_service_contact', 'show_resp']}]),
+    label='Detach service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_global_payment_account_list', 'show_resp']}]),
+    label='Get global payment account list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_global_payment_account', 'show_resp']}]),
+    label='Get global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_global_payment_account', 'show_resp']}]),
+    label='Update global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_global_payment_account', 'show_resp']}]),
+    label='Create global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
+    label='Remove global payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_password', 'show_resp']}]),
+    label='Update password') }
+
+
+
+
 continue button field: all_done
 ---
 question: |
@@ -145,6 +268,38 @@ question: |
 fields:
   - Filing id: filing_id
 ---
+question: |
+  Firm id?
+fields:
+  - Firm id: firm_id
+---
+question: |
+  Attorney id?
+fields:
+  - Attorney id: attorney_id
+---
+question: |
+  Payment account id?
+fields:
+  - Payment account id: payment_account_id
+---
+question: |
+  Global payment account id?
+fields:
+  - Global payment account id: global_payment_account_id
+---
+question: |
+  New password?
+fields:
+  - Password: new_user_password
+    datatype: password      
+---
+question: |
+  Service contact id?
+fields:
+  - Service contact id: service_contact_id
+
+---
 sets: proxy_conn.authed_user_id
 code: |
   resp = proxy_conn.AuthenticateUser(email=my_username, password=my_password)
@@ -196,9 +351,188 @@ code: |
   get_filing = True
 ---
 code: |
+  # TODO(qs): requires a bundle
   resp = proxy_conn.FileForReview(court_id)
   del court_id
   dummy_filing = True
+##################################
+# Q Starting
+---
+code: |
+  resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
+  del court_id
+  del filing_id
+  cancel_filing = True
+---
+code: |
+  # TODO(qs): requires a bundle
+  resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
+  del court_id
+  check_filing = True
+---
+code: |
+  resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
+  del court_id
+  del filing_id
+  cancel_filing = True
+---
+code: |
+  resp = proxy_conn.GetFirm(firm_id)
+  del firm_id
+  get_firm = True
+---
+code: |
+  resp = proxy_conn.UpdateFirm(firm_id)
+  del firm_id
+  update_firm = True
+---
+code: |
+  resp = proxy_conn.GetAttorneyList(firm_id)
+  del firm_id
+  get_attorney_list = True
+---
+code: |
+  resp = proxy_conn.GetAttorney(firm_id, attorney_id)
+  del firm_id
+  get_attorney = True
+---
+code: |
+  resp = proxy_conn.CreateAttorney(firm_id)
+  del firm_id
+  del attorney_id
+  get_attorney = True  
+---
+code: |
+  resp = proxy_conn.UpdateAttorney(firm_id, attorney_id)
+  del firm_id
+  del attorney_id
+  update_attorney = True
+---
+code: |
+  resp = proxy_conn.RemoveAttorney(firm_id, attorney_id)
+  del firm_id
+  del attorney_id
+  remove_attorney = True
+---
+code: |
+  resp = proxy_conn.GetPaymentAccountTypeList()
+  get_payment_account_type_list = True
+---
+code: |
+  resp = proxy_conn.GetPaymentAccountList(firm_id)
+  del firm_id
+  get_payment_account_list = True
+---
+code: |
+  resp = proxy_conn.GetPaymountAccount(firm_id, payment_account_id)
+  del firm_id
+  del payment_account_id
+  get_payment_account = True
+---
+code: |
+  resp = proxy_conn.UpdatePaymentAccount(firm_id, payment_account_id)
+  del firm_id
+  del payment_account_id
+  update_payment_account = True
+---
+code: |
+  resp = proxy_conn.CreatePaymentAccount(firm_id)
+  del firm_id
+  create_payment_account = True
+---
+code: |
+  resp = proxy_conn.RemovePaymentAccount(firm_id, payment_account_id)
+  del firm_id
+  del payment_account_id
+  remove_payment_account = True
+---
+code: |
+  resp = proxy_conn.GetVitalChekPaymentAccountId(firm_id)
+  del firm_id
+  get_vitalcheck_payment_account_id = True
+---
+code: |
+  resp = proxy_conn.CreateInactivePaymentAccount(firm_id)
+  del firm_id
+  create_inactive_payment_account = True
+---
+code: |
+  resp = proxy_conn.GetServiceContactList(firm_id)
+  del firm_id
+  get_service_contact_list = True
+---
+code: |
+  # TODO: this method is for ServiceContact, but name is not specific
+  resp = proxy_conn.GetPublicList(firm_id)
+  del firm_id
+  get_public_list = True
+---
+code: |
+  resp = proxy_conn.GetServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  get_service_contact = True
+---
+code: |
+  resp = proxy_conn.CreateServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  create_service_contact = True
+---
+code: |
+  resp = proxy_conn.UpdateServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  update_service_contact = True  
+---
+code: |
+  resp = proxy_conn.RemoveServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  remove_service_contact = True
+---
+code: |
+  resp = proxy_conn.AttachServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  attach_service_contact = True
+---
+code: |
+  resp = proxy_conn.DetachServiceContact(firm_id, service_contact_id)
+  del firm_id
+  del service_contact_id
+  detach_service_contact = True
+---
+code: |
+  resp = proxy_conn.GetGlobalPaymentAccountList()
+  get_global_payment_account_list = True
+---
+code: |
+  resp = proxy_conn.GetGlobalPaymentAccount(global_payment_account_id)
+  del global_payment_account_id
+  get_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.UpdateGlobalPaymentAccount(global_payment_account_id)
+  del global_payment_account_id
+  update_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.CreateGlobalPaymentAccount()
+  del global_payment_account_id
+  create_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.RemoveGlobalPaymentAccount(global_payment_account_id)
+  del global_payment_account_id
+  remove_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.UpdatePassword(user_id, new_user_password)
+  del user_id
+  del new_user_password
+  update_password = True
+
 ---
 question: |
   show resp:
