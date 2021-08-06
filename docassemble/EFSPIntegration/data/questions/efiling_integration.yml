@@ -215,7 +215,7 @@ code: |
   else:
     log("Couldn't login to the proxy server! " + str(resp))
     available_courts = []
-  court_id = convert_court_to_id(trial_count)
+  court_id = convert_court_to_id(trial_court)
 ---
 id: could_efile
 code: |
