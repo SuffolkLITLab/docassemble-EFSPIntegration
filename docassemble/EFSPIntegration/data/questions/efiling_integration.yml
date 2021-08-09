@@ -24,7 +24,7 @@ fields:
     datatype: email
     # Email is required if the user wants to efile,
     # and we have to be able to attempt efiling, meaning the court has to be right
-    required: court_id in available_courts and will_efile
+    required: can_check_efile
   - Other ways to reach you: users[0].other_contact_method
     input type: area
     required: False
@@ -82,7 +82,7 @@ question: |
   Final Review With Cover Page
 subquestion: |
   
-  % if could_efile:
+  % if ready_to_efile:
   Below is your ${comma_and_list(al_court_bundle.get_titles())} document with the 
   cover page that we will deliver to ${trial_court}.
 
@@ -103,7 +103,7 @@ subquestion: |
 
   ${ al_court_bundle.as_pdf() }  
 
-  % if could_efile:
+  % if ready_to_efile:
   Press below to deliver the form.
   % endif
 fields:
@@ -140,6 +140,28 @@ fields:
       - Download form now: download form
       - Save URL: save url
       - Email me at ${ users[0].email }: email me
+---
+question: |
+  Do you want to efile this document directly with the court?
+subquestion: |
+  You are able to electronically-file (e-file) this document with ${ trial_court }!
+
+  This means you don't have to print out the document. The court
+  will communicate with you through your email or phone.
+
+  You will have to provide your email to e-file this document. If you don't wish to provide that,
+  you can choose not to efile.
+fields:
+  - Do you want to efile?: user_wants_efile
+    datatype: yesnoradio
+---
+question: |
+  You will *not* be able to efile this document
+subquestion: |
+  Unfortunately, you won't be able to efile this document at ${ trial_court }.
+
+  However, you are still be able to continue and download a completed form.
+continue button field: show_no_efile
 ---
 question: |
   Missing fields
@@ -185,13 +207,6 @@ subquestion: |
 
 continue button field: show_remaining
 ---
-question: |
-  Do you want to efile this document directly with the court?
-subquestion: |
-  This means you don't have to print out the document. The court
-  will communicate with you through your email or phone.
-yesno: will_efile
----
 objects:
   - follow_up_vars: DADict
 ---
@@ -207,44 +222,54 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
-id: get available_courts 
+id: get available_efile_courts 
 code: |
   resp = proxy_conn.AuthenticateUser()  # Uses default config keys
   if resp.response_code == 200:
-    available_courts = proxy_conn.GetCourts().data
+    available_efile_courts = proxy_conn.GetCourts().data
   else:
     log("Couldn't login to the proxy server! " + str(resp))
-    available_courts = []
+    available_efile_courts = []
   court_id = convert_court_to_id(trial_court)
 ---
-id: could_efile
+id: check efile possibility
+reconsider: True
+code: |
+  if court_id in available_efile_courts:
+    # Ask the user if they want to efile
+    can_check_efile = user_wants_efile
+  else:
+    show_no_efile
+    can_check_efile = False
+---
+id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
-  if court_id in available_courts and will_efile:
+  if can_check_efile:
     check_resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
     if check_resp.error_msg:
-      could_efile = False
+      ready_to_efile = False
       if efile_author_mode:
         show_remaining
       
     elif len(remaining_to_check["required_vars"]) == 0:
-      could_efile = True
+      ready_to_efile = True
     else:
       if efile_author_mode:
         show_remaining
         follow_up_setup 
         for key in follow_up_vars.keys():
           define(follow_up_vars[key].name, follow_up_vars[key].value)
-        could_efile = True
+        ready_to_efile = True
       else:
-        could_efile = False
+        ready_to_efile = False
         fallback_user_choice
         act_on_user_choice
         show_user_choice
         command('exit')
   else:
-    could_efile = False
+    ready_to_efile = False
 ---
 code: |
   if fallback_user_choice == 'download form':
@@ -261,14 +286,14 @@ code: |
 ---
 id: actually efile
 code: |
-  if could_efile and will_efile:
+  if user_wants_efile and ready_to_efile:
     efile_user_reviewed
-    # prevent_going_back()
+    prevent_going_back()
     resp = proxy_conn.FileForReview(court_id, al_court_bundle)
-
     show_resp
     efile = True
-  efile = False
+  else:
+    efile = False
 ---
 generic object: DAObject
 question: |
