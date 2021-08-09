@@ -1,4 +1,4 @@
 
-def convert_court_to_id(trial_court):
+def convert_court_to_id(trial_court) -> str:
     # TODO(brycew): actually implement
-    return trial_court.name
+    return str(trial_court.name).lower()

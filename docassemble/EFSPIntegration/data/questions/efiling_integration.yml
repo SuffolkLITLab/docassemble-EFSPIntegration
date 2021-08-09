@@ -4,20 +4,50 @@ modules:
   - .conversions
 ---
 code: |
-  proxy_conn = ProxyConnection(url='http://efspjava:9000/')
+  proxy_conn = ProxyConnection()  # Uses default configs in the python module
 ---
 # You can override this value in your own interview
 code: |
   efile_author_mode = True
 ---
+id: your contact information
 question: |
-  % if resp == '200':
+  What is your contact information?
+subquestion: |
+  Include at least **one** way to reach you other than by mail.
+fields:  
+  - Mobile number: users[0].mobile_number
+    required: False
+  - Other phone number: users[0].phone_number
+    required: False
+  - Email address: users[0].email    
+    datatype: email
+    # Email is required if the user wants to efile,
+    # and we have to be able to attempt efiling, meaning the court has to be right
+    required: court_id in available_courts and will_efile
+  - Other ways to reach you: users[0].other_contact_method
+    input type: area
+    required: False
+    help: |
+      If you do not have a phone number or email, provide
+      specific contact instructions. For example, use a friend's phone number.
+      But the friend must be someone you can rely on to give you a
+      message.
+validation code: |
+  if (not showifdef('users[0].phone_number') and \
+      (not showifdef('users[0].mobile_number')) and \
+      (not showifdef('users[0].email')) and \
+      (not showifdef('users[0].other_contact_method'))):
+    validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
+---
+question: |
+  % if resp.response_code == 200:
   Your form was submitted!
   % else:
   Something went wrong delivering your form
   % endif
 subquestion: |
-  % if resp == '200':
+  % if resp.response_code == 200:
   You should receive a confirmation email within 10-15 minutes, and
   you should receive an update from the ${ trial_court } clerk on your filing 
   within 2 weeks.
@@ -36,7 +66,7 @@ subquestion: |
 
 help:
   label: |
-    ${ 'What went wrong?' if resp != '200' else 'Details' }
+    ${ 'What went wrong?' if resp.response_code != 200 else 'Details' }
   content: |
     Some debugging information:
 
@@ -53,7 +83,7 @@ question: |
 subquestion: |
   
   % if could_efile:
-  Below is your ${comma_and_list(al_download_titles)} document with the 
+  Below is your ${comma_and_list(al_court_bundle.get_titles())} document with the 
   cover page that we will deliver to ${trial_court}.
 
   We will deliver it securely. Please allow up to 15 minutes for the filing to
@@ -71,8 +101,7 @@ subquestion: |
 
   % endif
 
-  ${ all_final_forms_combined }  
-  [:file-download: Download this form with cover page](${all_final_forms_combined.url_for(attachment=True)})
+  ${ al_court_bundle.as_pdf() }  
 
   % if could_efile:
   Press below to deliver the form.
@@ -110,7 +139,7 @@ fields:
     choices:
       - Download form now: download form
       - Save URL: save url
-      - Email me at ${ user[0].email }: email me
+      - Email me at ${ users[0].email }: email me
 ---
 question: |
   Missing fields
@@ -119,10 +148,10 @@ subquestion: |
 
   To efile using the proxy server, you need to fix some problems in your interview.
 
-  % if isinstance(remaining_to_check, str):
+  % if check_resp.error_msg:
   Something went wrong when processing your interview:  
 
-  ${ remaining_to_check }
+  ${ check_resp }
 
   % elif len(remaining_to_check["optional_vars"]) > 0 or len(remaining_to_check["required_vars"]) > 0:
   
@@ -178,14 +207,23 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
+id: get available_courts 
+code: |
+  resp = proxy_conn.AuthenticateUser()  # Uses default config keys
+  if resp.response_code == 200:
+    available_courts = proxy_conn.GetCourts().data
+  else:
+    log("Couldn't login to the proxy server! " + str(resp))
+    available_courts = []
+  court_id = convert_court_to_id(trial_court)
+---
 id: could_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
-  court_id = convert_court_to_id(trial_court)
-  
-  if will_efile:
-    remaining_to_check = proxy_conn.CheckFiling(court_id, al_court_bundle)
-    if "error" in remaining_to_check:
+  if court_id in available_courts and will_efile:
+    check_resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
+    remaining_to_check = check_resp.data
+    if check_resp.error_msg:
       could_efile = False
       if efile_author_mode:
         show_remaining
@@ -223,14 +261,14 @@ code: |
 ---
 id: actually efile
 code: |
-  if will_efile and could_efile:
+  if could_efile and will_efile:
     efile_user_reviewed
-    prevent_going_back()
+    # prevent_going_back()
     resp = proxy_conn.FileForReview(court_id, al_court_bundle)
 
     show_resp
-
-  efile = True
+    efile = True
+  efile = False
 ---
 generic object: DAObject
 question: |
