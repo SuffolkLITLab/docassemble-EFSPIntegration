@@ -181,7 +181,7 @@ subquestion: |
 
   ## Required
 
-  % for var in remaining_to_check["required_vars"]:
+  % for var in remaining_to_check["required_vars"] + remaining_to_check["wrong_vars"]:
   * ${ var["name"] }: ${ var["description"] }. Should be a ${ var["datatype"] }
     % if len(var["choices"]) > 0:
     and have these choices:
@@ -218,6 +218,11 @@ code: |
     follow_up_vars.initializeObject(newName, DAObject)
     follow_up_vars[newName].name = var["name"]
     follow_up_vars[newName].description = var["description"]
+  for var in remaining_to_check["wrong_vars"]:
+    newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
+    follow_up_vars.initializeObject(newName, DAObject)
+    follow_up_vars[newName].name = var["name"]
+    follow_up_vars[newName].description = var["description"]
   follow_up_vars.there_is_another = False
   follow_up_vars.gathered = True
   follow_up_setup = True
@@ -228,8 +233,9 @@ code: |
   if resp.response_code == 200:
     available_efile_courts = proxy_conn.GetCourts().data
   else:
-    log("Couldn't login to the proxy server! " + str(resp))
+    log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
+   
   court_id = convert_court_to_id(trial_court)
 ---
 id: check efile possibility
@@ -253,7 +259,7 @@ code: |
       if efile_author_mode:
         show_remaining
       
-    elif len(remaining_to_check["required_vars"]) == 0:
+    elif not remaining_to_check["required_vars"] and not remaining_to_check["wrong_vars"]:
       ready_to_efile = True
     else:
       if efile_author_mode:
@@ -264,6 +270,7 @@ code: |
         ready_to_efile = True
       else:
         ready_to_efile = False
+        log(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
         fallback_user_choice
         act_on_user_choice
         show_user_choice
@@ -288,7 +295,7 @@ id: actually efile
 code: |
   if user_wants_efile and ready_to_efile:
     efile_user_reviewed
-    prevent_going_back()
+    #prevent_going_back()
     resp = proxy_conn.FileForReview(court_id, al_court_bundle)
     show_resp
     efile = True
