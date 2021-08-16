@@ -24,25 +24,48 @@ class ApiResponse(object):
     else:
       return f'response_code: {self.response_code}, data: {self.data}'
 
+def _recursive_give_data_url(bundle):
+  """Prepares the document types by setting a semi-permanent enabled and a data url"""
+  for doc in bundle:
+    if isinstance(doc, ALDocumentBundle):
+      recursive_give_data_url(doc)
+    else:
+      doc.proxy_enabled = doc.enabled
+      if doc.proxy_enabled:
+        doc.data_url = doc.as_pdf().url_for(temporary=True)
+      del doc.enabled
+
 class ProxyConnection(object):
     def __init__(self, url:str=None, api_key:str=None):
-        if url is None:
-          url = get_config('efile proxy').get('url')
-        if api_key is None:
-          api_key = get_config('efile proxy').get('api key')
+      temp_efile_config = get_config('efile proxy', {})
+      if url is None:
+        url = temp_efile_config.get('url')
+      if api_key is None:
+        api_key = temp_efile_config.get('api key')
 
-        if not url.endswith('/'):
-          url = url + '/'
-        self.base_url = url
-        self.api_key = api_key
-        self.proxy_client = requests.Session()
-        self.proxy_client.headers = {
-          'Content-type': 'application/json', 
-          'Accept': 'application/json',
-        }
-        self.verbose = False
-        self.authed_user_id = None
-        self.set_verbose_logging(True)
+      if not url.endswith('/'):
+        url = url + '/'
+      self.base_url = url
+      self.api_key = api_key
+      self.proxy_client = requests.Session()
+      self.proxy_client.headers = {
+        'Content-type': 'application/json', 
+        'Accept': 'application/json',
+      }
+      self.verbose = False
+      self.authed_user_id = None
+      self.set_verbose_logging(True)
+
+    def _call_proxy(self, send_func):
+      try:
+        resp = send_func()
+        if resp.status_code == 401:
+          auth_resp = self.AuthenticateUser()
+          if auth_resp.response_code == 200:
+            resp = send_func()
+      except ConnectionError as ex:
+        return ProxConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}')
+      return ProxyConnection.user_visible_resp(resp)
 
     @staticmethod
     # TODO(brycew): this is old zeep logging: update to use requests
@@ -78,12 +101,13 @@ class ProxyConnection(object):
         return ApiResponse(resp.status_code, resp.text, None)
 
     def AuthenticateUser(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
+      temp_efile_config = get_config('efile proxy', {})
       if tyler_email is None:
-        tyler_email = get_config('efile proxy').get('tyler email')
+        tyler_email = temp_efile_config.get('tyler email')
       if tyler_password is None:
-        tyler_password = get_config('efile proxy').get('tyler password')
+        tyler_password = temp_efile_config.get('tyler password')
       if jeffnet_key is None:
-        jeffnet_key = get_config('efile proxy').get('jeffnet api token')
+        jeffnet_key = temp_efile_config.get('jeffnet api token')
       auth_obj = {}
       auth_obj['api_key'] = self.api_key
       if jeffnet_key:
@@ -101,7 +125,7 @@ class ProxyConnection(object):
       return ProxyConnection.user_visible_resp(resp)
 
     def RegisterUser(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
-        reg_obj = {
+      reg_obj = {
             'registrationType': registration_type,
             'email': person_to_reg.email,
             'firstName': person_to_reg.name.first,
@@ -116,30 +140,22 @@ class ProxyConnection(object):
             'countryCode': person_to_reg.address.country,
             # only grabs the first 10 digits of the phone number
             'phoneNumber': person_to_reg.sms_number()[-10:]
-        }
+      }
 
-        send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
-        try:
-          resp = send()
-          if resp.status_code == 401:
-            auth_resp = self.AuthenticateUser()
-            if auth_resp.status_code == 200:
-              resp = send()
-        except ConnectionError as ex:
-          return ProxConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}')
-        return ProxyConnection.user_visible_resp(resp)
+      send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
+      return self._call_proxy(send)
 
     # Managing Firm Users
 
     def GetUserList(self):
-        resp = self.proxy_client.get(self.base_url + 'adminusers/users') 
-        return ProxyConnection.user_visible_resp(resp)
+      send = lambda: self.proxy_client.get(self.base_url + 'adminusers/users') 
+      return self._call_proxy(send) 
 
     def GetUser(self, id:str):
-        #if id is None:
-        #    id = self.authed_user_id
-        resp = self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
-        return ProxyConnection.user_visible_resp(resp)
+      #if id is None:
+      #    id = self.authed_user_id
+      send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
+      return self._call_proxy(send) 
 
     def GetUserRole(self, id:str):
         #if id is None:
@@ -181,7 +197,8 @@ class ProxyConnection(object):
 
     # TODO(brycew): not tested
     def GetNoficitationPreferenceOptions(self):
-        return self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
+      send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
+      return self._call_proxy(send)
 
     # TODO(brycew): not tested
     def UpdateUser(self, email:str, first_name:str, middle_name:str, last_name:str, id:str):
@@ -204,8 +221,8 @@ class ProxyConnection(object):
 
     # Managing a Firm
     def GetFirm(self, firm_id):
-      resp = self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
-      return ProxyConnection.user_visible_resp(resp)
+      send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
+      return self._call_proxy(send) 
 
     def UpdateFirm(self, firm_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
@@ -283,10 +300,12 @@ class ProxyConnection(object):
 
     # Global Payment Accounts
     def GetGlobalPaymentAccountList(self):
-        return ProxyConnection.user_visible_resp(None)
+      send = lambda: self.proxy_client.get(self.base_url + 'payments/global_payment')
+      return self._call_proxy(send)
 
     def GetGlobalPaymentAccount(self, global_payment_account_id):
-        return ProxyConnection.user_visible_resp(None)
+      send = lambda: self.proxy_client.get(self.base_url + f'payments/global_payment/{global_payment_account_id}') 
+      return self._call_proxy(send)
 
     def UpdateGlobalPaymentAccount(self, global_payment_account_id, **kwargs):
         return ProxyConnection.user_visible_resp(None)
@@ -298,13 +317,8 @@ class ProxyConnection(object):
         return ProxyConnection.user_visible_resp(None)
 
     def GetCourts(self):
-        send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
-        resp = send()
-        if resp.status_code == 401:
-          auth_resp = self.AuthenticateUser()
-          if auth_resp.status_code == 200:
-            resp = send()
-        return ProxyConnection.user_visible_resp(resp)
+      send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
+      return self._call_proxy(send)
 
     def GetFilingList(self, court_id:str):
         resp = self.proxy_client.get(self.base_url + f'filingreview/court/{court_id}/filings')
@@ -323,48 +337,19 @@ class ProxyConnection(object):
         return ProxyConnection.user_visible_resp(resp)
 
     def CheckFiling(self, court_id:str, al_court_bundle:ALDocumentBundle):
-        def recursive_give_data_url(bundle):
-            for doc in bundle:
-                if isinstance(doc, ALDocumentBundle):
-                    recursive_give_data_url(doc)
-                else:
-                    doc.data_url = doc.as_pdf().url_for(temporary=True)
-        recursive_give_data_url(al_court_bundle)
-        all_vars = json.dumps(all_variables())
-        send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
-        try:
-          resp = send() 
-          if resp.status_code == 401:
-            auth_resp = self.AuthenticateUser()
-            if auth_resp.response_code == 200:
-              resp = send()
-        except ConnectionError as ex:
-          return ProxConnection.user_visible_resp(f'Could not connect to efile proxy at {self.base_url}')
-        return ProxyConnection.user_visible_resp(resp)
-
+      _recursive_give_data_url(al_court_bundle)
+      all_vars = json.dumps(all_variables())
+      send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
+      return self._call_proxy(send)
+      
     def FileForReview(self, court_id:str, al_court_bundle:ALDocumentBundle):
-        def recursive_give_data_url(bundle):
-            for doc in bundle:
-                if isinstance(doc, ALDocumentBundle):
-                    recursive_give_data_url(doc)
-                else:
-                    doc.data_url = doc.as_pdf().url_for(temporary=True)
-
-        recursive_give_data_url(al_court_bundle)
-        tyler_payment_id = get_config('efile proxy').get('tyler payment id')
-        all_vars = json.dumps(all_variables())
-        send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing', 
+      _recursive_give_data_url(al_court_bundle)
+      all_vars_obj = all_variables()
+      all_vars_obj['tyler_payment_id'] = get_config('efile proxy').get('tyler payment id')
+      all_vars = json.dumps(all_vars_obj)
+      send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/filing', 
             data=all_vars)
-        try:
-          resp = send() 
-          if resp.status_code == 401:
-            auth_resp = self.AuthenticateUser()
-            if auth_resp.response_code == 200:
-              resp = send()
-        except ConnectionError as ex:
-          return ProxConnection.user_visible_resp(f'Could not connect to efile proxy at {self.base_url}')
-        return ProxyConnection.user_visible_resp(resp)
-        
+      return self._call_proxy(send)
 
 class MockPerson(object):
     def __init__(self):
