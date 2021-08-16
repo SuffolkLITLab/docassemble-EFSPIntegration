@@ -302,7 +302,7 @@ fields:
 ---
 sets: proxy_conn.authed_user_id
 code: |
-  resp = proxy_conn.AuthenticateUser(email=my_username, password=my_password)
+  resp = proxy_conn.AuthenticateUser(tyler_email=my_username, tyler_password=my_password)
   del my_username, my_password
   reauth = True
 ---
