@@ -5,8 +5,10 @@ import logging
 from typing import List
 import http.client as http_client
 
+from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
+from docassemble.base.util import IndividualName
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
 class ApiResponse:
@@ -101,7 +103,7 @@ class ProxyConnection:
     except:
       return ApiResponse(resp.status_code, resp.text, None)
 
-  def AuthenticateUser(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
+  def authenticate_user(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None):
     temp_efile_config = get_config('efile proxy', {})
     if tyler_email is None:
       tyler_email = temp_efile_config.get('tyler email')
@@ -127,7 +129,7 @@ class ProxyConnection:
         f'Could not connect to the Proxy server at {self.base_url}')
     return ProxyConnection.user_visible_resp(resp)
 
-  def RegisterUser(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
+  def register_user(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
     reg_obj = {
           'registrationType': registration_type,
           'email': person_to_reg.email,
@@ -150,17 +152,17 @@ class ProxyConnection:
 
   # Managing Firm Users
 
-  def GetUserList(self):
+  def get_user_list(self):
     send = lambda: self.proxy_client.get(self.base_url + 'adminusers/users')
     return self._call_proxy(send)
 
-  def GetUser(self, id:str):
+  def get_user(self, id:str):
     #if id is None:
     #    id = self.authed_user_id
     send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
     return self._call_proxy(send)
 
-  def GetUserRole(self, id:str):
+  def get_user_role(self, id:str):
     #if id is None:
     #    id = self.authed_user_id
     resp = self.proxy_client.get(self.base_url + f'adminuser/users/{id}/roles')
@@ -173,7 +175,7 @@ class ProxyConnection:
       data=json.dumps(roles))
     return ProxyConnection.user_visible_resp(resp)
 
-  def RemoveUserRole(self, roles:List[dict], id:str):
+  def remove_user_role(self, roles:List[dict], id:str):
       #if id is None:
       #    id = self.authed_user_id
       resp = self.proxy_client.delete(self.base_url + f'adminuser/users/{id}/roles')
@@ -224,7 +226,7 @@ class ProxyConnection:
     return ProxyConnection.user_visible_resp(resp)
 
   # Managing a Firm
-  def GetFirm(self, firm_id):
+  def get_firm(self):
     send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
     return self._call_proxy(send)
 
@@ -346,7 +348,7 @@ class ProxyConnection:
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/court/{court_id}/check_filing', data=all_vars)
     return self._call_proxy(send)
 
-  def FileForReview(self, court_id:str, al_court_bundle:ALDocumentBundle):
+  def file_for_review(self, court_id:str, al_court_bundle:ALDocumentBundle):
     _recursive_give_data_url(al_court_bundle)
     all_vars_obj = all_variables()
     all_vars_obj['tyler_payment_id'] = get_config('efile proxy').get('tyler payment id')
@@ -355,6 +357,36 @@ class ProxyConnection:
           data=all_vars)
     return self._call_proxy(send)
 
+  def get_cases(self, court_id:str, person_name:IndividualName=None, docket_id:str=None) -> ApiResponse:
+    #query_params = [('person_name', person_name), ('docket_id', docket_id)]
+    #filtered_params = list(filter(lambda p: p[1] is not None, query_params))
+    #print(filtered_params)
+    #query_strs = urlencode(filtered_params)
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case', 
+        data=json.dumps({'person_name': person_name}))
+    return self._call_proxy(send)
+
+  def get_case(self, court_id:str, case_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}')
+    return self._call_proxy(send)
+
+  def get_document(self, court_id:str, case_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/document')
+    return self._call_proxy(send)
+
+  def get_service_attach_case_list(self, court_id:str, service_contact_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/service_contact/{service_contact_id}/cases')
+    return self._call_proxy(send)
+
+  def get_service_information(self, court_id:str, case_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/service_information')
+    return self._call_proxy(send)
+
+  def get_service_information_history(self, court_id:str, case_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/service_information_history')
+    return self._call_proxy(send)
+
+"""
 class MockPerson:
   def __init__(self):
     self.email = 'thesurferdude@comcast.net'
@@ -373,3 +405,5 @@ class MockPerson:
 
   def sms_number(self) -> str:
     return '1234567890'
+"""
+
