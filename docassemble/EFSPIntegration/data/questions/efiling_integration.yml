@@ -258,6 +258,8 @@ code: |
       ready_to_efile = False
       if efile_author_mode:
         show_remaining
+      else:
+        log(f'Something went wrong: {check_resp.error_msg}')
       
     elif not remaining_to_check["required_vars"] and not remaining_to_check["wrong_vars"]:
       ready_to_efile = True
