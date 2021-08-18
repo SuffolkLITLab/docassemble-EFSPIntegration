@@ -181,32 +181,32 @@ class ProxyConnection:
       resp = self.proxy_client.delete(self.base_url + f'adminuser/users/{id}/roles')
       return ProxyConnection.user_visible_resp(resp)
 
-  def ChangePassword(self):
+  def change_password(self):
     # TODO
     resp = self.proxy_client.post(self.base_url + f'adminuser/users/{id}/password')
     return ProxyConnection.user_visible_resp(None)
 
   def self_resend_activation_email(self, email: str):
-    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/resend_activation_email',
+    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/resend-activation-email',
         data=email)
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   # TODO(brycew): not tested
   def resend_activation_email(self, id:str):
       #if id is None:
       #    id = self.authed_user_id
-      resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend_activation_email')
+      resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend-activation-email')
       return ProxyConnection.user_visible_resp(resp)
 
   # TODO(brycew): not tested
   def update_notification_preferences(self, **kwargs):
     # TODO
-    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/notification_preferences', data=json.dumps(kwargs))
+    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/notification-preferences', data=json.dumps(kwargs))
     return ProxyConnection.user_visible_resp(None)
 
   # TODO(brycew): not tested
   def get_notification_preference_options(self):
-    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification_options').json()
+    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification-options').json()
     return self._call_proxy(send)
 
   # TODO(brycew): not tested
@@ -219,15 +219,15 @@ class ProxyConnection:
     return ProxyConnection.user_visible_resp(resp)
 
   def remove_user(self, id:str):
-      #if id is None:
-      #    id = self.authed_user_id
-      resp = self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
-      return ProxyConnection.user_visible_resp(resp)
+    #if id is None:
+    #    id = self.authed_user_id
+    send = lambda: self.proxy_client.delete(self.base_url + f'adminusers/users/{id}')
+    return self._call_proxy(send)
 
   # TODO(brycew): not tested
   def reset_user_password(self, email:str):
-    resp = self.proxy_client.post(self.base_url + 'adminusers/user/reset_password', data=email)
-    return ProxyConnection.user_visible_resp(resp)
+    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/reset-password', data=email)
+    return self._call_proxy(send)
 
   # Managing a Firm
   def get_firm(self):
@@ -344,7 +344,7 @@ class ProxyConnection:
   def get_global_payment_account_list(self):
     # TODO
     send = lambda: self.proxy_client.get(self.base_url + f'payments/global-accounts')
-    return ProxyConnection.user_visible_resp(None)
+    return self._call_proxy(send) 
 
   def get_global_payment_account(self, global_payment_account_id):
     # TODO
@@ -410,28 +410,28 @@ class ProxyConnection:
     #filtered_params = list(filter(lambda p: p[1] is not None, query_params))
     #print(filtered_params)
     #query_strs = urlencode(filtered_params)
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case', 
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases', 
         data=json.dumps({'person_name': person_name}))
     return self._call_proxy(send)
 
   def get_case(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}')
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}')
     return self._call_proxy(send)
 
   def get_document(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/document')
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/documents')
     return self._call_proxy(send)
 
   def get_service_attach_case_list(self, court_id:str, service_contact_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/service_contact/{service_contact_id}/cases')
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/service-contacts/{service_contact_id}/cases')
     return self._call_proxy(send)
 
   def get_service_information(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/service_information')
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information')
     return self._call_proxy(send)
 
   def get_service_information_history(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/court/{court_id}/case/{case_id}/service_information_history')
+    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
     return self._call_proxy(send)
 
 """
