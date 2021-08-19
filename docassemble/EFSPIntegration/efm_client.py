@@ -63,7 +63,7 @@ class ProxyConnection:
     try:
       resp = send_func()
       if resp.status_code == 401:
-        auth_resp = self.AuthenticateUser()
+        auth_resp = self.authenticate_user()
         if auth_resp.response_code == 200:
           resp = send_func()
     except requests.ConnectionError as ex:
