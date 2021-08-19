@@ -182,8 +182,8 @@ subquestion: |
     label='Remove global payment account') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['update_password', 'show_resp']}]),
-    label='Update password') }
+    [{'recompute': ['change_password', 'show_resp']}]),
+    label='Change password') }
 
 
 
@@ -307,12 +307,12 @@ code: |
   reauth = True
 ---
 code: |
-  resp = proxy_conn.RegisterUser(person_to_reg, password=new_password)
+  resp = proxy_conn.register_user(person_to_reg, password=new_password)
   del new_password
   register = True
 ---
 code: |
-  resp = proxy_conn.RemoveUser(id=user_id) 
+  resp = proxy_conn.remove_user(id=user_id) 
   del user_id
   rm_user = True
 ---
@@ -321,217 +321,218 @@ code : |
   get_user_list = True
 ---
 code: |
-  resp = proxy_conn.GetUser(id=user_id)
+  resp = proxy_conn.get_user(id=user_id)
   del user_id
   get_user = True
 ---
 code: |
-  resp = proxy_conn.GetCourts()
+  resp = proxy_conn.get_courts()
   get_courts = True
 ---
 code: |
-  resp = proxy_conn.GetFilingList(court_id)
+  resp = proxy_conn.get_filing_list(court_id)
   del court_id
   get_filings = True
 ---
 code: |
-  resp = proxy_conn.SelfResendActivationEmail(email)
+  resp = proxy_conn.self_resend_activation_email(email)
   resend_activation = True
 ---
 code: |
-  resp = proxy_conn.GetFilingStatus(court_id, filing_id)
+  resp = proxy_conn.get_filing_status(court_id, filing_id)
   del court_id
   del filing_id
   get_filing_status = True
 ---
 code: |
-  resp = proxy_conn.GetFiling(court_id, filing_id)
+  resp = proxy_conn.get_filing(court_id, filing_id)
   del court_id
   del filing_id
   get_filing = True
 ---
 code: |
   # TODO(qs): requires a bundle
-  resp = proxy_conn.FileForReview(court_id)
+  resp = proxy_conn.file_for_review(court_id)
   del court_id
   dummy_filing = True
 ##################################
 # Q Starting
 ---
 code: |
-  resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
+  resp = proxy_conn.cancel_filing_status(court_id, filing_id)
   del court_id
   del filing_id
   cancel_filing = True
 ---
 code: |
   # TODO(qs): requires a bundle
-  resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
+  resp = proxy_conn.check_filing(court_id, al_court_bundle)
   del court_id
   check_filing = True
 ---
+# code: |
+#   resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
+#   del court_id
+#   del filing_id
+#   cancel_filing = True
+# ---
 code: |
-  resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
-  del court_id
-  del filing_id
-  cancel_filing = True
----
-code: |
-  resp = proxy_conn.GetFirm(firm_id)
+  resp = proxy_conn.get_firm(firm_id)
   del firm_id
   get_firm = True
 ---
 code: |
-  resp = proxy_conn.UpdateFirm(firm_id)
+  resp = proxy_conn.update_firm(firm_id)
   del firm_id
   update_firm = True
 ---
 code: |
-  resp = proxy_conn.GetAttorneyList(firm_id)
+  resp = proxy_conn.get_attorney_list(firm_id)
   del firm_id
   get_attorney_list = True
 ---
 code: |
-  resp = proxy_conn.GetAttorney(firm_id, attorney_id)
+  resp = proxy_conn.get_attorney(firm_id, attorney_id)
   del firm_id
   get_attorney = True
 ---
 code: |
-  resp = proxy_conn.CreateAttorney(firm_id)
+  resp = proxy_conn.create_attorney(firm_id)
   del firm_id
   del attorney_id
-  get_attorney = True  
+  create_attorney = True  
 ---
 code: |
-  resp = proxy_conn.UpdateAttorney(firm_id, attorney_id)
+  resp = proxy_conn.update_attorney(firm_id, attorney_id)
   del firm_id
   del attorney_id
   update_attorney = True
 ---
 code: |
-  resp = proxy_conn.RemoveAttorney(firm_id, attorney_id)
+  resp = proxy_conn.remove_attorney(firm_id, attorney_id)
   del firm_id
   del attorney_id
   remove_attorney = True
 ---
 code: |
-  resp = proxy_conn.GetPaymentAccountTypeList()
+  resp = proxy_conn.get_payment_account_type_list()
   get_payment_account_type_list = True
 ---
 code: |
-  resp = proxy_conn.GetPaymentAccountList(firm_id)
+  resp = proxy_conn.get_payment_account_list(firm_id)
   del firm_id
   get_payment_account_list = True
 ---
 code: |
-  resp = proxy_conn.GetPaymountAccount(firm_id, payment_account_id)
+  resp = proxy_conn.get_payment_account(firm_id, payment_account_id)
   del firm_id
   del payment_account_id
   get_payment_account = True
 ---
 code: |
-  resp = proxy_conn.UpdatePaymentAccount(firm_id, payment_account_id)
+  resp = proxy_conn.update_payment_account(firm_id, payment_account_id)
   del firm_id
   del payment_account_id
   update_payment_account = True
 ---
 code: |
-  resp = proxy_conn.CreatePaymentAccount(firm_id)
+  resp = proxy_conn.create_payment_account(firm_id)
   del firm_id
   create_payment_account = True
 ---
 code: |
-  resp = proxy_conn.RemovePaymentAccount(firm_id, payment_account_id)
+  resp = proxy_conn.remove_payment_account(firm_id, payment_account_id)
   del firm_id
   del payment_account_id
   remove_payment_account = True
 ---
 code: |
-  resp = proxy_conn.GetVitalChekPaymentAccountId(firm_id)
+  # TODO: not implemented anymore?
+  resp = proxy_conn.get_vitalcheck_payment_account_id(firm_id)
   del firm_id
   get_vitalcheck_payment_account_id = True
 ---
 code: |
-  resp = proxy_conn.CreateInactivePaymentAccount(firm_id)
+  resp = proxy_conn.create_inactive_payment_account(firm_id)
   del firm_id
   create_inactive_payment_account = True
 ---
 code: |
-  resp = proxy_conn.GetServiceContactList(firm_id)
+  resp = proxy_conn.get_service_contact_list(firm_id)
   del firm_id
   get_service_contact_list = True
 ---
 code: |
   # TODO: this method is for ServiceContact, but name is not specific
-  resp = proxy_conn.GetPublicList(firm_id)
+  resp = proxy_conn.get_public_list(firm_id)
   del firm_id
   get_public_list = True
 ---
 code: |
-  resp = proxy_conn.GetServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.get_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   get_service_contact = True
 ---
 code: |
-  resp = proxy_conn.CreateServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.create_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   create_service_contact = True
 ---
 code: |
-  resp = proxy_conn.UpdateServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.update_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   update_service_contact = True  
 ---
 code: |
-  resp = proxy_conn.RemoveServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.remove_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   remove_service_contact = True
 ---
 code: |
-  resp = proxy_conn.AttachServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.attach_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   attach_service_contact = True
 ---
 code: |
-  resp = proxy_conn.DetachServiceContact(firm_id, service_contact_id)
+  resp = proxy_conn.detach_service_contact(firm_id, service_contact_id)
   del firm_id
   del service_contact_id
   detach_service_contact = True
 ---
 code: |
-  resp = proxy_conn.GetGlobalPaymentAccountList()
+  resp = proxy_conn.get_global_payment_account_list()
   get_global_payment_account_list = True
 ---
 code: |
-  resp = proxy_conn.GetGlobalPaymentAccount(global_payment_account_id)
+  resp = proxy_conn.get_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   get_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.UpdateGlobalPaymentAccount(global_payment_account_id)
+  resp = proxy_conn.update_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   update_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.CreateGlobalPaymentAccount()
+  resp = proxy_conn.create_global_payment_account()
   del global_payment_account_id
   create_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.RemoveGlobalPaymentAccount(global_payment_account_id)
+  resp = proxy_conn.remove_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   remove_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.UpdatePassword(user_id, new_user_password)
+  resp = proxy_conn.change_password(user_id, new_user_password)
   del user_id
   del new_user_password
-  update_password = True
+  change_password = True
 
 ---
 question: |
