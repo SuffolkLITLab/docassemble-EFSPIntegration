@@ -229,7 +229,7 @@ code: |
 ---
 id: get available_efile_courts 
 code: |
-  resp = proxy_conn.AuthenticateUser()  # Uses default config keys
+  resp = proxy_conn.authenticate_user()  # Uses default config keys
   if resp.response_code == 200:
     available_efile_courts = proxy_conn.GetCourts().data
   else:
