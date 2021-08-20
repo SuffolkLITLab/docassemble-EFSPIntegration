@@ -231,7 +231,7 @@ id: get available_efile_courts
 code: |
   resp = proxy_conn.authenticate_user()  # Uses default config keys
   if resp.response_code == 200:
-    available_efile_courts = proxy_conn.GetCourts().data
+    available_efile_courts = proxy_conn.get_courts().data
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
@@ -252,7 +252,7 @@ id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
   if can_check_efile:
-    check_resp = proxy_conn.CheckFiling(court_id, al_court_bundle)
+    check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
     if check_resp.error_msg:
       ready_to_efile = False
@@ -298,7 +298,7 @@ code: |
   if user_wants_efile and ready_to_efile:
     efile_user_reviewed
     #prevent_going_back()
-    resp = proxy_conn.FileForReview(court_id, al_court_bundle)
+    resp = proxy_conn.file_for_review(court_id, al_court_bundle)
     show_resp
     efile = True
   else:
