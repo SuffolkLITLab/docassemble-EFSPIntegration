@@ -22,6 +22,9 @@ class ApiResponse:
       return f'response_code: {self.response_code}, error_msg: {self.error_msg}, data: {self.data}'
     return f'response_code: {self.response_code}, data: {self.data}'
 
+  def __repr__(self):
+    return str(self)
+
   def is_ok(self):
     return self.response_code in [200, 201, 202, 203, 204, 205]
 
@@ -118,7 +121,7 @@ class ProxyConnection:
     if tyler_email and tyler_password:
       auth_obj['tyler'] = {'username': tyler_email, 'password': tyler_password}
     try:
-      resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate/', 
+      resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate', 
         data=json.dumps(auth_obj))
       if resp.status_code == requests.codes.ok:
         self.active_token = resp.json()
@@ -129,23 +132,31 @@ class ProxyConnection:
         f'Could not connect to the Proxy server at {self.base_url}')
     return ProxyConnection.user_visible_resp(resp)
 
-  def register_user(self, person_to_reg, password:str, registration_type:str='INDIVIDUAL'):
+  def register_user(self, person, registration_type:str, password:str=None, firm_name_or_id:str=None):
+    """
+    registration_type needs to be INDIVIDUAL, FIRM_ADMINISTRATOR, or FIRM_ADMIN_NEW_MEMBER. 
+    If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password. 
+    If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
+    """
     reg_obj = {
-          'registrationType': registration_type,
-          'email': person_to_reg.email,
-          'firstName': person_to_reg.name.first,
-          'middleName': person_to_reg.name.middle,
-          'lastName': person_to_reg.name.last,
-          'password': password,
-          'streetAddressLine1': person_to_reg.address.address,
-          'streetAddressLine2': person_to_reg.address.unit,
-          'city': person_to_reg.address.city,
-          'stateCode': person_to_reg.address.state,
-          'zipCode': person_to_reg.address.zip_code,
-          'countryCode': person_to_reg.address.country,
+          'registrationType': registration_type.upper(),
+          'email': person.email,
+          'firstName': person.name.first,
+          'middleName': person.name.middle,
+          'lastName': person.name.last,
+          'streetAddressLine1': person.address.address,
+          'streetAddressLine2': person.address.unit,
+          'city': person.address.city,
+          'stateCode': person.address.state,
+          'zipCode': person.address.zip_code,
+          'countryCode': person.address.country,
           # only grabs the first 10 digits of the phone number
-          'phoneNumber': person_to_reg.sms_number()[-10:]
+          'phoneNumber': person.sms_number()[-10:]
     }
+    if registration_type != 'INDIVIDUAL':
+      reg_obj['firmName'] = firm_name_or_id
+    if registration_type != 'FIRM_ADMIN_NEW_MEMBER':
+      reg_obj['password'] = password
 
     send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
     return self._call_proxy(send)
@@ -156,67 +167,67 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + 'adminusers/users')
     return self._call_proxy(send)
 
-  def get_user(self, id:str):
-    #if id is None:
-    #    id = self.authed_user_id
-    send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
+  def get_users(self):
+    return self.get_user_list()
+
+  def get_user(self, id:str=None):
+    if id is None:
+      send = lambda: self.proxy_client.get(self.base_url + f'adminusers/user')
+    else:
+      send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}')
     return self._call_proxy(send)
 
-  def get_user_role(self, id:str):
-    #if id is None:
-    #    id = self.authed_user_id
-    resp = self.proxy_client.get(self.base_url + f'adminuser/users/{id}/roles')
-    return ProxyConnection.user_visible_resp(resp)
+  def get_user_roles(self, id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}/roles')
+    return self._call_proxy(send) 
 
-  def add_user_role(self, roles:List[dict], id:str):
-    #if id is None:
-    #    id = self.authed_user_id
-    resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', 
+  def add_user_roles(self, id:str, roles:List[dict]):
+    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', 
       data=json.dumps(roles))
-    return ProxyConnection.user_visible_resp(resp)
+    return self._call_proxy(send) 
 
-  def remove_user_role(self, roles:List[dict], id:str):
-      #if id is None:
-      #    id = self.authed_user_id
-      resp = self.proxy_client.delete(self.base_url + f'adminuser/users/{id}/roles')
-      return ProxyConnection.user_visible_resp(resp)
+  def remove_user_roles(self, id:str, roles:List[dict]):
+    send = lambda: self.proxy_client.delete(self.base_url + f'adminusers/users/{id}/roles',
+        data=json.dumps(roles))
+    return self._call_proxy(send) 
 
-  def change_password(self):
-    # TODO
-    resp = self.proxy_client.post(self.base_url + f'adminuser/users/{id}/password')
-    return ProxyConnection.user_visible_resp(None)
+  def change_password(self, id:str, email:str, new_password:str): 
+    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/password',
+        data=json.dumps({'email': email, 'newPassword': new_password}))
+    return self._call_proxy(send) 
+
+  def self_change_password(self, current_password:str, new_password:str):
+    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/user/password',
+        data=json.dumps({'currentPassword': current_password, 'newPassword': new_password}))
+    return self._call_proxy(send) 
 
   def self_resend_activation_email(self, email: str):
     send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/resend-activation-email',
         data=email)
     return self._call_proxy(send)
 
-  # TODO(brycew): not tested
   def resend_activation_email(self, id:str):
-      #if id is None:
-      #    id = self.authed_user_id
-      resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend-activation-email')
-      return ProxyConnection.user_visible_resp(resp)
+    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend-activation-email')
+    return self._call_proxy(send) 
 
-  # TODO(brycew): not tested
-  def update_notification_preferences(self, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'adminuser/users/{id}/notification-preferences', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
-
-  # TODO(brycew): not tested
-  def get_notification_preference_options(self):
-    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification-options').json()
+  def update_notification_preferences(self, notif_preferences:List[dict]):
+    send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/user/notification-preferences', 
+        data=json.dumps(notif_preferences))
     return self._call_proxy(send)
 
-  # TODO(brycew): not tested
-  def update_user(self, email:str, first_name:str, middle_name:str, last_name:str, id:str):
+  def get_notification_preferences(self):
+    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/user/notification-preferences')
+    return self._call_proxy(send)
+
+  def get_notification_options(self):
+    """AKA NotificationPreferencesList"""
+    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification-options')
+    return self._call_proxy(send)
+
+  def update_user(self, id:str, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
-    #if id is None:
-    #    id = self.authed_user_id
-    # TODO: qs: should this method be PUT, not POST?
-    resp = self.proxy_client.post(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
-    return ProxyConnection.user_visible_resp(resp)
+    send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
+    return self._call_proxy(send) 
 
   def remove_user(self, id:str):
     #if id is None:
@@ -229,146 +240,136 @@ class ProxyConnection:
     send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/reset-password', data=email)
     return self._call_proxy(send)
 
+  def get_password_question(self, email:str):
+    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/user/password-question', data=email)
+    return self._call_proxy(send)
+
   # Managing a Firm
   def get_firm(self):
     send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
     return self._call_proxy(send)
 
-  def update_firm(self, firm_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def update_firm(self, **kwargs):
+    send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(kwargs))
+    return self._call_proxy(send) 
 
   # Managing Attorneys
-  def get_attorney_list(self, firm_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys')
-    return ProxyConnection.user_visible_resp(None)
+  def get_attorney_list(self):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/attorneys')
+    return self._call_proxy(send) 
 
-  def get_attorney(self, firm_id, attorney_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}')
-    return ProxyConnection.user_visible_resp(None)
+  def get_attorney(self, attorney_id):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}')
+    return self._call_proxy(send)
 
-  def update_attorney(self, firm_id, attorney_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def update_attorney(self, attorney_id, bar_number:str=None, 
+      first_name:str=None, middle_name:str=None, last_name:str=None):
+    send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}', 
+        data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))
+    return self._call_proxy(send) 
 
-  def create_attorney(self, firm_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def create_attorney(self, bar_number:str, first_name:str, middle_name:str=None, last_name:str=None):
+    send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/attorneys', 
+        data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))
+    return self._call_proxy(send) 
 
-  def remove_attorney(self, firm_id, attorney_id):
-    # TODO
-    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/attorneys/{attorney_id}')
-    return ProxyConnection.user_visible_resp(None)
+  def remove_attorney(self, attorney_id):
+    send = lambda: self.proxy_client.delete(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}')
+    return self._call_proxy(send) 
 
   # Managing Payment Accounts
-  def get_payment_account_type_list(self, firm_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/types')
-    return ProxyConnection.user_visible_resp(None)
+  def get_payment_account_type_list(self):
+    send = lambda: self.proxy_client.get(self.base_url + f'payments/types')
+    return self._call_proxy(send) 
 
-  def get_payment_account_list(self, firm_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts')
-    return ProxyConnection.user_visible_resp(None)
+  def get_payment_account_list(self):
+    send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts')
+    return self._call_proxy(send) 
 
-  def get_payment_account(self, firm_id, payment_account_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/{payment_account_id}')
-    return ProxyConnection.user_visible_resp(None)
+  def get_payment_account(self, payment_account_id):
+    send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts/{payment_account_id}')
+    return self._call_proxy(send)
 
-  def update_payment_account(self, firm_id, payment_account_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def update_payment_account(self, payment_account_id, account_name:str=None, active:bool=True):
+    send = lambda: self.proxy_client.patch(self.base_url + f'payments/payment-accounts/{payment_account_id}', 
+        data=json.dumps({'account_name': account_name, 'active': active}))
+    return self._call_proxy(send) 
 
-  def create_payment_account(self, firm_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def create_payment_account(self, **kwargs):
+    send = lambda: self.proxy_client.post(self.base_url + f'payments/payment-accounts', data=json.dumps(kwargs))
+    return self._call_proxy(send) 
 
-  def remove_payment_account(self, firm_id, payment_account_id):
-    # TODO
-    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/payment_accounts/{payment_account_id}')
-    return ProxyConnection.user_visible_resp(None)
-
-  # Managing Service Contacts
-  # Service contacts are part of the `firm` hierarchy
-  def get_service_contact_list(self, firm_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts')
-    return ProxyConnection.user_visible_resp(None)
-
-  def get_service_contact(self, firm_id, service_contact_id):
-    # TODO
-    resp = self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}')
-    return ProxyConnection.user_visible_resp(None)
-
-  def update_service_contact(self, firm_id, service_contact_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
-
-  def create_service_contact(self, firm_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.post(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts')
-    return ProxyConnection.user_visible_resp(None)
-
-  def remove_service_contact(self, firm_id, service_contact_id):
-    # TODO
-    resp = self.proxy_client.delete(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/{service_contact_id}')
-    return ProxyConnection.user_visible_resp(None)
-
-  # Using Service Contacts
-  def attach_service_contact(self, firm_id, service_contact_id, **kwargs):
-    # TODO
-    resp = self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/attach/{service_contact_id}')
-    return ProxyConnection.user_visible_resp(None)
-
-  def detach_service_contact(self, firm_id, service_contact_id, **kwargs):
-    # TODO
-    send = lambda: self.proxy_client.put(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/detach/{service_contact_id}')
-    return ProxyConnection.user_visible_resp(None)
-
-  # TODO(QS): should this name include ServiceContact?
-  def get_public_list(self, firm_id):
-    # TODO
-    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/firms/{firm_id}/service_contacts/public_list')
-    return ProxyConnection.user_visible_resp(None)
+  def remove_payment_account(self, payment_account_id):
+    send = lambda: self.proxy_client.delete(self.base_url + f'payments/payment-accounts/{payment_account_id}')
+    return self._call_proxy(send) 
 
   # Global Payment Accounts
   def get_global_payment_account_list(self):
-    # TODO
     send = lambda: self.proxy_client.get(self.base_url + f'payments/global-accounts')
     return self._call_proxy(send) 
 
   def get_global_payment_account(self, global_payment_account_id):
-    # TODO
     send = lambda: self.proxy_client.get(self.base_url + f'payments/global-accounts/{global_payment_account_id}')
     return self._call_proxy(send) 
 
-  def update_global_payment_account(self, global_payment_account_id, **kwargs):
-    # TODO
-    send = lambda: self.proxy_client.put(self.base_url + f'payments/global-accounts/{global_payment_account_id}', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+  def update_global_payment_account(self, global_payment_account_id, account_name:str=None, active:bool=True):
+    send = lambda: self.proxy_client.patch(self.base_url + f'payments/global-accounts/{global_payment_account_id}', 
+        data=json.dumps({'account_name': account_name, 'active': active}))
+    return self._call_proxy(send) 
 
   def create_global_payment_account(self, **kwargs):
-    # TODO
     send = lambda: self.proxy_client.post(self.base_url + f'payments/global-accounts', data=json.dumps(kwargs))
-    return ProxyConnection.user_visible_resp(None)
+    return self._call_proxy(send) 
 
   def remove_global_payment_account(self, global_payment_account_id):
-    # TODO
     send = lambda: self.proxy_client.delete(self.base_url + f'payments/global-accounts/{global_payment_account_id}')
-    return ProxyConnection.user_visible_resp(None)
+    return self._call_proxy(send) 
 
-  # TODO(QS): should this name include ServiceContact?
-  def get_public_list(self, firm_id):
-    return ProxyConnection.user_visible_resp(None)
+  # Managing Service Contacts
+  # Service contacts are part of the `firm` hierarchy
+  def get_service_contact_list(self):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts')
+    return self._call_proxy(send)
+
+  def get_service_contact(self, service_contact_id):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}')
+    return self._call_proxy(send)
+
+  def update_service_contact(self, service_contact_id, **kwargs):
+    send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}', 
+        data=json.dumps(kwargs))
+    return self._call_proxy(send)
+
+  def create_service_contact(self, service_contact):
+    send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/service-contacts', 
+        data=json.dumps(service_contact))
+    return self._call_proxy(send)
+
+  def remove_service_contact(self, service_contact_id):
+    send = lambda: self.proxy_client.delete(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}')
+    return self._call_proxy(send)
+
+  def get_public_service_contacts(self, first_name:str=None, middle_name:str=None, last_name:str=None, email:str=None):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public',
+        data=json.dumps({'firstName': first_name, 'middleName': middle_name, 'lastName': last_name, 'email': email}))
+    return self._call_proxy(send)
+
+  # Using Service Contacts
+  def attach_service_contact(self, service_contact_id:str, case_id:str, case_party_id:str=None):
+    send = lambda: self.proxy_client.put(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}/cases',
+        data=json.dumps({'caseId': case_id, 'casepartyId': case_party_id}))
+    return self._call_proxy(send)
+
+  def detach_service_contact(self, service_contact_id:str, case_id:str, case_party_id:str=None):
+    url = self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}/cases/{case_id}'
+    if case_party_id is not None:
+      url += urlencode({'case_party_id': case_party_id})
+    send = lambda: self.proxy_client.delete(url)
+    return self._call_proxy(send)
+
+  def get_public_list(self):
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/public-service-contacts')
+    return self._call_proxy(send)
 
   def get_courts(self):
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
@@ -381,6 +382,10 @@ class ProxyConnection:
   def get_filing(self, court_id:str, filing_id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
     return self._call_proxy(send) 
+
+  def get_policy(self, court_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/policy')
+    return self._call_proxy(send)
 
   def get_filing_status(self, court_id:str, filing_id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}/status')
@@ -433,24 +438,3 @@ class ProxyConnection:
   def get_service_information_history(self, court_id:str, case_id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
     return self._call_proxy(send)
-
-"""
-class MockPerson:
-  def __init__(self):
-    self.email = 'thesurferdude@comcast.net'
-    # Neat trick: https://stackoverflow.com/a/24448351/11416267
-    self.name = type('', (), {})()
-    self.name.first = 'B'
-    self.name.middle = 'S'
-    self.name.last = 'W'
-    self.address = type('', (), {})()
-    self.address.address = '123 Fakestreet Ave'
-    self.address.unit = 'Apt 1'
-    self.address.city = 'Boston'
-    self.address.state = 'MA'
-    self.address.zip_code = '12345'
-    self.address.country = 'US'
-
-  def sms_number(self) -> str:
-    return '1234567890'
-"""

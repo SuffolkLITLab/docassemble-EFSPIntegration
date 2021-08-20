@@ -4,3 +4,5 @@
 .vscode
 .history
 *.egg-info/**
+rcfile
+**/.mypy_cache/**
