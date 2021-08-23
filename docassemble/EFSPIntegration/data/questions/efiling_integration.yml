@@ -41,13 +41,13 @@ validation code: |
     validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
 ---
 question: |
-  % if resp.response_code == 200:
+  % if efile_resp.response_code == 200:
   Your form was submitted!
   % else:
   Something went wrong delivering your form
   % endif
 subquestion: |
-  % if resp.response_code == 200:
+  % if efile_resp.response_code == 200:
   You should receive a confirmation email within 10-15 minutes, and
   you should receive an update from the ${ trial_court } clerk on your filing 
   within 2 weeks.
@@ -66,11 +66,11 @@ subquestion: |
 
 help:
   label: |
-    ${ 'What went wrong?' if resp.response_code != 200 else 'Details' }
+    ${ 'What went wrong?' if efile_resp.response_code != 200 else 'Details' }
   content: |
     Some debugging information:
 
-    ${ resp }
+    ${ efile_resp }
 continue button field: show_resp
 continue button label: Back to download screen
 ---
@@ -254,7 +254,7 @@ code: |
   if can_check_efile:
     check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
-    if check_resp.error_msg:
+    if not check_resp.is_ok():
       ready_to_efile = False
       if efile_author_mode:
         show_remaining
@@ -298,11 +298,15 @@ code: |
   if user_wants_efile and ready_to_efile:
     efile_user_reviewed
     #prevent_going_back()
-    resp = proxy_conn.file_for_review(court_id, al_court_bundle)
+    efile_resp
     show_resp
     efile = True
   else:
     efile = False
+---
+id: separate efile
+code: |
+  efile_resp = proxy_conn.file_for_review(court_id, al_court_bundle)
 ---
 generic object: DAObject
 question: |

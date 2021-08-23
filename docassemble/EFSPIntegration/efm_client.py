@@ -237,7 +237,7 @@ class ProxyConnection:
 
   # TODO(brycew): not tested
   def reset_user_password(self, email:str):
-    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/reset-password', data=email)
+    send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/password/reset', data=email)
     return self._call_proxy(send)
 
   def get_password_question(self, email:str):
@@ -398,7 +398,7 @@ class ProxyConnection:
   def check_filing(self, court_id:str, al_court_bundle:ALDocumentBundle):
     _recursive_give_data_url(al_court_bundle)
     all_vars = json.dumps(all_variables())
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/check_filing', data=all_vars)
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
   def file_for_review(self, court_id:str, al_court_bundle:ALDocumentBundle):
