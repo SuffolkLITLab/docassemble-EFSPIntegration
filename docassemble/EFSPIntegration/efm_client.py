@@ -438,3 +438,19 @@ class ProxyConnection:
   def get_service_information_history(self, court_id:str, case_id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
     return self._call_proxy(send)
+
+
+  def start_new_payments(self):
+    url_to_redirect = 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx'
+    data ="""<PaymentRequest>
+<ClientKey>CJOFS-ILSTAGE-EFSP</ClientKey>
+<TransactionID>201001020111111</TransactionID>
+<RedirectURL>https://courtformsonline.org</RedirectURL>
+<Amount>-1</Amount>
+<GetToken>1</GetToken>
+</PaymentRequest>
+    """
+    js_impl = """
+    $('#inset_form').html('<form action="https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx", name="temp" method="post" style="display:none;"><input """
+    return url_to_redirect, data
+    
