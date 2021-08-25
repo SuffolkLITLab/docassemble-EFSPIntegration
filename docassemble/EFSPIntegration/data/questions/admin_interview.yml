@@ -8,74 +8,67 @@ objects:
 code: |
   proxy_conn = ProxyConnection(url='http://efspjava:9000/')
 ---
+code: |
+  user_admin_list = [
+    ('reauth', 'Login'),
+    ('self_change_password', 'Self Change Password'),
+    ('rm_user', 'Remove user'),
+    ('get_user_list', 'Get All Users'),
+    ('get_user', 'Get User'),
+    ('self_resend_activation', 'Resend Self Activitation Email'),
+    ('resend_activation', 'Resend Other Activitation Email'),
+  ]
+  filing_admin_list = [
+    ('get_courts', 'See all Courts'),
+    ('get_filings', 'See Filings'),
+    ('get_filing_status', 'Get filing Status'),
+    ('get_filing', 'See Filing Info'),
+    ('cancel_filing', 'Cancel Filing'),
+  ]
+---
+question: |
+  Login Info?
+fields:
+  - email: my_username
+  - password: my_password
+    datatype: password
+---
 question: | 
   What to do?
 subquestion: |
-  Logged in as ${ proxy_conn.authed_user_id }
+  As ${ my_username }
 
-  Misc things to send:
-  ${ better_name }
-  ${ favorite_pokemon }
+  ${ reauth }
 
   ## User Administration
-
-  ${ action_button_html(url_ask(
-      [{'recompute': ['reauth', 'show_resp']}]), 
-      label='Login') }
       
   ${ action_button_html(url_ask(
       [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
       label='Register') }
-    
-  ${ action_button_html(url_ask(
-      [{'recompute': ['rm_user', 'show_resp']}]),
-      label='Remove User') }
 
+  % for elem in user_admin_list:
   ${ action_button_html(url_ask(
-      [{'recompute': ['get_user_list', 'show_resp']}]),
-      label='Get All Users') }
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
 
-  ${ action_button_html(url_ask(
-      [{'recompute': ['get_user', 'show_resp']}]),
-      label='Get User') }
-
-  ${ action_button_html(url_ask(
-      [{'recompute': ['resend_activation', 'show_resp']}]),
-      label='Resend Self Activation Email') }
+  % endfor
 
   ## Filing
 
+  % for elem in filing_admin_list:
   ${ action_button_html(url_ask(
-    [{'recompute': ['get_courts', 'show_resp']}]),
-    label='See All Courts') }
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
 
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_filings', 'show_resp']}]),
-    label='See Filings') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_filing_status', 'show_resp']}]),
-    label='See Filing Status') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_filing', 'show_resp']}]),
-    label='See Filing Info') }
-    
   ${ action_button_html(url_ask(
     [{'recompute': ['dummy_filing', 'show_resp']}]),
     label='Dummy File') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['cancel_filing', 'show_resp']}]),
-    label='Cancel Filing') }
-
-  ${ action_button_html(url_ask(
     [{'recompute': ['check_filing', 'show_resp']}]),
     label='Check filing') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['cancel_filing', 'show_resp']}]),
-    label='Cancel filing') }
 
   ${ action_button_html(url_ask(
     [{'recompute': ['get_firm', 'show_resp']}]),
@@ -124,14 +117,6 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['remove_payment_account', 'show_resp']}]),
     label='Remove payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_vitalcheck_payment_account_id', 'show_resp']}]),
-    label='Get VitalCheck payment account id') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['create_inactive_payment_account', 'show_resp']}]),
-    label='Create inactive payment account') }
 
   ${ action_button_html(url_ask(
     [{'recompute': ['get_service_contact_list', 'show_resp']}]),
@@ -185,17 +170,7 @@ subquestion: |
     [{'recompute': ['change_password', 'show_resp']}]),
     label='Change password') }
 
-
-
-
 continue button field: all_done
----
-question: |
-  Login info?
-fields:
-  - email: my_username
-  - password: my_password
-    datatype: password
 ---
 question: |
   Self email?
@@ -236,20 +211,6 @@ fields:
     datatype: password
 ---
 question: |
-  What is your better name?
-fields:
-  - no label: better_name
----
-question: |
-  What is your favorite pokemon?
-fields:
-  - no label: favorite_pokemon
-    choices:
-      - Charzard
-      - Pikachu
-      - Zizagoon
----
-question: |
   User ID?
 fields:
   - User ID: user_id
@@ -278,6 +239,13 @@ question: |
 fields:
   - Attorney id: attorney_id
 ---
+---
+question: |
+  Current password?
+fields:
+  - Password: current_password
+    datatype: password
+---
 question: |
   Payment account id?
 fields:
@@ -300,15 +268,25 @@ fields:
   - Service contact id: service_contact_id
 
 ---
+question: |
+  Registeration Type
+fields:
+  - Registration type: reg_type
+    choices:
+      - INDIVIDUAL
+      - FIRM_ADMINISTRATOR
+      - FIRM_ADMIN_NEW_MEMBER
+---
 sets: proxy_conn.authed_user_id
 code: |
   resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
-  del my_username, my_password
+  del my_password
+  # TODO(brycew): handle improper login info
   reauth = True
 ---
 code: |
-  resp = proxy_conn.register_user(person_to_reg, password=new_password)
-  del new_password
+  resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
+  del new_password, reg_type
   register = True
 ---
 code: |
@@ -336,6 +314,12 @@ code: |
 ---
 code: |
   resp = proxy_conn.self_resend_activation_email(email)
+  del email
+  self_resend_activation = True
+---
+code: |
+  resp = proxy_conn.resend_activation_email(id=user_id)
+  del user_id
   resend_activation = True
 ---
 code: |
@@ -377,12 +361,12 @@ code: |
 #   cancel_filing = True
 # ---
 code: |
-  resp = proxy_conn.get_firm(firm_id)
+  resp = proxy_conn.get_firm()
   del firm_id
   get_firm = True
 ---
 code: |
-  resp = proxy_conn.update_firm(firm_id)
+  resp = proxy_conn.update_firm()
   del firm_id
   update_firm = True
 ---
@@ -529,11 +513,15 @@ code: |
   remove_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.change_password(user_id, new_user_password)
+  resp = proxy_conn.change_password(user_id, email, new_user_password)
   del user_id
   del new_user_password
   change_password = True
-
+---
+code: |
+  resp = proxy_conn.self_change_password(current_password, new_user_password)
+  del current_password, new_user_password
+  self_change_password = True
 ---
 question: |
   show resp:
