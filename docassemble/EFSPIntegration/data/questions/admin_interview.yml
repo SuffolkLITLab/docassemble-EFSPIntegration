@@ -6,7 +6,7 @@ objects:
   person_to_reg: Individual
 ---
 code: |
-  proxy_conn = ProxyConnection(url='http://efspjava:9000/')
+  proxy_conn = ProxyConnection() 
 ---
 code: |
   user_admin_list = [
@@ -24,6 +24,14 @@ code: |
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
     ('cancel_filing', 'Cancel Filing'),
+    ('dummy_filing', 'Dummy File'),
+    ('check_filing', 'Check filing'),
+    ('get_firm', 'Get Firm'),
+    ('update_firm', 'Update Firm'),
+    ('get_attorney_list', 'Get All Attorneys'),
+    ('get_attorney', 'Get Attorney'),
+    ('update_attorney', 'Update Attorney'),
+    ('remove_attorney', 'Remove Attorney'),
   ]
 ---
 question: |
@@ -61,38 +69,6 @@ subquestion: |
       label=elem[1]) }
   
   % endfor
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['dummy_filing', 'show_resp']}]),
-    label='Dummy File') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['check_filing', 'show_resp']}]),
-    label='Check filing') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_firm', 'show_resp']}]),
-    label='Get firm') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['update_firm', 'show_resp']}]),
-    label='Update firm') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_attorney_list', 'show_resp']}]),
-    label='Get attorney list') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_attorney', 'show_resp']}]),
-    label='Get attorney') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['update_attorney', 'show_resp']}]),
-    label='Update attorney') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['remove_attorney', 'show_resp']}]),
-    label='Remove attorney') }
 
   ${ action_button_html(url_ask(
     [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
@@ -170,6 +146,10 @@ subquestion: |
     [{'recompute': ['change_password', 'show_resp']}]),
     label='Change password') }
 
+  ${ action_button_html(url_ask(
+    [{'recompute': ['new_payment_account', 'show_resp']}]),
+    label='New payment Account') }
+
 continue button field: all_done
 ---
 question: |
@@ -239,7 +219,6 @@ question: |
 fields:
   - Attorney id: attorney_id
 ---
----
 question: |
   Current password?
 fields:
@@ -269,13 +248,17 @@ fields:
 
 ---
 question: |
-  Registeration Type
+  Registration Type
 fields:
   - Registration type: reg_type
     choices:
       - INDIVIDUAL
       - FIRM_ADMINISTRATOR
       - FIRM_ADMIN_NEW_MEMBER
+---
+code: |
+  new_payment_account = True
+  command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
 ---
 sets: proxy_conn.authed_user_id
 code: |
@@ -526,7 +509,25 @@ code: |
 question: |
   show resp:
 subquestion: |
+  % if isinstance(resp.data, list):
+
+  % for idx, elem in enumerate(resp.data):
+  * idx: ${ idx }
+
+    % if isinstance(elem, dict):
+    % for k, inner_elem in elem.items():
+      * ${ k }: ${ inner_elem }
+
+    % endfor
+    % else:
+      * ${ elem }
+    % endif
+
+  % endfor
+
+  % else:
   ${ resp }
+  % endif
 continue button field: show_resp
 ---
 mandatory: True
