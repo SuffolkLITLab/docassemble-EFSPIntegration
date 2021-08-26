@@ -256,9 +256,39 @@ fields:
       - FIRM_ADMINISTRATOR
       - FIRM_ADMIN_NEW_MEMBER
 ---
+question: |
+  New payment account
+subquestion: |
+  <span id="inset_form"></span>
+script: |
+# Basis from https://stackoverflow.com/a/133997
+# TODO(brycew): just submit this + actual payment info to the Efile server as a POST,
+# Then hang on to that data with the transaction Id (created there), and send user to
+# the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
+  <script>
+      data = '<PaymentRequest></PaymentRequest>'; 
+      
+      const form = document.createElement('form');
+      form.method = 'post';
+      form.target = '_blank';
+      form.action = 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
+      
+      const hiddenField = document.createElement('input');
+      hiddenField.type = 'hidden';
+      hiddenField.name = 'RequestXML';
+      hiddenField.value = data;
+      form.appendChild(hiddenField);
+      document.body.appendChild(form);
+      form.submit();
+  </script>
+#      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
+#      ' <button>Click here if not working</button> </input>' +
+continue button field: new_payment_account
+
+---
 code: |
-  new_payment_account = True
-  command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
+  #new_payment_account = True
+  #command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
 ---
 sets: proxy_conn.authed_user_id
 code: |
