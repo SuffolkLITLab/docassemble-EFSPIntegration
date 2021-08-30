@@ -256,39 +256,71 @@ fields:
       - FIRM_ADMINISTRATOR
       - FIRM_ADMIN_NEW_MEMBER
 ---
+comment: |
+  # Basis from https://stackoverflow.com/a/133997
+  # TODO(brycew): just submit this + actual payment info to the Efile server as a POST,
+  # Then hang on to that data with the transaction Id (created there), and send user to
+  # the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
+  #      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
+  #      ' <button>Click here if not working</button> </input>' +
 question: |
   New payment account
 subquestion: |
   <span id="inset_form"></span>
 script: |
-# Basis from https://stackoverflow.com/a/133997
-# TODO(brycew): just submit this + actual payment info to the Efile server as a POST,
-# Then hang on to that data with the transaction Id (created there), and send user to
-# the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
   <script>
-      data = '<PaymentRequest></PaymentRequest>'; 
+      //data = '<PaymentRequest></PaymentRequest>'; 
       
       const form = document.createElement('form');
       form.method = 'post';
-      form.target = '_blank';
-      form.action = 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
+      //form.target = '_blank';
+      form.action = '${ proxy_conn.base_url + '/payments/new_toga_account' }'; // 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
       
-      const hiddenField = document.createElement('input');
-      hiddenField.type = 'hidden';
-      hiddenField.name = 'RequestXML';
-      hiddenField.value = data;
-      form.appendChild(hiddenField);
+      const nameField = document.createElement('input');
+      nameField.type = 'hidden';
+      nameField.name = 'account_name';
+      nameField.value = 'my_name';
+      form.appendChild(nameField);
+      const isglobal = document.createElement('input');
+      isglobal.type = 'hidden';
+      isglobal.name = 'global';
+      isglobal.value = ${ 'true' if new_account_is_global == 'on' else 'false'}; 
+      form.appendChild(isglobal);
+      const typeCode = document.createElement('input');
+      typeCode.type = 'hidden';
+      typeCode.name = 'type_code';
+      typeCode.value = '${ new_account_type_code }';
+      form.appendChild(typeCode);
+      // TODO(brycew): HACKY: how to propery add Headers here?
+      const tylerInfo = document.createElement('input');
+      tylerInfo.type = 'hidden';
+      tylerInfo.name = 'tyler_info';
+      tylerInfo.value = '${ proxy_conn.proxy_client.headers['TYLER-TOKEN'] }';
+      form.appendChild(tylerInfo);
+      const url = document.createElement('input');
+      url.type = 'hidden';
+      url.name = 'original_url';
+      url.value = '${ interview_url(temporary=1) }';
+      form.appendChild(url);
       document.body.appendChild(form);
       form.submit();
   </script>
-#      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
-#      ' <button>Click here if not working</button> </input>' +
 continue button field: new_payment_account
-
 ---
-code: |
-  #new_payment_account = True
-  #command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
+question: |
+  New payment account info
+fields:
+  - Global?: new_account_is_global
+    datatype: checkbox
+  - TypeCode: new_account_type_code
+    choices:
+      - WV
+      - BankAccount
+      - CC
+---
+#code: |
+#  new_payment_account = True
+#  command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
 ---
 sets: proxy_conn.authed_user_id
 code: |
