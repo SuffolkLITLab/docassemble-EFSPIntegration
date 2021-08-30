@@ -274,7 +274,7 @@ script: |
       const form = document.createElement('form');
       form.method = 'post';
       //form.target = '_blank';
-      form.action = '${ proxy_conn.base_url + '/payments/new_toga_account' }'; // 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
+      form.action = '${ proxy_conn.base_url + '/payments/new-toga-account' }'; // 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
       
       const nameField = document.createElement('input');
       nameField.type = 'hidden';
