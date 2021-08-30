@@ -58,6 +58,7 @@ class ProxyConnection:
       'Content-type': 'application/json',
       'Accept': 'application/json',
     }
+    self.proxy_client.headers['X-API-KEY'] = api_key 
     self.verbose = False
     self.authed_user_id = None
     self.set_verbose_logging(True)
@@ -124,8 +125,9 @@ class ProxyConnection:
       resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate', 
         data=json.dumps(auth_obj))
       if resp.status_code == requests.codes.ok:
-        self.active_token = resp.json()
-        self.proxy_client.headers['X-API-KEY'] = self.active_token
+        all_tokens = resp.json()
+        for k, v in all_tokens.items():
+          self.proxy_client.headers[k] = v
         # self.authed_user_id = data['userID']
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(
