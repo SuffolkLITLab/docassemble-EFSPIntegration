@@ -2,11 +2,11 @@
 modules:
   - .efm_client
 ---
+include:
+  - login_qs.yml
+---
 objects:
   person_to_reg: Individual
----
-code: |
-  proxy_conn = ProxyConnection() 
 ---
 code: |
   user_admin_list = [

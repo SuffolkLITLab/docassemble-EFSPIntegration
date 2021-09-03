@@ -1,0 +1,29 @@
+---
+code: |
+  proxy_conn = ProxyConnection() 
+---
+question: |
+  Tyler Login Info
+subquestion: |
+  Please provide your Tyler Login information
+fields:
+  - email/username: my_username
+  - password: my_password
+    datatype: password
+---
+sets: proxy_conn.authed_user_id
+code: |
+  resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
+  del my_password
+  if not resp.is_ok():
+    login_failed_screen
+  # TODO(brycew): handle improper login info
+  reauth = True
+---
+event: login_failed_screen
+question: |
+  Tyler Login failed
+subquestion: |
+  Please try again
+buttons:
+  - restart
