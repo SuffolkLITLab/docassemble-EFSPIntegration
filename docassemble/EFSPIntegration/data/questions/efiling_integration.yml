@@ -122,24 +122,32 @@ comment: |
   ${ action_button_html(url_ask([{'recompute': ['efile']}]),
      label='E-file') }
 ---
+#question: |
+#  Something went wrong when submitting
+#subquestion: |
+#  We ran into some technical problems and there was a problem delivering this to the ${trial_court}.
+#
+#  You have a few options:
+#
+#  * You can download the form to print and submit
+#  * You can save [this URL]() and come back after we have fixed things
+#  * We can email you when we've fixed things, no need to save the URL
+#
+#  Which would you prefer to do?
+#fields:
+#  - no label: fallback_user_choice
+#    choices:
+#      - Download form now: download form
+#      - Save URL: save url
+#      - Email me at ${ users[0].email }: email me
+---
 question: |
   Something went wrong when submitting
 subquestion: |
-  We ran into some technical problems and there was a problem delivering this to the ${trial_court}.
+  We ran into some technical problems and there was a problem delivering this to the ${ trial_court }.
 
-  You have a few options:
-
-  * You can download the form to print and submit
-  * You can save [this URL]() and come back after we have fixed things
-  * We can email you when we've fixed things, no need to save the URL
-
-  Which would you prefer to do?
-fields:
-  - no label: fallback_user_choice
-    choices:
-      - Download form now: download form
-      - Save URL: save url
-      - Email me at ${ users[0].email }: email me
+  You can continue to a page that will let you download your form.
+continue button field: fallback_user_choice
 ---
 question: |
   Do you want to efile this document directly with the court?
@@ -277,24 +285,8 @@ code: |
         ready_to_efile = False
         log(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
         fallback_user_choice
-        act_on_user_choice
-        show_user_choice
-        command('exit')
   else:
     ready_to_efile = False
----
-code: |
-  if fallback_user_choice == 'download form':
-    efile_user_reviewed
-    # TODO(brycew): don't restart here
-    command('restart')
-  elif fallback_user_choice == 'email me':
-    # TODO(brycew): send an email
-    pass
-  else: # save url
-    # TODO(brycew): show the URL
-    pass
-  act_on_user_choice = True
 ---
 id: actually efile
 depends on:
