@@ -55,7 +55,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 
 
 setup(name='docassemble.EFSPIntegration',
-      version='0.0.1',
+      version='0.0.1.1',
       description=DESCRIPTION,
       long_description=long_description,
       long_description_content_type='text/markdown',
