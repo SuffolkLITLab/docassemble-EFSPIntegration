@@ -235,7 +235,10 @@ code: |
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
-   
+---
+depends on:
+  - trial_court
+code: |  
   court_id = convert_court_to_id(trial_court)
 ---
 id: check efile possibility
@@ -294,8 +297,12 @@ code: |
   act_on_user_choice = True
 ---
 id: actually efile
+depends on:
+  - can_check_efile
+  - user_wants_efile
+  - ready_to_efile
 code: |
-  if user_wants_efile and ready_to_efile:
+  if can_check_efile and user_wants_efile and ready_to_efile:
     efile_user_reviewed
     #prevent_going_back()
     efile_resp
