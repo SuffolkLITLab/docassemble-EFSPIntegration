@@ -49,6 +49,10 @@ subquestion: |
   
   As ${ my_username }
 
+  ${ action_button_html(url_ask(
+      [{'recompute': ['get_firm','show_resp']}]),
+      label="Get firm ID") }
+
   ## Code cache refresh
 
   ## Firm admin - Users
@@ -344,7 +348,7 @@ question: |
   New payment account info
 fields:
   - Global?: new_account_is_global
-    datatype: yesno
+    datatype: checkbox
   - TypeCode: new_account_type_code
     choices:
       - WV
@@ -600,6 +604,10 @@ code: |
   resp = proxy_conn.self_change_password(current_password, new_user_password)
   del current_password, new_user_password
   self_change_password = True
+---
+code: |
+  resp = proxy_conn.get_firm()
+  get_firm = True
 ---
 question: |
   show resp:
