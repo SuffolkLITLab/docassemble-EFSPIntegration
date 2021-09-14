@@ -348,7 +348,7 @@ question: |
   New payment account info
 fields:
   - Global?: new_account_is_global
-    datatype: checkbox
+    datatype: yesno
   - TypeCode: new_account_type_code
     choices:
       - WV
