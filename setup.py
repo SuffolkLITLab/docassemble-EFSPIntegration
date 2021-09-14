@@ -1,24 +1,11 @@
-import io
 import os
+import sys
 from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
-# From https://github.com/navdeep-G/setup.py/blob/master/setup.py
-DESCRIPTION = 'A docassemble extension that handles EFSP Functionality'
-
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
-standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG_INFO', '*.egg-info')
-
-here = os.path.abspath(os.path.dirname(__file__))
-
-try:
-    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-        long_description = '\n' + f.read()
-except FileNotFoundError:
-    long_description = DESCRIPTION
-
-
+standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG-INFO', '*.egg-info')
 def find_package_data(where='.', package='', exclude=standard_exclude, exclude_directories=standard_exclude_directories):
     out = {}
     stack = [(convert_path(where), '', package)]
@@ -29,7 +16,8 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
             if os.path.isdir(fn):
                 bad_name = False
                 for pattern in exclude_directories:
-                    if (fnmatchcase(name, pattern) or fn.lower() == pattern.lower()):
+                    if (fnmatchcase(name, pattern)
+                        or fn.lower() == pattern.lower()):
                         bad_name = True
                         break
                 if bad_name:
@@ -45,7 +33,8 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
             else:
                 bad_name = False
                 for pattern in exclude:
-                    if (fnmatchcase(name, pattern) or fn.lower() == pattern.lower()):
+                    if (fnmatchcase(name, pattern)
+                        or fn.lower() == pattern.lower()):
                         bad_name = True
                         break
                 if bad_name:
@@ -53,20 +42,19 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
                 out.setdefault(package, []).append(prefix+name)
     return out
 
-
 setup(name='docassemble.EFSPIntegration',
       version='0.0.1.1',
-      description=DESCRIPTION,
-      long_description=long_description,
+      description=(''),
+      long_description='# docassemble-EFSPIntegration\r\n\r\nA docassemble extension that talks to [a proxy e-filing server](https://github.com/SuffolkLITLab/EfileProxyServer/) easily within a docassemble interview.\r\n\r\nMain interviews of import:\r\n\r\n* any_filing_interview.yml: allows you to make any type of filing, initial or subsequent\r\n* admin_interview.yml: lets you handle admin / user functionality, outside of the context of cases and filings\r\n\r\nIn progress!\r\n\r\n## Author\r\n\r\nBryce Willey (bwilley@suffolk.edu)\r\n',
       long_description_content_type='text/markdown',
       author='Bryce Willey',
       author_email='bwilley@suffolk.edu',
       license='The MIT License (MIT)',
-      python_requires='>=3.6.0',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['requests', 'docassemble.AssemblyLine'],
+      install_requires=['docassemble.AssemblyLine>=2.3.4', 'requests>=2.25.1'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
-      ) 
+     )
+
