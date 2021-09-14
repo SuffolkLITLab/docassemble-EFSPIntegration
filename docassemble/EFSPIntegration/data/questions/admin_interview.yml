@@ -4,6 +4,7 @@ modules:
 ---
 include:
   - login_qs.yml
+  - case_search.yml
 ---
 objects:
   person_to_reg: Individual
@@ -15,8 +16,8 @@ code: |
     ('rm_user', 'Remove user'),
     ('get_user_list', 'Get All Users'),
     ('get_user', 'Get User'),
-    ('self_resend_activation', 'Resend Self Activitation Email'),
-    ('resend_activation', 'Resend Other Activitation Email'),
+    ('self_resend_activation', 'Resend Self Activation Email'),
+    ('resend_activation', 'Resend Other Activation Email'),
   ]
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
@@ -131,10 +132,6 @@ subquestion: |
     label='Update payment account') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['create_payment_account', 'show_resp']}]),
-    label='Create payment account') }
-
-  ${ action_button_html(url_ask(
     [{'recompute': ['remove_payment_account', 'show_resp']}]),
     label='Remove payment account') }
   ${ action_button_html(url_ask(
@@ -150,10 +147,6 @@ subquestion: |
     label='Update global payment account') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['create_global_payment_account', 'show_resp']}]),
-    label='Create global payment account') }
-
-  ${ action_button_html(url_ask(
     [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
     label='Remove global payment account') }
   
@@ -162,6 +155,10 @@ subquestion: |
   ## Initial filing
   
   ## EFSP Cases
+  
+  ${ action_button_html(url_ask(
+    [{'recompute': ['interview_order_find_case', 'display_case']}]),
+    label="Find a case") }
   
   ## Subsequent filing
   
@@ -236,6 +233,9 @@ question: |
   Court Id?
 fields:
   - Court ID: court_id
+    datatype: combobox
+    code: |
+      proxy_conn.get_courts().data
 ---
 event: query_variables
 code: |
@@ -354,9 +354,9 @@ fields:
     datatype: yesno
   - TypeCode: new_account_type_code
     choices:
-      - WV
-      - BankAccount
-      - CC
+      - Waiver account: WV
+      - eCheck: BankAccount
+      - Credit Card: CC
 ---
 #code: |
 #  new_payment_account = True
@@ -504,10 +504,10 @@ code: |
   del payment_account_id
   update_payment_account = True
 ---
-code: |
-  resp = proxy_conn.create_payment_account(firm_id)
-  del firm_id
-  create_payment_account = True
+# code: |
+#   resp = proxy_conn.create_payment_account(firm_id)
+#   del firm_id
+#   create_payment_account = True
 ---
 code: |
   resp = proxy_conn.remove_payment_account(firm_id, payment_account_id)
@@ -588,8 +588,8 @@ code: |
   update_global_payment_account = True
 ---
 code: |
+  # TODO
   resp = proxy_conn.create_global_payment_account()
-  del global_payment_account_id
   create_global_payment_account = True
 ---
 code: |
