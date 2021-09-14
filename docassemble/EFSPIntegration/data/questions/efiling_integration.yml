@@ -231,18 +231,18 @@ id: get available_efile_courts
 code: |
   resp = proxy_conn.authenticate_user()  # Uses default config keys
   if resp.response_code == 200:
-    available_efile_courts = proxy_conn.get_courts().data
+    available_efile_courts = sorted(proxy_conn.get_courts().data)
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
 ---
-depends on:
-  - trial_court
+#depends on:
+#  - trial_court
 code: |  
   court_id = convert_court_to_id(trial_court)
 ---
 id: check efile possibility
-reconsider: True
+#reconsider: True
 code: |
   if court_id in available_efile_courts:
     # Ask the user if they want to efile
@@ -257,6 +257,7 @@ code: |
   if can_check_efile:
     check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
+    log('check_resp: ' + str(check_resp))
     if not check_resp.is_ok():
       ready_to_efile = False
       if efile_author_mode:
@@ -297,10 +298,9 @@ code: |
   act_on_user_choice = True
 ---
 id: actually efile
-depends on:
-  - can_check_efile
-  - user_wants_efile
-  - ready_to_efile
+#depends on:
+#  - can_check_efile
+#  - user_wants_efile
 code: |
   if can_check_efile and user_wants_efile and ready_to_efile:
     efile_user_reviewed
