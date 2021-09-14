@@ -1,0 +1,156 @@
+---
+modules:
+  - .efm_client
+---
+include:
+  - login_qs.yml
+---
+objects: 
+  - found_cases: DAList.using(object_type=DAObject, auto_gather=False)  
+---
+#mandatory: True
+id: interview order
+code: |
+  do_what_choice
+  if do_what_choice == 'search':
+    somebody.name.first
+    court_id    
+    get_cases_response
+    case_tracking_id = case_tracking_choice
+  elif do_what_choice == 'lookup':
+    case_docket_id
+    court_id    
+    get_case_response
+    display_case
+    case_tracking_id = get_case_response.data.get('value',{}).get('caseTrackingID',{}).get('value')
+  else:
+    case_tracking_id
+    while not confirm_case_tracking_id:
+      del case_tracking_id
+      case_tracking_id
+---
+question: |
+  How do you want to find a pre-existing case to file into?
+field: do_what_choice
+choices:
+  - Find a case by party name: search
+  - Find a case by Docket Number: lookup
+  - I know the tracking ID of the case: tracking_id
+---
+objects:
+  - somebody: Individual
+---
+question: |
+  Enter the case tracking ID
+fields:
+  - Case Tracking ID: case_tracking_id
+---
+question: |
+  Is this the case you were trying to find?
+subquestion: |
+  
+yesno: confirm_case_tracking_id
+---
+question: |
+  Party name to find
+subquestion: |
+  Enter the name of a party involved in the case that you want to file into.
+fields:
+  - First: somebody.name.first
+  - Middle: somebody.name.middle
+    required: False
+  - Last: somebody.name.last
+  - Suffix: somebody.name.suffix
+    required: False
+    code: |
+      name_suffix()
+---
+question: |
+  Choose a court
+fields:
+  - Pick one!: trial_court
+    code: |
+      all_courts
+---
+question:  |
+  ${ all_courts }
+field: _cont
+---
+code: |
+  all_courts = proxy_conn.get_courts().data
+---
+need:
+  - proxy_conn.authed_user_id
+code: |
+  docket_id = None  
+  get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last}, docket_id)
+---
+question: |
+  Docket ID
+fields:
+  - Docket id: case_docket_id
+---
+need:
+  - proxy_conn.authed_user_id
+code: |
+  get_case_response = proxy_conn.get_case(court_id, case_docket_id)
+---
+question: |
+  Results
+subquestion: |
+  % for case in found_cases:
+  #### ${ case.title } (${ case.date })
+  * DocketID: ${ case.docket_id }
+  * CourtID: ${ case.court_id }
+  * TrackingID: ${ case.tracking_id }
+  * CaseCategory: ${ case.category }
+  
+  ```
+  ${ json.dumps(case.case_details) }
+  ```
+  % endfor  
+fields:
+  - Which case?: case_tracking_choice
+    datatype: dropdown
+    code: |
+      found_case_options
+---
+event: display_case
+question: |
+  Results
+subquestion: |
+  ```
+  ${ json.dumps(get_case_response.data) } 
+  ```
+---
+need:
+  - court_id
+  - somebody.name.first
+  - found_cases
+id: get cleaned up results
+code: |
+    from datetime import datetime
+    #try: # trap name errors, etc. so Docassemble will only run this code once
+    first_pass = get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last})
+    found_cases.clear()
+    if first_pass.is_ok():
+      for entry in first_pass.data:
+        new_case = found_cases.appendObject()
+        new_case.details = entry
+        new_case.court_id = court_id
+        new_case.tracking_id =  entry.get('value',{}).get('caseTrackingID',{}).get('value')
+        new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
+        new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
+        
+        new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
+        
+        new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')
+        
+        new_case.date = as_datetime(datetime.utcfromtimestamp(new_case.case_details.get('value',{}).get('activityDateRepresentation',{}).get('value',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
+        
+    # except:
+    #  message("Something went wrong")
+    
+    found_cases.gathered = True
+    
+    found_case_options = list(map(lambda vv: (vv.tracking_id, vv.docket_id), found_cases))
