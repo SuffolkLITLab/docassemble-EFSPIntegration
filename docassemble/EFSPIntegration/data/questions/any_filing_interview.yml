@@ -1,0 +1,382 @@
+---
+modules:
+  - .efm_client
+---
+include:
+  - login_qs.yml
+  - efiling_integration.yml
+  - docassemble.AssemblyLine:al_package.yml
+  - case_search.yml
+---
+code: |
+  proxy_conn = ProxyConnection(url='http://efspjava:9000')
+---
+objects:
+  - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
+  - other_parties: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
+---
+objects:
+  - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc")
+---
+objects:
+  - service_contacts: DAList.using(object_type=DAObject)
+---
+code: |
+  lead_doc.enabled = True
+---
+objects:
+  - lead_doc.optional_services: DAList.using(object_type=DAObject)
+---
+objects:
+  - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court")
+---
+mandatory: True
+code: |
+  welcome
+  tyler_login
+  trial_court
+  can_check_efile
+  if is_initial_filing:
+    log(case_category)
+    tyler_case_category = case_category_map[case_category]['name']
+    tyler_case_type = case_type_map[case_type]['name']
+    if case_subtype_options:
+      tyler_case_subtype = case_subtype_map[case_subtype]['name']
+    tyler_filing_attorney
+    tyler_payment_id
+    user_ask_role
+    plaintiff_party_type = party_type_map[plaintiff_party_type_code]['name']
+    defendant_party_type = party_type_map[defendant_party_type_code]['name']
+    # TODO(brycew): add party type and other items in the complete attr block
+    is_adding_new_parties = False
+  else:
+    existing_case_to_add_too = case_tracking_id
+    is_adding_new_parties
+
+  users.gather()
+  other_parties.gather()
+  
+  tyler_filing_type = filing_type_map[filing_type]['name']
+  filing_description
+  reference_number
+  lead_doc.optional_services.gather(complete_attribute='complete')
+  lead_doc.document_type = document_type_map[lead_doc.document_type_code]['name']
+  log('lead_doc code: ' + str(lead_doc.filing_component_code))
+  lead_doc.filing_component = filing_component_map[lead_doc.filing_component_code]['name']
+  lead_doc.enabled = True
+  user_responsible_for_payment
+  service_contacts.gather(complete_attribute='complete')
+
+  if can_check_efile:
+    users[0].email
+    ready_to_efile
+
+  show_disclaimers
+  efile
+  summary_page
+  #submitted_page
+---
+question: |
+  Are you adding any additional parties to this filing?
+yesno: is_adding_new_parties
+---
+question: |
+  Make a Filing
+subquestion: |
+  Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
+continue button field: welcome
+---
+question: |
+  Tyler login
+fields: 
+  - username: my_username
+    datatype: text
+  - password: my_password
+    datatype: password
+---
+code: |
+  resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
+  del my_password
+  tyler_login = True
+---
+question: |
+  Is this an initial filing?
+yesno: is_initial_filing
+---
+question: | 
+  Location?
+fields:
+  - Court Location: trial_court
+    datatype: dropdown
+    code: |
+      trial_court_options
+---
+question: |
+  Case Category
+fields:
+  - Case Category: case_category
+    datatype: dropdown
+    code: |
+      case_category_options
+---
+question: |
+  Case Type
+fields:
+  - Case Type: case_type
+    datatype: dropdown
+    code: |
+      case_type_options
+---
+question: |
+  Case Subtype
+fields:
+  - Case Subtype: case_subtype
+    datatype: dropdown
+    code: |
+      case_subtype_options
+---
+question: |
+  Filing Attorney
+fields:
+  - Filing Attorney: tyler_filing_attorney
+    datatype: dropdown
+    code: |
+      tyler_filing_attorney_options
+---
+question: |
+  Payment Account
+fields:
+  - Payment Account: tyler_payment_id
+    datatype: dropdown
+    code: |
+      tyler_payment_account_options
+---
+question: |
+  Filing Type
+fields:
+  - Filing Type: filing_type
+    datatype: dropdown
+    code: |
+      filing_type_options
+---
+question: |
+  Filing Description
+fields: 
+  - Filing Description: filing_description
+    datatype: text
+---
+question: |
+  Plantiff party type?
+fields:
+  - Plaintiff Party Type: plaintiff_party_type_code
+    datatype: dropdown
+    code: |
+      party_type_options
+---
+question: |
+  Defendant party type?
+fields:
+  - Defendant Party Type: defendant_party_type_code
+    datatype: dropdown
+    code: |
+      party_type_options
+---
+question: |
+  Document Type
+fields:
+  - Document type: lead_doc.document_type_code
+    datatype: dropdown
+    code: |
+      document_type_options
+---
+question: |
+  Filing Component
+fields:
+  - Filing Component: lead_doc.filing_component_code
+    datatype: dropdown
+    code: |
+      filing_component_options
+---
+question: |
+  Disclaimers
+subquestion: |
+  % if not disclaimers:
+  No Disclaimers!
+  % else:
+  %for dis in disclaimers: 
+  
+  * ${ disclaimers }
+  % endfor
+  % endif
+continue button field: show_disclaimers
+---
+question: |
+  Reference number
+fields:
+  - Reference Number: reference_number
+    datatype: text
+---
+question: |
+  Are there any optional services that you want?
+yesno: lead_doc.optional_services.there_are_any
+---
+question: |
+  Are there any other optional services that you want?
+yesno: lead_doc.optional_services.there_is_another
+---
+code: |
+  my_code = lead_doc.optional_services[i].code
+  if optional_service_map[my_code]['multiplier']:
+    lead_doc.optional_services[i].multiplier
+  if optional_service_map[my_code]['hasfeeprompt']:
+    lead_doc.optional_services[i].fee_amount
+  lead_doc.optional_services[i].complete = True
+---
+question: |
+  Optional Services Type ${ i }
+fields:
+  - Optional Services: lead_doc.optional_services[i].code
+    datatype: dropdown
+    code: |
+      optional_service_options
+---
+question: |
+  Optional Service ${ i } multiplier?
+fields:
+  - Multiplier: lead_doc.optional_services[i].multiplier
+    datatype: integer
+---
+question: |
+  Optional Service ${ i } fee amount?
+subquestion: |
+  ${ optional_service_map[lead_doc.optional_services[i].code]['feeprompttext'] }
+fields: 
+  - Fee Amount: lead_doc.optional_services[i].fee_amount
+    datatype: currency
+---
+question: |
+  User responsible for payment
+fields:
+  - User for payment: user_responsible_for_payment
+    datatype: dropdown
+    code: |
+      users
+---
+code: |
+  service_contacts[i].contact_id
+  service_contacts[i].service_type
+  service_contacts[i].party_association
+  service_contacts[i].complete = True
+---
+question: |
+  Service Contact
+fields: 
+  - Contact Id: service_contacts[i].contact_id
+    datatype: dropdown
+    code: |
+      service_contact_options
+---
+question: |
+  Service Type
+fields: 
+  - Service Type: service_contacts[i].service_type
+    datatype: dropdown
+    code: | 
+      service_type_options
+---
+question: |
+  Service Party Association?
+subquestion: |
+  TODO(brycew): none for now
+fields:
+  - PartyAssociation: service_contacts[i].party_association
+    datatype: text
+---
+question: |
+  Any service contacts?
+yesno: service_contacts.there_are_any
+---
+question: |
+  Any more service contacts?
+yesno: service_contacts.there_is_another
+---
+event: summary_page
+question: |
+  Your form is submitted!
+#subquestion: |
+#  % if ready_to_efile and not (defined('efile') and efile):
+#  Click the "E-File" button below te e-file your form at ${ trial_court }.
+#
+#  ${ action_button_html(url_ask([{'recompute': ['efile']}]), label='E-file', icon='file-export')}
+#  % endif
+---
+event: submitted_page
+question: |
+  Yay
+---
+event: go_back_screen
+question: |
+  Something went wrong
+subquestion: |
+  Your selections aren't working. :/  Please try again.
+---
+code: |
+  trial_court_resp = proxy_conn.get_courts()
+  log(trial_court_resp)
+  trial_court_options = trial_court_resp.data
+---
+code: |
+  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id).data)
+  if not case_category_options:
+    go_back_screen
+---
+code: |
+  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, case_category, timing='Initial' if is_initial_filing else 'Subsequent').data)
+  if not case_type_options:
+    go_back_screen
+---
+code: |
+  case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, case_type).data)
+---
+code: |
+  tyler_filing_attorney_options, tyler_filing_attorney_map = choices_and_map(proxy_conn.get_attorney_list().data, 
+      display='{firstName} {middleName} {lastName}',
+      backing='attorneyID')
+---
+code: |
+  tyler_payment_account_options = list(map(lambda vv: (vv['paymentAccountID'], vv['accountName']), proxy_conn.get_payment_account_list().data))
+---
+code: |
+  disclaimers = proxy_conn.get_disclaimers(court_id).data
+---
+code: |
+  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, case_category, case_type, is_initial_filing).data)
+---
+code: |
+  party_type_options, party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
+  if any(map(lambda vv: vv['isrequired'], party_type_map.values())):
+    party_type_options = list(filter(lambda vv: party_type_map[vv[0]]['isrequired'], party_type_options))
+---
+code: |
+  raw_opt_servs = proxy_conn.get_optional_services(court_id, filing_type).data
+  optional_service_options, optional_service_map = choices_and_map(raw_opt_servs)
+---
+code: |
+  raw_components = proxy_conn.get_filing_components(court_id, filing_type)
+  log('raw_components: ' + str(raw_components))
+  filing_component_options, filing_component_map = choices_and_map(raw_components.data)
+  log('map: ' + str(filing_component_map))
+---
+code: |
+  document_type_options, document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, filing_type).data)
+---
+code: |
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
+---
+code: |
+  service_contact_options = list(map(lambda vv: (vv['serviceContactID'], f"{vv['firstName']} {vv['middleName']} {vv['lastName']}"), proxy_conn.get_service_contact_list().data))
+---
+comment: |
+  service_information
+  submitted_page

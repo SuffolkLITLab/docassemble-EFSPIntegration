@@ -3,9 +3,9 @@ code: |
   proxy_conn = ProxyConnection() 
 ---
 question: |
-  Tyler Login Info
+  eFile IL Login Info
 subquestion: |
-  Please provide your Tyler Login information
+  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](/start/tyler_new_user).
 fields:
   - email/username: my_username
   - password: my_password
