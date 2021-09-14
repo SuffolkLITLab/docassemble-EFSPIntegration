@@ -8,10 +8,10 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName
+from docassemble.base.util import IndividualName, DAObject
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
-class ApiResponse:
+class ApiResponse(DAObject):
   def __init__(self, response_code, error_msg:str, data):
     self.response_code = response_code
     self.error_msg = error_msg
