@@ -28,6 +28,7 @@ code: |
     while not confirm_case_tracking_id:
       del case_tracking_id
       case_tracking_id
+  interview_order_find_case = True      
 ---
 question: |
   How do you want to find a pre-existing case to file into?
@@ -129,10 +130,11 @@ need:
   - found_cases
 id: get cleaned up results
 code: |
+    found_cases.clear()
+
     from datetime import datetime
     #try: # trap name errors, etc. so Docassemble will only run this code once
     first_pass = get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last})
-    found_cases.clear()
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
