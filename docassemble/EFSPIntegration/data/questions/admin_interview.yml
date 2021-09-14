@@ -34,13 +34,6 @@ code: |
     ('remove_attorney', 'Remove Attorney'),
   ]
 ---
-question: |
-  Login Info?
-fields:
-  - email: my_username
-  - password: my_password
-    datatype: password
----
 question: | 
   What to do?
 subquestion: |
@@ -111,7 +104,7 @@ subquestion: |
   ## Firm admin - payment accounts
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['new_payment_account', 'show_resp']}]),
+    [{'recompute': ['new_payment_account']}]),
     label='New payment Account') }
 
   ${ action_button_html(url_ask(
@@ -306,16 +299,19 @@ comment: |
 question: |
   New payment account
 subquestion: |
-  <span id="inset_form"></span>
+  % if url_args.get('completed', 'false') == 'true':
+  You've created your new payment account!
+  % endif
 script: |
+  % if url_args.get('completed', 'false') != 'true':
   <script>
       //data = '<PaymentRequest></PaymentRequest>'; 
       
       const form = document.createElement('form');
       form.method = 'post';
       //form.target = '_blank';
-      form.action = '${ os.path.join(proxy_conn.base_url, 'payments/new-toga-account') }'; // 'https://togatest.tylerhost.net/EPayments/Webs/EPayment.aspx';
-      
+      form.action = '${ os.path.join(proxy_conn.base_url, 'payments/new-toga-account') }';
+
       const nameField = document.createElement('input');
       nameField.type = 'hidden';
       nameField.name = 'account_name';
@@ -324,7 +320,7 @@ script: |
       const isglobal = document.createElement('input');
       isglobal.type = 'hidden';
       isglobal.name = 'global';
-      isglobal.value = ${ 'true' if new_account_is_global == 'on' else 'false'}; 
+      isglobal.value = ${ 'true' if new_account_is_global == 'on' else 'false'};
       form.appendChild(isglobal);
       const typeCode = document.createElement('input');
       typeCode.type = 'hidden';
@@ -340,11 +336,12 @@ script: |
       const url = document.createElement('input');
       url.type = 'hidden';
       url.name = 'original_url';
-      url.value = '${ interview_url(temporary=1) }';
+      url.value = '${ interview_url(temporary=1, completed='true') }';
       form.appendChild(url);
       document.body.appendChild(form);
       form.submit();
   </script>
+  % endif
 continue button field: new_payment_account
 ---
 question: |
@@ -357,17 +354,6 @@ fields:
       - WV
       - BankAccount
       - CC
----
-#code: |
-#  new_payment_account = True
-#  command('leave', url=proxy_conn.base_url + '/payments/new_toga_account')
----
-sets: proxy_conn.authed_user_id
-code: |
-  resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
-  del my_password
-  # TODO(brycew): handle improper login info
-  reauth = True
 ---
 code: |
   resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
