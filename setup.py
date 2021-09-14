@@ -57,4 +57,3 @@ setup(name='docassemble.EFSPIntegration',
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
      )
-

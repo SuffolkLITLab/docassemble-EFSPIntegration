@@ -44,11 +44,14 @@ fields:
 question: | 
   What to do?
 subquestion: |
+  ## Login status
+  Logged in: ${ reauth }
+  
   As ${ my_username }
 
-  ${ reauth }
+  ## Code cache refresh
 
-  ## User Administration
+  ## Firm admin - Users
       
   ${ action_button_html(url_ask(
       [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
@@ -61,38 +64,17 @@ subquestion: |
 
   % endfor
 
-  ## Filing
-
-  % for elem in filing_admin_list:
-  ${ action_button_html(url_ask(
-      [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+  ## Firm admin - Cross Vendor Functionality
   
-  % endfor
-
+  ## Firm admin - Password
+  
   ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
-    label='Get payment account type list') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account_list', 'show_resp']}]),
-    label='Get payment account list') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account', 'show_resp']}]),
-    label='Get payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['update_payment_account', 'show_resp']}]),
-    label='Update payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['create_payment_account', 'show_resp']}]),
-    label='Create payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['remove_payment_account', 'show_resp']}]),
-    label='Remove payment account') }
+    [{'recompute': ['change_password', 'show_resp']}]),
+    label='Change password') }
+    
+  ## Firm admin - Attorneys
+  
+  ## Firm admin - service contacts
 
   ${ action_button_html(url_ask(
     [{'recompute': ['get_service_contact_list', 'show_resp']}]),
@@ -121,7 +103,36 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['detach_service_contact', 'show_resp']}]),
     label='Detach service contact') }
+  
+  ## Firm admin - payment accounts
 
+  ${ action_button_html(url_ask(
+    [{'recompute': ['new_payment_account', 'show_resp']}]),
+    label='New payment Account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
+    label='Get payment account type list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account_list', 'show_resp']}]),
+    label='Get payment account list') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_payment_account', 'show_resp']}]),
+    label='Get payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['update_payment_account', 'show_resp']}]),
+    label='Update payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['create_payment_account', 'show_resp']}]),
+    label='Create payment account') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['remove_payment_account', 'show_resp']}]),
+    label='Remove payment account') }
   ${ action_button_html(url_ask(
     [{'recompute': ['get_global_payment_account_list', 'show_resp']}]),
     label='Get global payment account list') }
@@ -141,14 +152,36 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
     label='Remove global payment account') }
+  
+  ## User management
+  
+  ## Initial filing
+  
+  ## EFSP Cases
+  
+  ## Subsequent filing
+  
+  ## Firm admin - eService
+  
+  ## Mail service
+  
+  ## ECF Filing
+  
+  ## Court scheduling
 
-  ${ action_button_html(url_ask(
-    [{'recompute': ['change_password', 'show_resp']}]),
-    label='Change password') }
+  ## Filing
 
+  % for elem in filing_admin_list:
   ${ action_button_html(url_ask(
-    [{'recompute': ['new_payment_account', 'show_resp']}]),
-    label='New payment Account') }
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
+
+
+
+
+
 
 continue button field: all_done
 ---
@@ -311,7 +344,7 @@ question: |
   New payment account info
 fields:
   - Global?: new_account_is_global
-    datatype: checkbox
+    datatype: yesno
   - TypeCode: new_account_type_code
     choices:
       - WV
