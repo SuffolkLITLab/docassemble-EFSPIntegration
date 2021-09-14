@@ -1,0 +1,123 @@
+---
+modules:
+  - .efm_client
+---
+include:
+  - login_qs.yml
+---
+objects:
+  person_to_reg: Individual
+---
+code: |
+  user_admin_list = [
+    ('self_resend_activation', 'Resend Self Activitation Email'),
+    ('reset_user_password', 'Reset Your Password'),
+  ]
+---
+question: | 
+  What to do?
+subquestion: |
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
+      label='Register') }
+
+  % for elem in user_admin_list:
+  ${ action_button_html(url_ask(
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+
+  % endfor
+
+continue button field: all_done
+---
+generic object: Individual
+question: |
+  Name?
+fields:
+  - First Name: x.name.first
+  - Middle Name: x.name.middle
+  - Last Name: x.name.last
+---
+generic object: Individual
+question: |
+  Address?
+fields:
+  - Street: x.address.address
+  - Unit: x.address.unit
+  - City: x.address.city
+  - State: x.address.state
+  - Zip: x.address.zip_code
+  - Country: x.address.country
+---
+generic object: Individual
+question: |
+  Contact Info?
+fields:
+  - Phone Number: x.mobile_number
+  - email: x.email
+    datatype: email
+---
+question: |
+  Password?
+fields:
+  - Password: new_password
+    datatype: password
+---
+question: |
+  Registration Type
+fields:
+  - Registration type: reg_type
+    choices:
+      - INDIVIDUAL
+      - FIRM_ADMINISTRATOR
+---
+question: |
+  Email
+fields:
+  - Email: my_email
+---
+code: |
+  resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
+  del new_password, reg_type
+  register = True
+---
+code: |
+  resp = proxy_conn.reset_user_password(email=my_email)
+  del my_email
+  reset_user_password = True
+---
+code: |
+  resp = proxy_conn.self_resend_activation_email(my_email)
+  del my_email
+  self_resend_activation = True
+---
+---
+question: |
+  show resp:
+subquestion: |
+  % if isinstance(resp.data, list):
+
+  % for idx, elem in enumerate(resp.data):
+  * idx: ${ idx }
+
+    % if isinstance(elem, dict):
+    % for k, inner_elem in elem.items():
+      * ${ k }: ${ inner_elem }
+
+    % endfor
+    % else:
+      * ${ elem }
+    % endif
+
+  % endfor
+
+  % else:
+  ${ resp }
+  % endif
+continue button field: show_resp
+
+---
+mandatory: True
+code: |
+  all_done
