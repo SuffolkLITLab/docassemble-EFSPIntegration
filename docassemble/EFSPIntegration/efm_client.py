@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import re
 import json
 import logging
 from typing import List
@@ -8,8 +8,10 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject
+from docassemble.base.util import IndividualName, DAObject, log
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
+
+__all__ = ['ApiResponse','ProxyConnection']
 
 class ApiResponse(DAObject):
   def __init__(self, response_code, error_msg:str, data):
@@ -140,6 +142,12 @@ class ProxyConnection:
     If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password. 
     If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
     """
+    if hasattr(person, 'phone_number'):
+      phone_number = person.phone_number
+    elif hasattr(person, 'mobile_number'):
+      phone_number = person.mobile_number
+    else:
+      phone_number = ''
     reg_obj = {
           'registrationType': registration_type.upper(),
           'email': person.email,
@@ -150,10 +158,9 @@ class ProxyConnection:
           'streetAddressLine2': person.address.unit,
           'city': person.address.city,
           'stateCode': person.address.state,
-          'zipCode': person.address.zip_code,
+          'zipCode': person.address.zip,
           'countryCode': person.address.country,
-          # only grabs the first 10 digits of the phone number
-          'phoneNumber': person.sms_number()[-10:]
+          'phoneNumber': phone_number
     }
     if registration_type != 'INDIVIDUAL':
       reg_obj['firmName'] = firm_name_or_id
@@ -162,6 +169,22 @@ class ProxyConnection:
 
     send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
     return self._call_proxy(send)
+
+  def get_password_rules(self):
+    """
+    Password rules are stored in the global court, id 1.
+    """
+    send = lambda: self.proxy_client.get(self.base_url + "/codes/courts/1/datafields/GlobalPassword")
+    return self._call_proxy(send)
+
+  def is_valid_password(self, password):
+    results = self.get_password_rules()
+    if not results.data:
+      log(str(results))
+    try:
+      return bool(re.match(results.data.get('regularexpression'), password))
+    except:
+      return None      
 
   # Managing Firm Users
 
@@ -230,6 +253,8 @@ class ProxyConnection:
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
     return self._call_proxy(send) 
+
+  
 
   def remove_user(self, id:str):
     #if id is None:
