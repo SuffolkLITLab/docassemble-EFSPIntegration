@@ -130,7 +130,6 @@ class ProxyConnection:
         all_tokens = resp.json()
         for k, v in all_tokens.items():
           self.proxy_client.headers[k] = v
-        log(str(self.proxy_client.headers))
         # self.authed_user_id = data['userID']
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(

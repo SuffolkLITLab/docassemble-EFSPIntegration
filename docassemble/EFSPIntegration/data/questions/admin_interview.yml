@@ -607,26 +607,10 @@ code: |
   del payment_account_id
   update_payment_account = True
 ---
-# code: |
-#   resp = proxy_conn.create_payment_account(firm_id)
-#   del firm_id
-#   create_payment_account = True
----
 code: |
   resp = proxy_conn.remove_payment_account(payment_account_id)
   del payment_account_id
   remove_payment_account = True
----
-code: |
-  # TODO: not implemented anymore?
-  resp = proxy_conn.get_vitalcheck_payment_account_id(firm_id)
-  del firm_id
-  get_vitalcheck_payment_account_id = True
----
-code: |
-  # TODO(qs): how does this interact with TOGA?
-  resp = proxy_conn.create_inactive_payment_account()
-  create_inactive_payment_account = True
 ---
 code: |
   resp = proxy_conn.get_service_contact_list()
