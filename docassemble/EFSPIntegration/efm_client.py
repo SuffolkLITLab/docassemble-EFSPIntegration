@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import re
 import json
 import logging
 from typing import List
@@ -171,6 +171,22 @@ class ProxyConnection:
     send = lambda: self.proxy_client.put(self.base_url + 'adminusers/users', data=json.dumps(reg_obj))
     return self._call_proxy(send)
 
+  def get_password_rules(self):
+    """
+    Password rules are stored in the global court, id 1.
+    """
+    send = lambda: self.proxy_client.get(self.base_url + "/codes/courts/1/datafields/GlobalPassword")
+    return self._call_proxy(send)
+
+  def is_valid_password(self, password):
+    results = self.get_password_rules()
+    if not results.data:
+      log(str(results))
+    try:
+      return bool(re.match(results.data.get('regularexpression'), password))
+    except:
+      return None      
+
   # Managing Firm Users
 
   def get_user_list(self):
@@ -238,6 +254,8 @@ class ProxyConnection:
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
     return self._call_proxy(send) 
+
+  
 
   def remove_user(self, id:str):
     #if id is None:

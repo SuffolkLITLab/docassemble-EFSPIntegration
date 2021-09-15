@@ -373,8 +373,8 @@ fields:
     datatype: radio
     choices:
       - Pro se user: INDIVIDUAL
-      - Firm administrator: FIRM_ADMINISTRATOR
-      - Firm member: FIRM_ADMIN_NEW_MEMBER
+      - Administrator of a new firm: FIRM_ADMINISTRATOR
+      - New member of the current firm: FIRM_ADMIN_NEW_MEMBER
   - note: |
       ---
   - Email address: person_to_reg.email
