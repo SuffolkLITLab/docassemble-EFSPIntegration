@@ -9,7 +9,7 @@ include:
   - case_search.yml
 ---
 code: |
-  proxy_conn = ProxyConnection(url='http://efspjava:9000')
+  proxy_conn = ProxyConnection(url=get_config('efile proxy url', 'https://efile.suffolklitlab.org:9000'))
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
@@ -75,6 +75,10 @@ code: |
   efile
   summary_page
   #submitted_page
+---
+continue button field: DEBUG_trial_court
+question: |
+  ${ proxy_conn.get_courts() }
 ---
 question: |
   Are you adding any additional parties to this filing?
