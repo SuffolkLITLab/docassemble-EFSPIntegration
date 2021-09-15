@@ -13,7 +13,11 @@ code: |
   register_status
 ---
 code: |
-  resp = proxy_conn.register_user(person_to_reg, registration_type='INDIVIDUAL')
+  password_rules = proxy_conn.get_password_rules()
+---
+code: |
+  resp = proxy_conn.register_user(person_to_reg, registration_type='INDIVIDUAL', password=new_password)
+  del new_password
   register = True
 ---
 objects:
@@ -28,8 +32,12 @@ question: |
 fields:
   - Email address: person_to_reg.email
     datatype: email
+  - Password: new_password
+    datatype: password
+    validate: proxy_conn.is_valid_password
+  - note: |
+      ${ password_rules.data.get("validationmessage") }
   - Phone number: person_to_reg.phone_number
-    required: False    
   - First name: person_to_reg.name.first
   - Middle name: person_to_reg.name.middle
     required: False
@@ -56,10 +64,13 @@ question: |
   Successfully registered
   % else:
   Something went wrong when we tried to register your account
+  % if get_config('debug'):
+  ${ resp }
+  % endif
   % endif
 subquestion: |
   % if resp.is_ok():
-  You will get an email from eFileIl asking you to reset your password.
+  You will get an email from eFileIl asking you to activate your account.
   % endif
 buttons:
   - restart
