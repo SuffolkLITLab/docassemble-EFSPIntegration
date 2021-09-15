@@ -199,7 +199,7 @@ subquestion: |
   * Repeat as: waiver account; e-check
   * Repeat as: firm user: credit card, waiver, e-check
 
-  ${ interview_url(i=user_info().package + "any_filing_interview.yml") }
+  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
   
   ## EFSP Cases
   
