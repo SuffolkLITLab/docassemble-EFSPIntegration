@@ -9,6 +9,7 @@ include:
 objects:
   - person_to_reg: Individual
   - new_attorney: Individual
+  - updated_user: Individual     
 ---
 code: |
   user_admin_list = [
@@ -81,6 +82,10 @@ subquestion: |
       label=elem[1]) }
 
   % endfor
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['user_id','updated_user', 'update_user', 'show_resp']}]),
+      label="Update user") }
 
   ## Firm admin - Cross Vendor Functionality
   
@@ -383,7 +388,10 @@ fields:
     datatype: password
     
   - Phone number: person_to_reg.phone_number
-    required: False    
+  - Firm name: person_to_reg.firm_name
+    show if:
+      variable: reg_type
+      is: FIRM_ADMINISTRATOR  
   - First name: person_to_reg.name.first
   - Middle name: person_to_reg.name.middle
     required: False
@@ -402,6 +410,20 @@ fields:
   - Country: person_to_reg.address.country
     code: countries_list()
     default: US
+---
+question: |
+  Update user information
+fields:
+  - Email address: updated_user.email
+    datatype: email
+    default: ${ updated_user.default_email }
+  - First name: updated_user.name.first
+    default: ${ updated_user.default_first }
+  - Middle name: updated_user.name.middle
+    required: False
+    default: ${ updated_user.default_first }
+  - Last name: updated_user.name.last
+    default: ${ updated_user.default_first }
 ---
 imports:
   - os
@@ -473,9 +495,35 @@ fields:
       - Credit Card: CC
 ---
 code: |
-  resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
+  if reg_type == "FIRM_ADMINISTRATOR":
+    resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=person_to_reg.firm_name)    
+  else:
+    resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
   del new_password, reg_type
   register = True
+---
+depends on:
+  - user_id
+code: |
+  user_resp = proxy_conn.get_user(id=user_id)  
+  if user_resp.data:
+    updated_user.default_first = user_resp.data.get('firstName','')
+    updated_user.default_middle = user_resp.data.get('middleName','')
+    updated_user.default_last = user_resp.data.get('lastName','')
+    updated_user.default_email = user_resp.data.get('email','')
+  else:
+    updated_user.default_first = ''
+    updated_user.default_middle = ''
+    updated_user.default_last = ''
+    updated_user.default_email = ''      
+---
+code: |
+  resp = proxy_conn.update_user(user_id, 
+    email=updated_user.email,
+    first_name=updated_user.name.first,
+    last_name=updated_user.name.last,
+    middle_name=updated_user.name.middle )
+  update_user = True
 ---
 code: |
   resp = proxy_conn.remove_user(id=user_id) 
