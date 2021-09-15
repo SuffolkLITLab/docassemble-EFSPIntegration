@@ -1,6 +1,6 @@
 ---
 code: |
-  proxy_conn = ProxyConnection(url=get_config('efile proxy url', 'https://efile.suffolklitlab.org:9000'))
+  proxy_conn = ProxyConnection()
 ---
 question: |
   eFile IL Login Info
