@@ -8,8 +8,10 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject
+from docassemble.base.util import IndividualName, DAObject, log
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
+
+__all__ = ['ApiResponse','ProxyConnection']
 
 class ApiResponse(DAObject):
   def __init__(self, response_code, error_msg:str, data):
@@ -128,6 +130,7 @@ class ProxyConnection:
         all_tokens = resp.json()
         for k, v in all_tokens.items():
           self.proxy_client.headers[k] = v
+        log(str(self.proxy_client.headers))
         # self.authed_user_id = data['userID']
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(
@@ -140,6 +143,12 @@ class ProxyConnection:
     If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password. 
     If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
     """
+    if hasattr(person, 'phone_number'):
+      phone_number = person.phone_number
+    elif hasattr(person, 'mobile_number'):
+      phone_number = person.mobile_number
+    else:
+      phone_number = ''
     reg_obj = {
           'registrationType': registration_type.upper(),
           'email': person.email,
@@ -150,10 +159,9 @@ class ProxyConnection:
           'streetAddressLine2': person.address.unit,
           'city': person.address.city,
           'stateCode': person.address.state,
-          'zipCode': person.address.zip_code,
+          'zipCode': person.address.zip,
           'countryCode': person.address.country,
-          # only grabs the first 10 digits of the phone number
-          'phoneNumber': person.sms_number()[-10:]
+          'phoneNumber': phone_number
     }
     if registration_type != 'INDIVIDUAL':
       reg_obj['firmName'] = firm_name_or_id
