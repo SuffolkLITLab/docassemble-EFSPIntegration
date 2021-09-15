@@ -4,19 +4,21 @@ modules:
 ---
 include:
   - login_qs.yml
+  - case_search.yml
 ---
 objects:
-  person_to_reg: Individual
+  - person_to_reg: Individual
+  - new_attorney: Individual
 ---
 code: |
   user_admin_list = [
-    ('reauth', 'Login'),
+    ('tyler_login', 'Login'),
     ('self_change_password', 'Self Change Password'),
     ('rm_user', 'Remove user'),
     ('get_user_list', 'Get All Users'),
     ('get_user', 'Get User'),
-    ('self_resend_activation', 'Resend Self Activitation Email'),
-    ('resend_activation', 'Resend Other Activitation Email'),
+    ('self_resend_activation', 'Resend Self Activation Email'),
+    ('resend_activation', 'Resend Other Activation Email'),
   ]
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
@@ -35,10 +37,14 @@ code: |
   ]
 ---
 question: | 
-  What to do?
+  Admin Tasks
 subquestion: |
   ## Login status
-  Logged in: ${ reauth }
+  Logged in: ${ tyler_login }
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['tyler_login','show_resp']}]),
+      label="Login") }
   
   As ${ my_username }
 
@@ -48,8 +54,23 @@ subquestion: |
 
   ## Code cache refresh
 
+  Code cache refresh is initiated in the backend only.
+  It takes ~ 20 minutes to fully refresh codes.
+
   ## Firm admin - Users
-      
+  Tests:
+
+  * Create a new firm administrator of new firm
+  * Attempt to create users with bad/missing info
+  * Create additional users with approprate info
+  * Change all info for user (email, first, middle last)
+  * Attempt 6 bad logins to lock out user
+  * User firm admin to elevate the new user to admin
+  * Update firm details with new info
+  * De-elevate the new user back to regular user
+  * Use firm admin to remove user.
+  * Merge existing user into firm, verify they're in List    
+  
   ${ action_button_html(url_ask(
       [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
       label='Register') }
@@ -63,14 +84,32 @@ subquestion: |
 
   ## Firm admin - Cross Vendor Functionality
   
+  * Login to EFSP with existing Tyler creds
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['tyler_login','show_resp']}]),
+      label="Login") }
+      
   ## Firm admin - Password
-  
+
+  * Update the password GUID to expire in 20 minutes from current time (zulu time).
+  * From EFSP login page, as firm administrator initiate password reset.  
+
   ${ action_button_html(url_ask(
     [{'recompute': ['change_password', 'show_resp']}]),
     label='Change password') }
     
   ## Firm admin - Attorneys
-  
+
+  * Login as admin. Add several Attorneys
+  * Attempt to create Attorney with bad info (password that fails security requirements?)
+  * Change info for a selected attorney
+  * Use firm admin and rm at attorney from the firm  
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['tyler_login','show_resp']}]),
+      label="Login") }
+
   ## Firm admin - service contacts
 
   ${ action_button_html(url_ask(
@@ -103,6 +142,10 @@ subquestion: |
   
   ## Firm admin - payment accounts
 
+  * Credit card
+  * Waiver
+  * eCheck
+
   ${ action_button_html(url_ask(
     [{'recompute': ['new_payment_account']}]),
     label='New payment Account') }
@@ -124,10 +167,6 @@ subquestion: |
     label='Update payment account') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['create_payment_account', 'show_resp']}]),
-    label='Create payment account') }
-
-  ${ action_button_html(url_ask(
     [{'recompute': ['remove_payment_account', 'show_resp']}]),
     label='Remove payment account') }
   ${ action_button_html(url_ask(
@@ -143,28 +182,74 @@ subquestion: |
     label='Update global payment account') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['create_global_payment_account', 'show_resp']}]),
-    label='Create global payment account') }
-
-  ${ action_button_html(url_ask(
     [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
     label='Remove global payment account') }
   
   ## User management
+
+  * Change / reset password
+  * Update user
   
   ## Initial filing
+
+  * Login as Pro Se, create initial filing with credit card
+  * Continue preparing. Attach documents
+  * Submit Filing for clerk review
+  * Accept envelope
+  * Repeat as: waiver account; e-check
+  * Repeat as: firm user: credit card, waiver, e-check
+
+  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
   
   ## EFSP Cases
   
+  * EFSP Cases - Case Search - Integrated CMS
+  * EFSP Case - Broken Integration
+  * EFSP Case - Secure Case
+  * EFSP Cases - Case Search - Non Integrated CMS
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['interview_order_find_case', 'display_case']}]),
+    label="Find a case") }
+  
   ## Subsequent filing
+
+  * Subsequent Filing - Firm User
+  * Subsequent Filing - Pro Se Filer
+  * Subsequent Filing - Business Origination
+  * Subsequent Filing - Add/Remove Case Party & Attorney
+  * Subsequest Filing - Add Service and Multiple Service contacts to an existing case
+  * Subsequent Filing - Add/Remove Service Contact to case party
   
   ## Firm admin - eService
   
+  * eService
+
   ## Mail service
+
+  * Not implementing
   
   ## ECF Filing
+
+  * ECF Filing - Subsequent Filing into Non-indexed case
+  * ECF Filing - Filing with Courtesy Copies
+  * ECF Service - Access E-Service SMTP Logs
+  * ECF Service - Notification of Service
+  * ECF Service - Access Service Information History
+  * ECF Service - Access List of Attached Cases  
+
+  ## User admin notification preferences
+
+  * User Admin - Notification - Manage Prefernces
   
+  ## EFSP admin global payment account
+  
+  * EFSP Admin - Global Payment Account
+
   ## Court scheduling
+
+  * Court Scheduling - Receive Return Date
+  * Court Scheduling - Reserving a Hearing Date
 
   ## Filing
 
@@ -200,10 +285,11 @@ question: |
   Address?
 fields:
   - Street: x.address.address
+    address autocomplete: True
   - Unit: x.address.unit
   - City: x.address.city
   - State: x.address.state
-  - Zip: x.address.zip_code
+  - Zip: x.address.zip
   - Country: x.address.country
 ---
 generic object: Individual
@@ -229,6 +315,9 @@ question: |
   Court Id?
 fields:
   - Court ID: court_id
+    datatype: combobox
+    code: |
+      proxy_conn.get_courts().data
 ---
 event: query_variables
 code: |
@@ -281,10 +370,38 @@ question: |
   Registration Type
 fields:
   - Registration type: reg_type
+    datatype: radio
     choices:
-      - INDIVIDUAL
-      - FIRM_ADMINISTRATOR
-      - FIRM_ADMIN_NEW_MEMBER
+      - Pro se user: INDIVIDUAL
+      - Administrator of a new firm: FIRM_ADMINISTRATOR
+      - New member of the current firm: FIRM_ADMIN_NEW_MEMBER
+  - note: |
+      ---
+  - Email address: person_to_reg.email
+    datatype: email
+  - Password: new_password
+    datatype: password
+    
+  - Phone number: person_to_reg.phone_number
+    required: False    
+  - First name: person_to_reg.name.first
+  - Middle name: person_to_reg.name.middle
+    required: False
+  - Last name: person_to_reg.name.last
+  - note: |
+      ---
+  - Street address: person_to_reg.address.address
+    required: False
+  - Unit: person_to_reg.address.unit
+    required: False
+  - City: person_to_reg.address.city
+  - State: person_to_reg.address.state
+    code: states_list()
+    default: IL
+  - Zip: person_to_reg.address.zip
+  - Country: person_to_reg.address.country
+    code: countries_list()
+    default: US
 ---
 imports:
   - os
@@ -351,9 +468,9 @@ fields:
     datatype: yesno
   - TypeCode: new_account_type_code
     choices:
-      - WV
-      - BankAccount
-      - CC
+      - Waiver account: WV
+      - eCheck: BankAccount
+      - Credit Card: CC
 ---
 code: |
   resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
@@ -433,39 +550,41 @@ code: |
 # ---
 code: |
   resp = proxy_conn.get_firm()
-  del firm_id
   get_firm = True
 ---
 code: |
   resp = proxy_conn.update_firm()
-  del firm_id
   update_firm = True
 ---
 code: |
-  resp = proxy_conn.get_attorney_list(firm_id)
-  del firm_id
+  resp = proxy_conn.get_attorney_list()
   get_attorney_list = True
 ---
 code: |
-  resp = proxy_conn.get_attorney(firm_id, attorney_id)
-  del firm_id
+  resp = proxy_conn.get_attorney(attorney_id)
+  del attorney_id
   get_attorney = True
 ---
 code: |
-  resp = proxy_conn.create_attorney(firm_id)
-  del firm_id
-  del attorney_id
+  resp = proxy_conn.create_attorney(new_attorney.bar_number,
+    new_attorney.name.first, 
+    middle_name=new_attorney.name.middle, 
+    last_name=new_attorney.name.last)
+  del new_attorney
   create_attorney = True  
 ---
 code: |
-  resp = proxy_conn.update_attorney(firm_id, attorney_id)
-  del firm_id
+  resp = proxy_conn.update_attorney(attorney_id,
+    new_attorney.bar_number,
+    new_attorney.name.first, 
+    middle_name=new_attorney.name.middle, 
+    last_name=new_attorney.name.last)
+  del new_attorney
   del attorney_id
   update_attorney = True
 ---
 code: |
-  resp = proxy_conn.remove_attorney(firm_id, attorney_id)
-  del firm_id
+  resp = proxy_conn.remove_attorney(attorney_id)
   del attorney_id
   remove_attorney = True
 ---
@@ -474,88 +593,64 @@ code: |
   get_payment_account_type_list = True
 ---
 code: |
-  resp = proxy_conn.get_payment_account_list(firm_id)
-  del firm_id
+  resp = proxy_conn.get_payment_account_list()
   get_payment_account_list = True
 ---
 code: |
-  resp = proxy_conn.get_payment_account(firm_id, payment_account_id)
-  del firm_id
+  resp = proxy_conn.get_payment_account(payment_account_id)
   del payment_account_id
   get_payment_account = True
 ---
 code: |
-  resp = proxy_conn.update_payment_account(firm_id, payment_account_id)
-  del firm_id
+  # TODO(qs): how does this interact with TOGA?
+  resp = proxy_conn.update_payment_account(payment_account_id)
   del payment_account_id
   update_payment_account = True
 ---
 code: |
-  resp = proxy_conn.create_payment_account(firm_id)
-  del firm_id
-  create_payment_account = True
----
-code: |
-  resp = proxy_conn.remove_payment_account(firm_id, payment_account_id)
-  del firm_id
+  resp = proxy_conn.remove_payment_account(payment_account_id)
   del payment_account_id
   remove_payment_account = True
 ---
 code: |
-  # TODO: not implemented anymore?
-  resp = proxy_conn.get_vitalcheck_payment_account_id(firm_id)
-  del firm_id
-  get_vitalcheck_payment_account_id = True
----
-code: |
-  resp = proxy_conn.create_inactive_payment_account(firm_id)
-  del firm_id
-  create_inactive_payment_account = True
----
-code: |
-  resp = proxy_conn.get_service_contact_list(firm_id)
-  del firm_id
+  resp = proxy_conn.get_service_contact_list()
   get_service_contact_list = True
 ---
 code: |
   # TODO: this method is for ServiceContact, but name is not specific
-  resp = proxy_conn.get_public_list(firm_id)
-  del firm_id
+  resp = proxy_conn.get_public_list()
   get_public_list = True
 ---
 code: |
-  resp = proxy_conn.get_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.get_service_contact(service_contact_id)
   del service_contact_id
   get_service_contact = True
 ---
 code: |
-  resp = proxy_conn.create_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.create_service_contact(service_contact_id,
+    {} # TODO(qs): add appropriate keys/values
+    )
   del service_contact_id
   create_service_contact = True
 ---
 code: |
-  resp = proxy_conn.update_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.update_service_contact(service_contact_id,
+    ) # TODO(qs): update efm_client w/ real parameters
   del service_contact_id
   update_service_contact = True  
 ---
 code: |
-  resp = proxy_conn.remove_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.remove_service_contact(service_contact_id)
   del service_contact_id
   remove_service_contact = True
 ---
 code: |
-  resp = proxy_conn.attach_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.attach_service_contact(service_contact_id)
   del service_contact_id
   attach_service_contact = True
 ---
 code: |
-  resp = proxy_conn.detach_service_contact(firm_id, service_contact_id)
-  del firm_id
+  resp = proxy_conn.detach_service_contact(service_contact_id)
   del service_contact_id
   detach_service_contact = True
 ---
@@ -569,13 +664,14 @@ code: |
   get_global_payment_account = True
 ---
 code: |
+  # TODO(qs): this interacts with TOGA--not implemented
   resp = proxy_conn.update_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   update_global_payment_account = True
 ---
 code: |
+  # TODO: how does this interact with TOGA?
   resp = proxy_conn.create_global_payment_account()
-  del global_payment_account_id
   create_global_payment_account = True
 ---
 code: |

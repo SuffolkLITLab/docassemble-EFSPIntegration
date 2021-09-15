@@ -1,24 +1,40 @@
 ---
 code: |
-  proxy_conn = ProxyConnection() 
+  proxy_conn = ProxyConnection()
 ---
 question: |
   eFile IL Login Info
 subquestion: |
-  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](/start/tyler_new_user).
+  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](${ interview_url(i=user_info().package + ":new_pro_se_user.yml", reset=1) }).
 fields:
   - email/username: my_username
   - password: my_password
     datatype: password
+    hide if: user_forgot_password
+  - I forgot my password: user_forgot_password
+    datatype: yesno    
 ---
-sets: proxy_conn.authed_user_id
 code: |
-  resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
-  del my_password
-  if not resp.is_ok():
-    login_failed_screen
+  if not user_forgot_password:
+    tyler_login_resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
+    del my_password
+    if not tyler_login_resp.is_ok():
+      login_failed_screen
+  if user_forgot_password:
+    tyler_reset_password_resp = proxy_conn.reset_user_password(my_username)
+    reset_password_screen
   # TODO(brycew): handle improper login info
-  reauth = True
+  tyler_login = True
+---
+event: reset_password_screen
+question: |
+  % if tyler_reset_password_resp.is_ok():
+  Your password reset was requested
+  % else:
+  Something went wrong when we tried to reset your password
+  % endif
+buttons:
+  - restart
 ---
 event: login_failed_screen
 question: |
