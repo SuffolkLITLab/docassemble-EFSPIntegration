@@ -9,7 +9,7 @@ include:
   - case_search.yml
 ---
 code: |
-  proxy_conn = ProxyConnection(url=get_config('efile proxy url', 'https://efile.suffolklitlab.org:9000'))
+  proxy_conn = proxy_conn = ProxyConnection()
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
