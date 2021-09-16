@@ -5,14 +5,19 @@ modules:
 include:
   - login_qs.yml
   - case_search.yml
+  - docassemble.AssemblyLine:al_package.yml  
+---
+metadata:
+  title: |
+    EFSP Admin Interface  
 ---
 objects:
-  - person_to_reg: Individual
-  - new_attorney: Individual
-  - updated_attorney: Individual
-  - updated_user: Individual     
-  - new_firm: Person
-  - updated_firm: Person
+  - person_to_reg: ALIndividual
+  - new_attorney: ALIndividual
+  - updated_attorney: ALIndividual
+  - updated_user: ALIndividual     
+  - new_firm: ALPerson
+  - updated_firm: ALPerson
 ---
 code: |
   user_admin_list = [
@@ -158,7 +163,7 @@ subquestion: |
     label='Get service contact') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['create_service_contact', 'show_resp']}]),
+    [{'recompute': ['new_service_contact','create_service_contact', 'show_resp']}]),
     label='Create service contact') }
 
   ${ action_button_html(url_ask(
@@ -310,25 +315,25 @@ question: |
 fields:
   - email: email
 ---
-generic object: Individual
-question: |
-  Name?
-fields:
-  - First Name: x.name.first
-  - Middle Name: x.name.middle
-  - Last Name: x.name.last
----
-generic object: Individual
-question: |
-  Address?
-fields:
-  - Street: x.address.address
-    address autocomplete: True
-  - Unit: x.address.unit
-  - City: x.address.city
-  - State: x.address.state
-  - Zip: x.address.zip
-  - Country: x.address.country
+#generic object: Individual
+#question: |
+#  Name?
+#fields:
+#  - First Name: x.name.first
+#  - Middle Name: x.name.middle
+#  - Last Name: x.name.last
+#---
+#generic object: Individual
+#question: |
+#  Address?
+#fields:
+#  - Street: x.address.address
+#    address autocomplete: True
+#  - Unit: x.address.unit
+#  - City: x.address.city
+#  - State: x.address.state
+#  - Zip: x.address.zip
+#  - Country: x.address.country
 ---
 generic object: Individual
 question: |
@@ -393,10 +398,32 @@ fields:
   - Password: current_password
     datatype: password
 ---
+id: payment account id
 question: |
   Payment account id?
+subquestion: |
+  Enter a payment account GUID or select from existing
+  payment accounts in your firm.  
 fields:
   - Payment account id: payment_account_id
+    datatype: combobox
+    code: |
+      payment_account_labels(proxy_conn.get_payment_account_list())
+---
+code: |
+  def payment_account_labels(resp):
+    retval = []
+    if resp.data:
+      for account in resp.data:
+        if account.get("paymentAccountTypeCode") == "CC":
+          retval.append({
+            account.get("paymentAccountID"): f"{account.get('accountName')} ({account.get('cardLast4')})"
+          })
+        else: # elif account.get("paymentAccountTypeCode") == "WV":
+          retval.append({
+            account.get("paymentAccountID"): f"{account.get('accountName')}"
+          })
+    return retval
 ---
 question: |
   Global payment account id?
@@ -872,7 +899,7 @@ code: |
   get_service_contact = True
 ---
 code: |
-  resp = proxy_conn.create_service_contact(service_contact_id,
+  resp = proxy_conn.create_service_contact(
     {} # TODO(qs): add appropriate keys/values
     )
   del service_contact_id
