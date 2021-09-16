@@ -440,9 +440,9 @@ fields:
     default: ${ updated_user.default_first }
   - Middle name: updated_user.name.middle
     required: False
-    default: ${ updated_user.default_first }
+    default: ${ updated_user.default_middle }
   - Last name: updated_user.name.last
-    default: ${ updated_user.default_first }
+    default: ${ updated_user.default_last }
 ---
 imports:
   - os
@@ -534,7 +534,7 @@ code: |
     updated_user.default_first = ''
     updated_user.default_middle = ''
     updated_user.default_last = ''
-    updated_user.default_email = ''      
+    updated_user.default_email = ''
 ---
 code: |
   resp = proxy_conn.update_user(user_id, 
@@ -542,6 +542,7 @@ code: |
     first_name=updated_user.name.first,
     last_name=updated_user.name.last,
     middle_name=updated_user.name.middle )
+  del user_id
   update_user = True
 ---
 depends on:
@@ -602,6 +603,7 @@ code: |
     del_resp = proxy_conn.remove_user_roles(user_id, removed_user_roles)
   else:
     del_resp = ''
+  del user_id
   update_user_roles = True
 ---
 code: |
