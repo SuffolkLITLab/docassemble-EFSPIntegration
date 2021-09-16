@@ -84,8 +84,22 @@ subquestion: |
   % endfor
 
   ${ action_button_html(url_ask(
+      [{'recompute': ['user_id', 'get_user_roles', 'show_resp']}] ),
+      label="Get user roles") }
+
+  ${ action_button_html(url_ask(
       [{'recompute': ['user_id','updated_user', 'update_user', 'show_resp']}]),
       label="Update user") }
+
+  ${ action_button_html(url_ask(
+      [{'recompute': ['user_id', 
+        'enable_role_filer', 
+        'enable_role_admin',
+        'new_user_roles', 
+        'removed_user_roles',
+        'update_user_roles', 
+        'show_role_resp']}]),
+      label="Update user role") }
 
   ## Firm admin - Cross Vendor Functionality
   
@@ -313,8 +327,13 @@ fields:
 ---
 question: |
   User ID?
+subquestion: |
+  Type in a user GUID or choose from members in your firm.  
 fields:
   - User ID: user_id
+    datatype: combobox
+    code: |
+      [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data ]
 ---
 question: |
   Court Id?
@@ -525,6 +544,66 @@ code: |
     middle_name=updated_user.name.middle )
   update_user = True
 ---
+depends on:
+  - user_id
+code: |
+  user_role_resp = proxy_conn.get_user_roles(user_id)
+---
+code: |
+  def has_role(data, role):
+    try:
+      return len(list(filter(lambda y: y.get('roleName') == role, data))) > 0
+    except:
+      return False
+---
+code: |
+  resp = proxy_conn.get_user_roles(user_id)
+  get_user_roles = True
+---
+reconsider:
+  - user_role_resp
+question: |
+  Update user roles
+fields:
+  - Filer: enable_role_filer
+    datatype: yesno
+    default: ${ has_role(user_role_resp.data, 'FILER') }
+  - Admin: enable_role_admin
+    datatype: yesno
+    default: ${ has_role(user_role_resp.data, 'FIRM_ADMIN') }
+---
+depends on:
+  - enable_role_admin
+  - enable_role_filer
+code: |
+  # Only two roles are relevant for the civil side:
+  # FILER and FIRM_ADMIN. So our logic doesn't need to be fancy
+
+  new_user_roles = []
+  if enable_role_filer: # and 'FILER' not in user_role_resp:
+    new_user_roles.append({'location': "","roleName": "FILER"})
+  if enable_role_admin: # and 'FIRM_ADMIN' not in user_role_resp:
+    new_user_roles.append({'location': "","roleName": "FIRM_ADMIN"})
+  
+  removed_user_roles = []
+  if not enable_role_filer: 
+    removed_user_roles.append({'location': "","roleName": "FILER"})
+  if not enable_role_admin: 
+    removed_user_roles.append({'location': "","roleName": "FIRM_ADMIN"})
+  
+  
+---
+code: |
+  if len(new_user_roles): 
+    add_resp = proxy_conn.add_user_roles(user_id, new_user_roles)
+  else:
+    add_resp = ''
+  if len(removed_user_roles):
+    del_resp = proxy_conn.remove_user_roles(user_id, removed_user_roles)
+  else:
+    del_resp = ''
+  update_user_roles = True
+---
 code: |
   resp = proxy_conn.remove_user(id=user_id) 
   del user_id
@@ -575,8 +654,6 @@ code: |
   resp = proxy_conn.file_for_review(court_id)
   del court_id
   dummy_filing = True
-##################################
-# Q Starting
 ---
 code: |
   resp = proxy_conn.cancel_filing_status(court_id, filing_id)
@@ -765,6 +842,16 @@ subquestion: |
   ${ resp }
   % endif
 continue button field: show_resp
+---
+question: |
+  show resp:
+subquestion: |
+  Adding roles: ${ add_resp }
+
+  Removing roles: ${ del_resp }
+
+continue button field: show_role_resp
+
 ---
 mandatory: True
 code: |

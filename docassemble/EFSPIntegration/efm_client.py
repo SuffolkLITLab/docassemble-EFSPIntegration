@@ -254,8 +254,6 @@ class ProxyConnection:
     send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
     return self._call_proxy(send) 
 
-  
-
   def remove_user(self, id:str):
     #if id is None:
     #    id = self.authed_user_id
