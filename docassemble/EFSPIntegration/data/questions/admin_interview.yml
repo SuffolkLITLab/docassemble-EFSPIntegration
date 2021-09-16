@@ -9,11 +9,16 @@ include:
 objects:
   - person_to_reg: Individual
   - new_attorney: Individual
+  - updated_attorney: Individual
   - updated_user: Individual     
+  - new_firm: Person
+  - updated_firm: Person
 ---
 code: |
   user_admin_list = [
     ('tyler_login', 'Login'),
+    ('get_firm', 'Get Firm'),
+    ('update_firm', 'Update Firm'),
     ('self_change_password', 'Self Change Password'),
     ('rm_user', 'Remove user'),
     ('get_user_list', 'Get All Users'),
@@ -29,8 +34,10 @@ code: |
     ('cancel_filing', 'Cancel Filing'),
     ('dummy_filing', 'Dummy File'),
     ('check_filing', 'Check filing'),
-    ('get_firm', 'Get Firm'),
-    ('update_firm', 'Update Firm'),
+  ]
+
+  firm_admin_attorneys_list = [
+    ('create_attorney', 'Create attorney'),
     ('get_attorney_list', 'Get All Attorneys'),
     ('get_attorney', 'Get Attorney'),
     ('update_attorney', 'Update Attorney'),
@@ -51,7 +58,7 @@ subquestion: |
 
   ${ action_button_html(url_ask(
       [{'recompute': ['get_firm','show_resp']}]),
-      label="Get firm ID") }
+      label="Get firm") }
 
   ## Code cache refresh
 
@@ -115,6 +122,10 @@ subquestion: |
   * From EFSP login page, as firm administrator initiate password reset.  
 
   ${ action_button_html(url_ask(
+      [{'recompute': ['tyler_login','show_resp']}]),
+      label="Login") }
+
+  ${ action_button_html(url_ask(
     [{'recompute': ['change_password', 'show_resp']}]),
     label='Change password') }
     
@@ -128,6 +139,13 @@ subquestion: |
   ${ action_button_html(url_ask(
       [{'recompute': ['tyler_login','show_resp']}]),
       label="Login") }
+
+  % for elem in firm_admin_attorneys_list:
+  ${ action_button_html(url_ask(
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
 
   ## Firm admin - service contacts
 
@@ -359,8 +377,14 @@ fields:
 ---
 question: |
   Attorney id?
+subquestion: |
+  Enter an attorney's GUID or select from attorneys in your firm.  
 fields:
   - Attorney id: attorney_id
+    datatype: combobox
+    code: |
+      [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data ]
+
 ---
 question: |
   Current password?
@@ -443,6 +467,31 @@ fields:
     default: ${ updated_user.default_middle }
   - Last name: updated_user.name.last
     default: ${ updated_user.default_last }
+---
+question: |
+  Create attorney
+subquestion: |
+  Comment: Tyler validates the bar number, so you must use a real 
+  number. It's possible that 6224951 is our test number to use.
+fields:
+  - Bar number: new_attorney.bar_number
+  - First name: new_attorney.name.first
+  - Middle name: new_attorney.name.middle
+    required: False
+  - Last name: new_attorney.name.last
+---
+question: |
+  Update attorney
+fields:
+  - Bar number: updated_attorney.bar_number
+    default: ${ updated_attorney.default_bar_number }
+  - First name: updated_attorney.name.first
+    default: ${ updated_attorney.default_first }
+  - Middle name: updated_attorney.name.middle
+    required: False
+    default: ${ updated_attorney.default_middle }
+  - Last name: updated_attorney.name.last  
+    default: ${ updated_attorney.default_last }
 ---
 imports:
   - os
@@ -535,6 +584,21 @@ code: |
     updated_user.default_middle = ''
     updated_user.default_last = ''
     updated_user.default_email = ''
+---
+depends on: attorney_id
+code: |
+  atty_resp = proxy_conn.get_attorney(attorney_id)
+  if atty_resp.data:
+    updated_attorney.default_first = atty_resp.data.get('firstName','')
+    updated_attorney.default_middle = atty_resp.data.get('middleName','')
+    updated_attorney.default_last = atty_resp.data.get('lastName','')
+    updated_attorney.default_bar_number = atty_resp.data.get('barNumber','')
+  else:
+    updated_attorney.default_first = ''
+    updated_attorney.default_middle = ''
+    updated_attorney.default_last = ''
+    updated_attorney.default_bar_number = ''
+
 ---
 code: |
   resp = proxy_conn.update_user(user_id, 
@@ -680,7 +744,55 @@ code: |
   get_firm = True
 ---
 code: |
-  resp = proxy_conn.update_firm()
+  firm_details = proxy_conn.get_firm()
+  if firm_details.data:
+    updated_firm.default_name = firm_details.data.get('firmName')
+    updated_firm.default_phone = firm_details.data.get('phoneNumber')
+    updated_firm.default_address_address = firm_details.data.get('address',{}).get('addressLine1')
+    updated_firm.default_address_unit = firm_details.data.get('address',{}).get('addressLine2')
+    updated_firm.default_address_city = firm_details.data.get('address',{}).get('city')
+    updated_firm.default_address_state = firm_details.data.get('address',{}).get('state')
+    updated_firm.default_address_zip = firm_details.data.get('address',{}).get('zipCode')
+    updated_firm.default_address_country = firm_details.data.get('address',{}).get('country')
+  else:
+    updated_firm.default_name = ""
+    updated_firm.default_phone = ""
+    updated_firm.default_address_address = ""
+    updated_firm.default_address_unit = ""
+    updated_firm.default_address_city = ""
+    updated_firm.default_address_state = ""
+    updated_firm.default_address_zip = ""
+    updated_firm.default_address_country = ""
+---
+question: |
+  Update firm information
+fields:
+  - Firm name: updated_firm.name.text
+    default: ${ updated_firm.default_name }
+  - Phone number: updated_firm.phone_number    
+    default: ${ updated_firm.default_phone }
+  - Street address: updated_firm.address.address
+    address autocomplete: True    
+    default: ${ updated_firm.default_address_address }
+  - Unit: updated_firm.address.unit
+    required: False    
+    default: ${ updated_firm.default_address_unit }
+  - City: updated_firm.address.city    
+    default: ${ updated_firm.default_address_city }
+  - State: updated_firm.address.state    
+    default: ${ updated_firm.default_address_state if updated_firm.default_address_state else 'IL' }
+    code: states_list()
+  - Zip: updated_firm.address.zip
+    default: ${ updated_firm.default_address_zip }
+  - Country: updated_firm.address.country
+    default: ${ updated_firm.default_address_country if updated_firm.default_address_country else 'US' }
+    code: countries_list()
+---
+need:
+  - updated_firm.name.text
+code: |
+  resp = proxy_conn.update_firm(updated_firm)
+  del updated_firm
   update_firm = True
 ---
 code: |
@@ -702,11 +814,11 @@ code: |
 ---
 code: |
   resp = proxy_conn.update_attorney(attorney_id,
-    new_attorney.bar_number,
-    new_attorney.name.first, 
-    middle_name=new_attorney.name.middle, 
-    last_name=new_attorney.name.last)
-  del new_attorney
+    updated_attorney.bar_number,
+    updated_attorney.name.first, 
+    middle_name=updated_attorney.name.middle, 
+    last_name=updated_attorney.name.last)
+  del updated_attorney
   del attorney_id
   update_attorney = True
 ---
