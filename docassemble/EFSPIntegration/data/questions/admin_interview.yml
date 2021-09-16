@@ -68,16 +68,16 @@ subquestion: |
   ## Firm admin - Users
   Tests:
 
-  * Create a new firm administrator of new firm
-  * Attempt to create users with bad/missing info
-  * Create additional users with approprate info
-  * Change all info for user (email, first, middle last)
-  * Attempt 6 bad logins to lock out user
-  * User firm admin to elevate the new user to admin
-  * Update firm details with new info
-  * De-elevate the new user back to regular user
-  * Use firm admin to remove user.
-  * Merge existing user into firm, verify they're in List    
+  * Create a new firm administrator of new firm :far-fa-check-square:
+  * Attempt to create users with bad/missing info :far-fa-check-square:
+  * Create additional users with approprate info :far-fa-check-square:
+  * Change all info for user (email, first, middle last) :far-fa-check-square:
+  * Attempt 6 bad logins to lock out user 
+  * User firm admin to elevate the new user to admin :far-fa-check-square:
+  * Update firm details with new info :far-fa-check-square:
+  * De-elevate the new user back to regular user :far-fa-check-square:
+  * Use firm admin to remove user. :far-fa-check-square:
+  * Merge existing user into firm, verify they're in List     
   
   ${ action_button_html(url_ask(
       [{'recompute': ['person_to_reg', 'register', 'show_resp']}]),
@@ -110,7 +110,7 @@ subquestion: |
 
   ## Firm admin - Cross Vendor Functionality
   
-  * Login to EFSP with existing Tyler creds
+  * Login to EFSP with existing Tyler creds 
 
   ${ action_button_html(url_ask(
       [{'recompute': ['tyler_login','show_resp']}]),
@@ -131,10 +131,10 @@ subquestion: |
     
   ## Firm admin - Attorneys
 
-  * Login as admin. Add several Attorneys
-  * Attempt to create Attorney with bad info (password that fails security requirements?)
-  * Change info for a selected attorney
-  * Use firm admin and rm at attorney from the firm  
+  * Login as admin. Add several Attorneys :far-fa-check-square:
+  * Attempt to create Attorney with bad info (e.g., invalid bar number?) :far-fa-check-square:
+  * Change info for a selected attorney :far-fa-check-square:
+  * Use firm admin and rm at attorney from the firm   :far-fa-check-square:
 
   ${ action_button_html(url_ask(
       [{'recompute': ['tyler_login','show_resp']}]),
@@ -206,6 +206,7 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['remove_payment_account', 'show_resp']}]),
     label='Remove payment account') }
+
   ${ action_button_html(url_ask(
     [{'recompute': ['get_global_payment_account_list', 'show_resp']}]),
     label='Get global payment account list') }
@@ -410,9 +411,14 @@ fields:
 ---
 question: |
   Service contact id?
+subquestion: |
+  Type in the GUID of a service contact or select from 
+  existing contacts in your firm.
 fields:
   - Service contact id: service_contact_id
-
+    datatype: combobox
+    code: |
+      [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data]
 ---
 question: |
   Registration Type
