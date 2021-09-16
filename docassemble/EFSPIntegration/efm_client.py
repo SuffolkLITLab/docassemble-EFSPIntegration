@@ -8,7 +8,7 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject, log
+from docassemble.base.util import IndividualName, DAObject, log, Person
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 
 __all__ = ['ApiResponse','ProxyConnection']
@@ -274,8 +274,19 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
     return self._call_proxy(send)
 
-  def update_firm(self, **kwargs):
-    send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(kwargs))
+  def update_firm(self, firm:Person):
+    # firm is stateful
+    update = {
+      "firmName": firm.name.text,
+      "phoneNumber": firm.name.phone_number,
+      "addressLine1": firm.address.address,
+      "addressLine2": firm.address.unit,
+      "city": firm.address.city,
+      "state": firm.address.state,
+      "zipCode": firm.address.zip,
+      "country": firm.address.country
+    }
+    send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(update))
     return self._call_proxy(send) 
 
   # Managing Attorneys
