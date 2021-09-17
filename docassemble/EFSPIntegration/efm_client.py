@@ -2,6 +2,8 @@
 import re
 import json
 import logging
+import isodate
+from datetime import datetime, timedelta
 from typing import Union,List, Dict
 import http.client as http_client
 
@@ -446,6 +448,19 @@ class ProxyConnection:
           data=all_vars)
     return self._call_proxy(send)
 
+  def get_return_date(self, court_id:str):
+    all_vars = json.dumps(all_variables())
+    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/return_date', data=all_vars)
+    return self._call_proxy(send)
+
+  def reserve_court_date(self, court_id:str, doc_id:str, 
+      start_date:datetime, end_date:datetime):
+    estimated_duration = end_date - start_date
+    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/reserve_date', 
+        data={'doc_id': doc_id, 'estimated_duration': estimated_duration, 'start_date' : start_date, 'end_date': end_date})
+    return self._call_proxy(send)
+  
+
   def get_cases(self, court_id:str, person_name:IndividualName=None, docket_id:str=None) -> ApiResponse:
     #query_params = [('person_name', person_name), ('docket_id', docket_id)]
     #filtered_params = list(filter(lambda p: p[1] is not None, query_params))
@@ -514,11 +529,11 @@ class ProxyConnection:
   def get_datafield(self, court_id:str, field_name:str):
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/datafields/{field_name}')
     return self._call_proxy(send)
-  
+
   def get_disclaimers(self, court_id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/disclaimer_requirements')
     return self._call_proxy(send)
-  
+
 
 def serialize_person(person:Union[Person,Individual])->Dict:
   """
@@ -549,4 +564,3 @@ def serialize_person(person:Union[Person,Individual])->Dict:
   })
 
   return return_dict
-  
