@@ -18,6 +18,7 @@ objects:
   - updated_user: ALIndividual     
   - new_firm: ALPerson
   - updated_firm: ALPerson
+  - new_service_contact: ALIndividual
 ---
 code: |
   user_admin_list = [
@@ -164,7 +165,7 @@ subquestion: |
     label='Get service contact') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['new_service_contact','create_service_contact', 'show_resp']}]),
+    [{'undefine': ['new_service_contact']},{'recompute': ['create_service_contact', 'show_resp']}]),
     label='Create service contact') }
 
   ${ action_button_html(url_ask(
@@ -533,6 +534,20 @@ fields:
     default: ${ updated_user.default_middle }
   - Last name: updated_user.name.last
     default: ${ updated_user.default_last }
+---
+sets:
+  - new_service_contact.name.first
+  - new_service_contact.address.address  
+id: create service contact
+question: |
+  Create a new service contact
+fields:
+  - code: |
+      new_service_contact.name_fields()
+  - code: |
+      new_service_contact.address_fields(default_state="IL", show_country=True)
+  - Email: new_service_contact.email
+    datatype: email
 ---
 id: create attorney
 question: |
@@ -945,11 +960,15 @@ code: |
   del service_contact_id
   get_service_contact = True
 ---
+need:
+  - new_service_contact.name.first  
+  - new_service_contact.address.address
+  - new_service_contact.email
 code: |
   resp = proxy_conn.create_service_contact(
-    {} # TODO(qs): add appropriate keys/values
+      new_service_contact
     )
-  del service_contact_id
+  del new_service_contact
   create_service_contact = True
 ---
 code: |
