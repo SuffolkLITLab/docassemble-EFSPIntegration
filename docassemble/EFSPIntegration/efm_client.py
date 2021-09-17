@@ -8,8 +8,9 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject, log, Person, Individual
+from docassemble.base.util import IndividualName, DAObject, log, Person, Individual, DADateTime, as_datetime
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
+from datetime import datetime
 
 __all__ = ['ApiResponse','ProxyConnection']
 
@@ -368,12 +369,8 @@ class ProxyConnection:
         data=json.dumps(kwargs))
     return self._call_proxy(send)
 
-  def create_service_contact(self, service_contact:Individual, is_public:bool, is_in_master_list:bool, admin_copy:str=None):
+  def create_service_contact(self, service_contact:Individual):
     service_contact_dict = serialize_person(service_contact)
-    service_contact_dict['isPublic'] = is_public
-    service_contact_dict['isInFirmMaster'] = is_in_master_list
-    service_contact_dict['administrativeCopy'] = admin_copy
-    print(service_contact_dict)
     send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/service-contacts', 
         data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
@@ -408,8 +405,13 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
     return self._call_proxy(send)
 
-  def get_filing_list(self, court_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings')
+  def get_filing_list(self, court_id:str, start_date:DADateTime, end_date:DADateTime):
+    params = {
+      "user_id": None,
+      "start_date": as_datetime(start_date).format("yyyy-MM-dd"),
+      "end_date": as_datetime(end_date).format("yyyy-MM-dd")
+    }
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings', params=params)
     return self._call_proxy(send) 
 
   def get_filing(self, court_id:str, filing_id:str):
@@ -519,7 +521,7 @@ class ProxyConnection:
 def serialize_person(person:Union[Person,Individual])->Dict:
   """
   Converts a Docassemble Person or Individual into a dictionary suitable for
-  json.dumps and in format expected by Tyler-specific endpoints on the EFSPProxy
+  json.dumps and in format expected by the EFSPProxy
   """
   if isinstance(person, Individual):
     return_dict = {
@@ -529,15 +531,15 @@ def serialize_person(person:Union[Person,Individual])->Dict:
     }
   else:
     return_dict = {
-      "firmName": person.name.text if hasattr(person.name, 'text') else None,
+      "firmName": person.name.text,
     }
   return_dict.update({
     "address": {
-      "addressLine1": person.address.address if hasattr(person.address, 'address') else None,
+      "addressLine1": person.address.address,
       "addressLine2": person.address.unit if hasattr(person.address, 'unit') else None,
-      "city": person.address.city if hasattr(person.address, 'city') else None,
-      "state": person.address.state if hasattr(person.address, 'state') else None,
-      "zipCode": person.address.zip if hasattr(person.address, 'zip') else None,
+      "city": person.address.city,
+      "state": person.address.state,
+      "zipCode": person.address.zip,
       "country": person.address.country if hasattr(person.address, 'country') else 'US',
     },
     "phoneNumber": person.phone_number if hasattr(person, 'phone_number') else None,

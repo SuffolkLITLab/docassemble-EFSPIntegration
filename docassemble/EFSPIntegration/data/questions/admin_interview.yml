@@ -548,13 +548,6 @@ fields:
       new_service_contact.address_fields(default_state="IL", show_country=True)
   - Email: new_service_contact.email
     datatype: email
-  - Should this contact be public?: new_service_contact.is_public
-    datatype: yesno
-  - Should this contact be in the Firm master list?: new_service_contact.is_in_master_list
-    datatype: yesno
-  - Admin Copy: new_service_contact.admin_copy
-    datatype: email
-    required: False
 ---
 id: create attorney
 question: |
@@ -660,6 +653,17 @@ fields:
       - Waiver account: WV
       - eCheck: BankAccount
       - Credit Card: CC
+---
+question: |
+  Search dates
+fields:
+  - Start date: start_date
+    datatype: date
+    default: ${ today().minus(years=1).format("yyyy-MM-dd")}
+  - End date: end_date
+    datatype: date
+    default: ${ today().format("yyyy-MM-dd")}
+
 ---
 code: |
   if reg_type == "FIRM_ADMINISTRATOR":
@@ -788,7 +792,7 @@ code: |
   get_courts = True
 ---
 code: |
-  resp = proxy_conn.get_filing_list(court_id)
+  resp = proxy_conn.get_filing_list(court_id, start_date, end_date)
   del court_id
   get_filings = True
 ---
@@ -973,10 +977,7 @@ need:
   - new_service_contact.email
 code: |
   resp = proxy_conn.create_service_contact(
-      new_service_contact,
-      new_service_contact.is_public,
-      new_service_contact.is_in_master_list,
-      new_service_contact.admin_copy if hasattr(new_service_contact, 'admin_copy') else None
+      new_service_contact
     )
   del new_service_contact
   create_service_contact = True
@@ -992,8 +993,15 @@ code: |
   del service_contact_id
   remove_service_contact = True
 ---
+id: case party id
+question: |
+  Case party id?
+fields:
+  - no label: case_party_id
+# TODO: add lookup based on case_tracking_id
+---
 code: |
-  resp = proxy_conn.attach_service_contact(service_contact_id)
+  resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
   del service_contact_id
   attach_service_contact = True
 ---
