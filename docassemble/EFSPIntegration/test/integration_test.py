@@ -1,4 +1,4 @@
-from docassemble.base.util import Address
+from docassemble.base.util import Address, Person, Individual
 from ..efm_client import ProxyConnection, ApiResponse
 import sys
 import subprocess
@@ -33,7 +33,7 @@ class MockPerson:
     self.address.unit = 'Apt 1'
     self.address.city = 'Boston'
     self.address.state = 'MA'
-    self.address.zip_code = '12345'
+    self.address.zip = '12345'
     self.address.country = 'US'
 
   def sms_number(self) -> str:
@@ -84,26 +84,19 @@ class TestClass:
 
   def test_service_contacts(self):
     public =  self.basic_assert(self.proxy_conn.get_public_service_contacts(first_name='John'))
-    new_contact = self.proxy_conn.create_service_contact({
-      'firstName': 'Ella', 
-      'lastName': 'Doe', 
-      'email': 'ella.doe@example.com',
-      'administrativeCopy': 'ella.doe@example.com',
-      'isPublic': False,
-      'isInFirmMaster': True,
-      'address': {
-        'addressLine1': '123 Fakestreet Ave',
-        'addressLine2': 'Unit 999',
-        'city': 'Boston',
-        'state': 'MA',
-        'zipCode': '12345',
-        'country': 'US'
-      },
-      'phoneNumber': '9727133770'})
-    if self.verbose:
-      print(new_contact)
-    assert(new_contact.response_code == 200)
-    contact_id = new_contact.data
+    new_contact = Individual()
+    new_contact.name.first = 'Ella'
+    new_contact.name.last = 'Doe'
+    new_contact.email = 'ella.doe@example.com'
+    new_contact.address.address = '123 Fakestreet Ave'
+    new_contact.address.unit = 'Unit 999'
+    new_contact.address.city = 'Boston'
+    new_contact.address.state = 'MA'
+    new_contact.address.zip = '12345'
+    new_contact.address.country = 'US'
+    new_contact.phone_number = '9727133770'
+    new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, False, True, admin_copy='ella.doe@example.com'))
+    contact_id = new_c.data
     self.basic_assert(self.proxy_conn.update_service_contact(contact_id, middleName='"Lorde"', email='different@example.com'))
 
     my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
@@ -124,16 +117,19 @@ class TestClass:
     assert(firm.data['isIndividual'] == False)
     assert(firm.data['address']['addressLine1'] == '120 Tremont Street')
 
-    resp = self.proxy_conn.update_firm(firmName='Suffolk FIT Lab', address={'addressLine1': '121 Tremont Street'})
+    update_firm = Person()
+    update_firm.name.text = 'Suffolk FIT Lab'
+    update_firm.address.address = '121 Tremont Street'
+    resp = self.proxy_conn.update_firm(update_firm)
     assert(resp.response_code == 200)
 
-    new_firm = self.proxy_conn.get_firm()
-    assert(new_firm.response_code == 200)
+    new_firm = self.basic_assert(self.proxy_conn.get_firm())
     assert(new_firm.data['firmName'] == 'Suffolk FIT Lab')
     assert(new_firm.data['address']['addressLine1'] == '121 Tremont Street')
 
-    resp2 = self.proxy_conn.update_firm(firmName='Suffolk LIT Lab', address={'addressLine1': '120 Tremont Street'})
-    assert(resp2.response_code == 200)
+    update_firm.name.text = 'Suffolk LIT Lab'
+    update_firm.address.address = '120 Tremont Street'
+    self.basic_assert(self.proxy_conn.update_firm(update_firm))
 
 
   def test_users(self):
@@ -293,11 +289,10 @@ class TestClass:
 
   def test_filings(self):
     filing_list = self.basic_assert(self.proxy_conn.get_filing_list('adams'))
-    policy = self.basic_assert(self.get_policy('adams'))
+    policy = self.basic_assert(self.proxy_conn.get_policy('adams'))
 
 
 def main(args):
-  # Just writitng the test however now. Get something down.
   base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key)
@@ -305,16 +300,16 @@ def main(args):
       tyler_password=os.getenv('bryce_user_password'))
   assert(resp.response_code == 200)
   tc = TestClass(proxy_conn, verbose=True)
-  #tc.test_self_user()
-  #tc.test_firm()
+  tc.test_self_user()
+  tc.test_firm()
   tc.test_service_contacts()
-  #tc.test_get_courts()
-  #tc.test_global_payment_accounts()
-  #tc.test_payment_accounts()
-  #tc.test_attorneys()
-  #tc.test_court_record()
-  #tc.test_users()
-  #tc.test_filings()
+  tc.test_get_courts()
+  tc.test_global_payment_accounts()
+  tc.test_payment_accounts()
+  tc.test_attorneys()
+  tc.test_court_record()
+  tc.test_users()
+  tc.test_filings()
 
 if __name__ == '__main__':
   main(sys.argv)

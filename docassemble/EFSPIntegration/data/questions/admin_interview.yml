@@ -548,6 +548,13 @@ fields:
       new_service_contact.address_fields(default_state="IL", show_country=True)
   - Email: new_service_contact.email
     datatype: email
+  - Should this contact be public?: new_service_contact.is_public
+    datatype: yesno
+  - Should this contact be in the Firm master list?: new_service_contact.is_in_master_list
+    datatype: yesno
+  - Admin Copy: new_service_contact.admin_copy
+    datatype: email
+    required: False
 ---
 id: create attorney
 question: |
@@ -966,7 +973,10 @@ need:
   - new_service_contact.email
 code: |
   resp = proxy_conn.create_service_contact(
-      new_service_contact
+      new_service_contact,
+      new_service_contact.is_public,
+      new_service_contact.is_in_master_list,
+      new_service_contact.admin_copy if hasattr(new_service_contact, 'admin_copy') else None
     )
   del new_service_contact
   create_service_contact = True
