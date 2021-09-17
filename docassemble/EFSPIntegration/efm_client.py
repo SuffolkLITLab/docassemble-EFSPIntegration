@@ -369,9 +369,7 @@ class ProxyConnection:
     return self._call_proxy(send)
 
   def create_service_contact(self, service_contact:Individual):
-    service_contact_dict = {
-
-    }
+    service_contact_dict = serialize_person(service_contact)
     send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/service-contacts', 
         data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
@@ -536,9 +534,10 @@ def serialize_person(person:Union[Person,Individual])->Dict:
       "city": person.address.city,
       "state": person.address.state,
       "zipCode": person.address.zip,
-      "country": person.address.country if hasattr(person.address, 'country') else None,
+      "country": person.address.country if hasattr(person.address, 'country') else 'US',
     },
     "phoneNumber": person.phone_number if hasattr(person, 'phone_number') else None,
+    "email": person.email if hasattr(person, 'email') else ''
   })
 
   return return_dict
