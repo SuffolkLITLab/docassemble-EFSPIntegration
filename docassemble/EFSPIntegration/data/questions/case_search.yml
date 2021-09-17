@@ -30,8 +30,9 @@ code: |
       case_tracking_id
   interview_order_find_case = True      
 ---
+id: case lookup
 question: |
-  How do you want to find a pre-existing case to file into?
+  Case lookup
 field: do_what_choice
 choices:
   - Find a case by party name: search
@@ -41,6 +42,7 @@ choices:
 objects:
   - somebody: Individual
 ---
+id: tracking id
 question: |
   Enter the case tracking ID
 fields:
@@ -52,10 +54,11 @@ subquestion: |
   
 yesno: confirm_case_tracking_id
 ---
+id: party name
 question: |
   Party name to find
 subquestion: |
-  Enter the name of a party involved in the case that you want to file into.
+  Enter the name of a party involved in the case
 fields:
   - First: somebody.name.first
   - Middle: somebody.name.middle
@@ -66,13 +69,15 @@ fields:
     code: |
       name_suffix()
 ---
+id: court
 question: |
   Choose a court
 fields:
-  - Pick one!: trial_court
+  - no label: trial_court
     code: |
       all_courts
 ---
+id: debug courts
 question:  |
   ${ all_courts }
 field: _cont
@@ -86,6 +91,7 @@ code: |
   docket_id = None  
   get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last}, docket_id)
 ---
+id: docket id
 question: |
   Docket ID
 fields:
@@ -96,26 +102,30 @@ need:
 code: |
   get_case_response = proxy_conn.get_case(court_id, case_docket_id)
 ---
+id: results
 question: |
   Results
 subquestion: |
-  % for case in found_cases:
-  #### ${ case.title } (${ case.date })
-  * DocketID: ${ case.docket_id }
-  * CourtID: ${ case.court_id }
-  * TrackingID: ${ case.tracking_id }
-  * CaseCategory: ${ case.category }
-  
-  ```
-  ${ json.dumps(case.case_details) }
-  ```
-  % endfor  
+  ${ collapse_template(case_results_template) }
 fields:
   - Which case?: case_tracking_choice
     datatype: dropdown
     code: |
       found_case_options
 ---
+template: case_results_template
+subject: |
+  View case data
+content: |
+  % for case in found_cases:
+  #### ${ case.title } (${ case.date })
+  * DocketID: ${ case.docket_id }
+  * CourtID: ${ case.court_id }
+  * TrackingID: ${ case.tracking_id }
+  * CaseCategory: ${ case.category }  
+  % endfor  
+---
+id: display case
 event: display_case
 question: |
   Results
@@ -154,5 +164,4 @@ code: |
     #  message("Something went wrong")
     
     found_cases.gathered = True
-    
-    found_case_options = list(map(lambda vv: (vv.tracking_id, vv.docket_id), found_cases))
+    found_case_options = [{case.tracking_id: f"{case.docket_id} {case.title} ({case.date})"} for case in found_cases]

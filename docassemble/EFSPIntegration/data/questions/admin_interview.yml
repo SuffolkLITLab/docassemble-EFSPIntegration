@@ -189,8 +189,10 @@ subquestion: |
   * Waiver
   * eCheck
 
-  ${ action_button_html(url_ask(
-    [{'recompute': ['new_payment_account']}]),
+  ${ action_button_html(url_ask([
+      {'undefine': ['new_payment_account']},
+      {'recompute': ['new_payment_account']}
+    ]),
     label='New payment Account') }
 
   ${ action_button_html(url_ask(
@@ -253,7 +255,7 @@ subquestion: |
   * EFSP Cases - Case Search - Non Integrated CMS
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['interview_order_find_case', 'display_case']}]),
+    [{'recompute': ['interview_order_find_case']}]),
     label="Find a case") }
   
   ## Subsequent filing
@@ -562,6 +564,14 @@ fields:
 imports:
   - os
 ---
+if: |
+  new_account_type_code == 'WV'
+code: |
+  # TODO: this isn't wired up yet!
+  resp = proxy_conn.create_payment_account()
+---
+if: |
+  new_account_type_code in ['CC','BankAccount']
 comment: |
   # Basis from https://stackoverflow.com/a/133997
   # TODO(brycew): just submit this + actual payment info to the Efile server as a POST,
