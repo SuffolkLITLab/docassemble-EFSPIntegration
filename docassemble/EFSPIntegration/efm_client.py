@@ -276,16 +276,8 @@ class ProxyConnection:
 
   def update_firm(self, firm:Person):
     # firm is stateful
-    update = {
-      "firmName": firm.name.text,
-      "phoneNumber": firm.name.phone_number,
-      "addressLine1": firm.address.address,
-      "addressLine2": firm.address.unit,
-      "city": firm.address.city,
-      "state": firm.address.state,
-      "zipCode": firm.address.zip,
-      "country": firm.address.country
-    }
+    update = serialize_person(firm)
+    
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(update))
     return self._call_proxy(send) 
 
