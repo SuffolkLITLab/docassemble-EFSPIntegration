@@ -21,6 +21,9 @@ objects:
 objects:
   - service_contacts: DAList.using(object_type=DAObject)
 ---
+objects:
+  - cross_references: DADict.using(there_are_any=True)
+---
 code: |
   lead_doc.enabled = True
 ---
@@ -37,7 +40,6 @@ code: |
   trial_court
   can_check_efile
   if is_initial_filing:
-    log(case_category)
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
     tyler_case_type = case_type_map(case_type,{}).get('name')
     if case_subtype_options:
@@ -58,25 +60,40 @@ code: |
   users.gather()
   other_parties.gather()
   
-  tyler_filing_type = filing_type_map.get(filing_type,{}).get('name')
+  tyler_filing_type
   filing_description
   reference_number
-  lead_doc.optional_services.gather(complete_attribute='complete')
-  lead_doc.document_type = document_type_map.get(lead_doc.document_type_code,{}).get('name')
-  log('lead_doc code: ' + str(lead_doc.filing_component_code))
-  lead_doc.filing_component = filing_component_map.get(lead_doc.filing_component_code,{}).get('name')
-  lead_doc.enabled = True
+  lead_doc_stuff
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
+  cross_references.gather()
+  al_court_bundle.as_pdf()
+  users[0].email
+  
+  if full_court_info.data['allowreturndate']:
+    return_date
+    show_allowed_return_date
 
   if can_check_efile:
-    users[0].email
     ready_to_efile
 
   show_disclaimers
   efile
   summary_page
   #submitted_page
+---
+code: |
+  tyler_filing_type = filing_type_map[filing_type]['name']
+---
+code: |
+  return_date = proxy_conn.get_return_date(court_id, user_return_date, al_court_bundle)
+---
+code: |
+  lead_doc.optional_services.gather(complete_attribute='complete')
+  lead_doc.document_type = document_type_map.get(lead_doc.document_type_code,{}).get(name')
+  lead_doc.filing_component = filing_component_map.get(lead_doc.filing_component_code{}).get('name')
+  lead_doc.as_pdf()
+  lead_doc_stuff =True
 ---
 continue button field: DEBUG_trial_court
 question: |
@@ -93,12 +110,10 @@ subquestion: |
 continue button field: welcome
 ---
 question: |
-  Tyler login
-fields: 
-  - username: my_username
-    datatype: text
-  - password: my_password
-    datatype: password
+  You can use this return date. Is this okay?
+subquestion: |
+  ${ return_date }
+continue button field: show_allowed_return_date
 ---
 code: |
   resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
@@ -238,7 +253,7 @@ subquestion: |
   % else:
   %for dis in disclaimers: 
   
-  * ${ disclaimers }
+  * ${ dis['requirementText'] }
   % endfor
   % endif
 continue button field: show_disclaimers
@@ -252,6 +267,13 @@ fields:
   - Reference Number (optional): reference_number
     datatype: text
     required: False
+---
+question: |
+  Return Date?
+fields:
+  - Return Date: user_return_date
+    datatype: date
+    min: ${ today() }
 ---
 question: |
   Are there any optional services that you want?
@@ -282,6 +304,24 @@ question: |
 fields:
   - Multiplier: lead_doc.optional_services[i].multiplier
     datatype: integer
+---
+question: |
+  What type of cross reference is this?
+fields:
+  - Type of Reference: cross_references.new_item_name
+    datatype: dropdown
+    code: |
+      cross_ref_types
+  - Reference text: cross_references.new_item_value
+validation code: |
+  regex_str = cross_ref_type_map[cross_references.new_item_name]['validationregex']
+  if not re.search(regex_str, cross_references.new_item_value):
+    validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'])
+  
+---
+question: |
+  Do you have any other types of cross references?
+yesno: cross_references.there_is_another
 ---
 question: |
   Optional Service ${ i } fee amount?
@@ -358,12 +398,15 @@ subquestion: |
   Your selections aren't working. :/  Please try again.
 ---
 code: |
-  trial_court_resp = proxy_conn.get_courts()
+  trial_court_resp = proxy_conn.get_courts(filable_only=True)
   log(trial_court_resp)
   trial_court_options = trial_court_resp.data
 ---
 code: |
-  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id).data)
+  full_court_info = proxy_conn.get_court(court_id)
+---
+code: |
+  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, filable_only=True).data)
   if not case_category_options:
     go_back_screen
 ---
@@ -410,6 +453,7 @@ code: |
 ---
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='name')
 ---
 code: |
   service_contact_options = list(map(lambda vv: (vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}"), proxy_conn.get_service_contact_list().data))
