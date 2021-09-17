@@ -405,8 +405,12 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/public-service-contacts')
     return self._call_proxy(send)
 
-  def get_courts(self):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts')
+  def get_courts(self, filable_only:bool=False):
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts?filable_only={filable_only}')
+    return self._call_proxy(send)
+  
+  def get_court(self, court_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/codes')
     return self._call_proxy(send)
 
   def get_filing_list(self, court_id:str, start_date:DADateTime, end_date:DADateTime):
@@ -434,23 +438,25 @@ class ProxyConnection:
     send = lambda: self.proxy_client.delete(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
     return self._call_proxy(send) 
 
-  def check_filing(self, court_id:str, al_court_bundle:ALDocumentBundle):
-    _recursive_give_data_url(al_court_bundle)
+  def check_filing(self, court_id:str, court_bundle:ALDocumentBundle):
+    _recursive_give_data_url(court_bundle)
     all_vars = json.dumps(all_variables())
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
-  def file_for_review(self, court_id:str, al_court_bundle:ALDocumentBundle):
-    _recursive_give_data_url(al_court_bundle)
+  def file_for_review(self, court_id:str, court_bundle:ALDocumentBundle):
+    _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
 
-  def get_return_date(self, court_id:str):
-    all_vars = json.dumps(all_variables())
-    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/return_date', data=all_vars)
+  def get_return_date(self, court_id:str, req_return_date, court_bundle:ALDocumentBundle):
+    _recursive_give_data_url(court_bundle)
+    all_vars_obj = all_variables()
+    all_vars_obj['return_date'] = req_return_date.isoformat()
+    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/return_date', data=json.dumps(all_vars_obj))
     return self._call_proxy(send)
 
   def reserve_court_date(self, court_id:str, doc_id:str, 
@@ -490,8 +496,8 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
     return self._call_proxy(send)
   
-  def get_case_categories(self, court_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/categories')
+  def get_case_categories(self, court_id:str, filable_only:bool=False):
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/categories?filable_only={filable_only}')
     return self._call_proxy(send)
   
   def get_case_types(self, court_id:str, case_category:str, timing:str=None):
@@ -526,6 +532,10 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_codes/{filing_type}/optional_services')
     return self._call_proxy(send)
   
+  def get_cross_references(self, court_id:str, case_type:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/casetypes/{case_type}/cross_references')
+    return self._call_proxy(send)
+
   def get_datafield(self, court_id:str, field_name:str):
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/datafields/{field_name}')
     return self._call_proxy(send)
