@@ -49,6 +49,7 @@ code: |
     ('remove_attorney', 'Remove Attorney'),
   ]
 ---
+id: Admin tasks
 question: | 
   Admin Tasks
 subquestion: |
@@ -310,6 +311,7 @@ subquestion: |
 
 continue button field: all_done
 ---
+id: email
 question: |
   Self email?
 fields:
@@ -335,6 +337,7 @@ fields:
 #  - Zip: x.address.zip
 #  - Country: x.address.country
 ---
+id: contact info
 generic object: Individual
 question: |
   Contact Info?
@@ -343,12 +346,14 @@ fields:
   - email: x.email
     datatype: email
 ---
+id: password
 question: |
   Password?
 fields:
   - Password: new_password
     datatype: password
 ---
+id: user id
 question: |
   User ID?
 subquestion: |
@@ -359,6 +364,7 @@ fields:
     code: |
       [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data ]
 ---
+id: court id
 question: |
   Court Id?
 fields:
@@ -371,16 +377,19 @@ event: query_variables
 code: |
   variables_as_json()
 ---
+id: filing id
 question: |
   Filing id?
 fields:
   - Filing id: filing_id
 ---
+id: firm id
 question: |
   Firm id?
 fields:
   - Firm id: firm_id
 ---
+id: attorney id
 question: |
   Attorney id?
 subquestion: |
@@ -392,6 +401,7 @@ fields:
       [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data ]
 
 ---
+id: current password
 question: |
   Current password?
 fields:
@@ -410,6 +420,22 @@ fields:
     code: |
       payment_account_labels(proxy_conn.get_payment_account_list())
 ---
+depends on: payment_account_id
+code: |
+  payment_account_id_resp = proxy_conn.get_payment_account(payment_account_id)
+---
+depends on:
+  - payment_account_id
+id: update payment account
+question: |
+  Update payment account
+fields:
+  - Account name: payment_account_name
+    default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
+  - Active?: payment_account_active
+    datatype: yesno
+    default: ${ payment_account_id_resp.data.get('active',{}).get('value') if payment_account_id_resp.data else False}
+---
 code: |
   def payment_account_labels(resp):
     retval = []
@@ -425,17 +451,20 @@ code: |
           })
     return retval
 ---
+id: global payment account id
 question: |
   Global payment account id?
 fields:
   - Global payment account id: global_payment_account_id
 ---
+id: new password
 question: |
   New password?
 fields:
   - Password: new_user_password
     datatype: password      
 ---
+id: service contact id
 question: |
   Service contact id?
 subquestion: |
@@ -447,6 +476,7 @@ fields:
     code: |
       [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data]
 ---
+id: registration type
 question: |
   Registration Type
 fields:
@@ -487,6 +517,7 @@ fields:
     code: countries_list()
     default: US
 ---
+id: update user information
 question: |
   Update user information
 fields:
@@ -501,6 +532,7 @@ fields:
   - Last name: updated_user.name.last
     default: ${ updated_user.default_last }
 ---
+id: create attorney
 question: |
   Create attorney
 subquestion: |
@@ -513,6 +545,7 @@ fields:
     required: False
   - Last name: new_attorney.name.last
 ---
+id: update attorney
 question: |
   Update attorney
 fields:
@@ -584,6 +617,7 @@ script: |
   % endif
 continue button field: new_payment_account
 ---
+id: new payment account
 question: |
   New payment account info
 fields:
@@ -797,6 +831,7 @@ code: |
     updated_firm.default_address_zip = ""
     updated_firm.default_address_country = ""
 ---
+id: update firm information
 question: |
   Update firm information
 fields:
@@ -875,8 +910,10 @@ code: |
 ---
 code: |
   # TODO(qs): how does this interact with TOGA?
-  resp = proxy_conn.update_payment_account(payment_account_id)
+  resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
   del payment_account_id
+  del payment_account_name
+  del payment_account_active
   update_payment_account = True
 ---
 code: |
@@ -966,8 +1003,9 @@ code: |
   resp = proxy_conn.get_firm()
   get_firm = True
 ---
+id: results
 question: |
-  show resp:
+  Results of your request
 subquestion: |
   % if isinstance(resp.data, list):
 
@@ -990,8 +1028,9 @@ subquestion: |
   % endif
 continue button field: show_resp
 ---
+id: results role update
 question: |
-  show resp:
+  Results of your request
 subquestion: |
   Adding roles: ${ add_resp }
 
