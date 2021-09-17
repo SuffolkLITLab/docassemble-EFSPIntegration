@@ -323,13 +323,15 @@ class ProxyConnection:
         data=json.dumps({'account_name': account_name, 'active': active}))
     return self._call_proxy(send) 
 
-  def create_payment_account(self, **kwargs):
-    send = lambda: self.proxy_client.post(self.base_url + f'payments/payment-accounts', data=json.dumps(kwargs))
-    return self._call_proxy(send) 
-
   def remove_payment_account(self, payment_account_id):
     send = lambda: self.proxy_client.delete(self.base_url + f'payments/payment-accounts/{payment_account_id}')
     return self._call_proxy(send) 
+
+  # Both types of accounts
+  def create_waiver_account(self, account_name:str, is_global:bool):
+    url = self.base_url + f'payments/global-accounts' if is_global else self.base_url + f'payments/payment-accounts'
+    send = lambda: self.proxy_client.post(url, data=account_name)
+    return self._call_proxy(send)
 
   # Global Payment Accounts
   def get_global_payment_account_list(self):
@@ -343,10 +345,6 @@ class ProxyConnection:
   def update_global_payment_account(self, global_payment_account_id, account_name:str=None, active:bool=True):
     send = lambda: self.proxy_client.patch(self.base_url + f'payments/global-accounts/{global_payment_account_id}', 
         data=json.dumps({'account_name': account_name, 'active': active}))
-    return self._call_proxy(send) 
-
-  def create_global_payment_account(self, **kwargs):
-    send = lambda: self.proxy_client.post(self.base_url + f'payments/global-accounts', data=json.dumps(kwargs))
     return self._call_proxy(send) 
 
   def remove_global_payment_account(self, global_payment_account_id):

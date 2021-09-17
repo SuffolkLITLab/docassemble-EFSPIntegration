@@ -941,7 +941,6 @@ code: |
   get_payment_account = True
 ---
 code: |
-  # TODO(qs): how does this interact with TOGA?
   resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
   del payment_account_id
   del payment_account_name
@@ -1018,8 +1017,7 @@ code: |
   update_global_payment_account = True
 ---
 code: |
-  # TODO: how does this interact with TOGA?
-  resp = proxy_conn.create_global_payment_account()
+  resp = proxy_conn.create_waiver_account(waiver_account_name, is_global=waiver_is_global)
   create_global_payment_account = True
 ---
 code: |
