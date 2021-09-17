@@ -199,68 +199,35 @@ class TestClass:
 
 
   def test_payment_accounts(self):
-    payment_types = self.proxy_conn.get_payment_account_type_list()
-    if self.verbose:
-      print(payment_types)
-    assert(payment_types.response_code == 200)
-    all_accounts = self.proxy_conn.get_payment_account_list()
-    if self.verbose:
-      print(all_accounts)
-    assert(all_accounts.response_code == 200)
+    self.basic_assert(self.proxy_conn.get_payment_account_type_list())
+    self.basic_assert(self.proxy_conn.get_payment_account_list())
 
-    #new_account = self.proxy_conn.create_payment_account(
-    #  accountName='New Test account',
-    #  cardType='MASTERCARD',
-    #  cardLast4='1234',
-    #  cardMonth=1,
-    #  cardYear=2025,
-    #  cardHolderName='Boby Bobby')
+    new_account = self.basic_assert(self.proxy_conn.create_waiver_account('New Test account', False))
+    id = new_account.data
+    one_account = self.basic_assert(self.proxy_conn.get_payment_account(id))
+    assert(one_account.data['accountName'] == 'New Test account')
+    assert(one_account.data['paymentAccountID'] == id)
 
-    #if self.verbose:
-    #  print(new_account)
-
-    #self.proxy_conn.remove_payment_account(new_account.data['paymentAccountID'])
-
-    one_account = self.proxy_conn.get_payment_account('3edbc236-14e1-4850-b101-50c1da073e30')
-    if self.verbose:
-      print(one_account)
-    assert(one_account.response_code == 200)
-    assert(one_account.data['accountName'] == 'Waiver Account')
-    assert(one_account.data['paymentAccountID'] == '3edbc236-14e1-4850-b101-50c1da073e30')
-
-    update_account = self.proxy_conn.update_payment_account('3edbc236-14e1-4850-b101-50c1da073e30', 
-        account_name='New, Better Name')
-    assert(update_account.response_code == 200)
-    better_account = self.proxy_conn.get_payment_account('3edbc236-14e1-4850-b101-50c1da073e30')
-    assert(better_account.response_code == 200)
+    self.basic_assert(self.proxy_conn.update_payment_account(id, account_name='New, Better Name'))
+    better_account = self.basic_assert(self.proxy_conn.get_payment_account(id))
     assert(better_account.data['accountName'] == 'New, Better Name')
 
-    update_account = self.proxy_conn.update_payment_account('3edbc236-14e1-4850-b101-50c1da073e30', 
-        account_name=one_account.data['accountName'])
-    assert(update_account.response_code == 200)
+    self.basic_assert(self.proxy_conn.update_payment_account(id, account_name=one_account.data['accountName']))
+    self.basic_assert(self.proxy_conn.remove_payment_account(new_account.data))
+
+    global_account = self.basic_assert(self.proxy_conn.create_waiver_account('test global account', True))
+    self.basic_assert(self.proxy_conn.remove_global_payment_account(global_account.data))
 
 
   def test_court_record(self):
-    cases = self.proxy_conn.get_cases('adams', person_name={'first': 'John', 'last': 'Brown'})
-    assert(cases.response_code == 200)
+    cases = self.basic_assert(self.proxy_conn.get_cases('adams', person_name={'first': 'John', 'last': 'Brown'}))
     assert(len(cases.data) > 0)
-    if self.verbose:
-      print(cases)
     case_id = cases.data[0]['value']['caseTrackingID']['value']
-    case = self.proxy_conn.get_case('adams', case_id)
-    assert(case.response_code == 200)
-    if self.verbose:
-      print(case)
+    case = self.basic_assert(self.proxy_conn.get_case('adams', case_id))
     doc_resp = self.proxy_conn.get_document('adams', case_id)
     assert(doc_resp.response_code == 405)
-    serv_info = self.proxy_conn.get_service_information('adams', case_id)
-    assert(serv_info.response_code == 200)
-    if self.verbose:
-      print(serv_info)
-    history_serv_info = self.proxy_conn.get_service_information_history('adams', case_id)
-    assert(history_serv_info.response_code == 200)
-    if self.verbose:
-      print(history_serv_info)
+    serv_info = self.basic_assert(self.proxy_conn.get_service_information('adams', case_id))
+    history_serv_info = self.basic_assert(self.proxy_conn.get_service_information_history('adams', case_id))
 
     serv_id = 'abcd'  # serv_info.data[0]
     attach_cases = self.proxy_conn.get_service_attach_case_list('adams', serv_id)
