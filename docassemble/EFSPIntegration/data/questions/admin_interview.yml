@@ -54,7 +54,23 @@ id: Admin tasks
 question: | 
   Admin Tasks
 subquestion: |
-  ## Login status
+  ${ tabbed_templates_html("Tests", login_status_template,
+      code_cache_template,
+      firm_admin_users_template,
+      firm_admin_attorneys_template,
+      firm_admin_service_contacts,
+      firm_admin_payment_template,
+      initial_filing_template,
+      efsp_template,
+      subsequent_filing_template,
+      eservice_template,
+      ecf_template,
+      filings_template) }
+continue button field: all_done
+---
+template: login_status_template
+subject: Login
+content: |
   Logged in: ${ tyler_login }
 
   ${ action_button_html(url_ask(
@@ -66,13 +82,24 @@ subquestion: |
   ${ action_button_html(url_ask(
       [{'recompute': ['get_firm','show_resp']}]),
       label="Get firm") }
+      
+  ### Firm admin - Cross Vendor Functionality
 
-  ## Code cache refresh
-
+  * Login to EFSP with existing Tyler creds 
+  
+  * Notification preferences
+---
+template: code_cache_template
+subject: |
+  Refresh Codes
+content: |
   Code cache refresh is initiated in the backend only.
   It takes ~ 20 minutes to fully refresh codes.
-
-  ## Firm admin - Users
+---
+template: firm_admin_users_template
+subject: |
+  Users
+content: |  
   Tests:
 
   * Create a new firm administrator of new firm :far-fa-check-square:
@@ -115,37 +142,18 @@ subquestion: |
         'show_role_resp']}]),
       label="Update user role") }
 
-  ## Firm admin - Cross Vendor Functionality
-  
-  * Login to EFSP with existing Tyler creds 
-
-  ${ action_button_html(url_ask(
-      [{'recompute': ['tyler_login','show_resp']}]),
-      label="Login") }
-      
-  ## Firm admin - Password
-
-  * Update the password GUID to expire in 20 minutes from current time (zulu time).
-  * From EFSP login page, as firm administrator initiate password reset.  
-
-  ${ action_button_html(url_ask(
-      [{'recompute': ['tyler_login','show_resp']}]),
-      label="Login") }
-
   ${ action_button_html(url_ask(
     [{'recompute': ['change_password', 'show_resp']}]),
     label='Change password') }
-    
-  ## Firm admin - Attorneys
-
+---
+template: firm_admin_attorneys_template
+subject: |
+  Attorneys
+content: |
   * Login as admin. Add several Attorneys :far-fa-check-square:
   * Attempt to create Attorney with bad info (e.g., invalid bar number?) :far-fa-check-square:
   * Change info for a selected attorney :far-fa-check-square:
   * Use firm admin and rm at attorney from the firm   :far-fa-check-square:
-
-  ${ action_button_html(url_ask(
-      [{'recompute': ['tyler_login','show_resp']}]),
-      label="Login") }
 
   % for elem in firm_admin_attorneys_list:
   ${ action_button_html(url_ask(
@@ -153,9 +161,11 @@ subquestion: |
       label=elem[1]) }
   
   % endfor
-
-  ## Firm admin - service contacts
-
+---
+template: firm_admin_service_contacts
+subject: |
+  Service contacts
+content: |
   ${ action_button_html(url_ask(
     [{'recompute': ['get_service_contact_list', 'show_resp']}]),
     label='Get service contact list') }
@@ -183,9 +193,11 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['detach_service_contact', 'show_resp']}]),
     label='Detach service contact') }
-  
-  ## Firm admin - payment accounts
-
+---
+template: firm_admin_payment_template
+subject: |
+  Payment accounts
+content: |
   * Credit card
   * Waiver
   * eCheck
@@ -231,14 +243,11 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
     label='Remove global payment account') }
-  
-  ## User management
-
-  * Change / reset password
-  * Update user
-  
-  ## Initial filing
-
+---
+template: initial_filing_template
+subject: |
+  Initial filing
+content: |
   * Login as Pro Se, create initial filing with credit card
   * Continue preparing. Attach documents
   * Submit Filing for clerk review
@@ -247,9 +256,11 @@ subquestion: |
   * Repeat as: firm user: credit card, waiver, e-check
 
   ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
-  
-  ## EFSP Cases
-  
+---  
+template: efsp_template
+subject: |
+  Case Search
+content: |  
   * EFSP Cases - Case Search - Integrated CMS
   * EFSP Case - Broken Integration
   * EFSP Case - Secure Case
@@ -258,9 +269,11 @@ subquestion: |
   ${ action_button_html(url_ask(
     [{'recompute': ['interview_order_find_case']}]),
     label="Find a case") }
-  
-  ## Subsequent filing
-
+---
+template: subsequent_filing_template
+subject: |
+  Subsequent filing
+content: |
   * Subsequent Filing - Firm User
   * Subsequent Filing - Pro Se Filer
   * Subsequent Filing - Business Origination
@@ -268,51 +281,37 @@ subquestion: |
   * Subsequest Filing - Add Service and Multiple Service contacts to an existing case
   * Subsequent Filing - Add/Remove Service Contact to case party
   
-  ## Firm admin - eService
-  
+  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }  
+---
+template: eservice_template
+subject: |
+  Firm admin - eService
+content: |  
   * eService
-
-  ## Mail service
-
-  * Not implementing
-  
-  ## ECF Filing
-
+---
+template: ecf_template
+subject: |
+  ECF Filing
+content: |
   * ECF Filing - Subsequent Filing into Non-indexed case
   * ECF Filing - Filing with Courtesy Copies
   * ECF Service - Access E-Service SMTP Logs
   * ECF Service - Notification of Service
   * ECF Service - Access Service Information History
   * ECF Service - Access List of Attached Cases  
-
-  ## User admin notification preferences
-
-  * User Admin - Notification - Manage Prefernces
   
-  ## EFSP admin global payment account
-  
-  * EFSP Admin - Global Payment Account
-
-  ## Court scheduling
-
-  * Court Scheduling - Receive Return Date
-  * Court Scheduling - Reserving a Hearing Date
-
-  ## Filing
-
+  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
+---
+template: filings_template
+subject: |
+  Filings
+content: |  
   % for elem in filing_admin_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
       label=elem[1]) }
   
   % endfor
-
-
-
-
-
-
-continue button field: all_done
 ---
 id: email
 question: |
@@ -583,7 +582,11 @@ if: |
   new_account_type_code == 'WV'
 code: |
   # TODO: this isn't wired up yet!
-  resp = proxy_conn.create_payment_account()
+  resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
+  del new_account_name
+  del new_account_is_global
+  show_resp
+  new_payment_account = True 
 ---
 if: |
   new_account_type_code in ['CC','BankAccount']
@@ -613,7 +616,7 @@ script: |
       const nameField = document.createElement('input');
       nameField.type = 'hidden';
       nameField.name = 'account_name';
-      nameField.value = 'my_name';
+      nameField.value = '${ new_account_name }';
       form.appendChild(nameField);
       const isglobal = document.createElement('input');
       isglobal.type = 'hidden';
@@ -646,9 +649,11 @@ id: new payment account
 question: |
   New payment account info
 fields:
-  - Global?: new_account_is_global
+  - Global: new_account_is_global
     datatype: yesno
-  - TypeCode: new_account_type_code
+  - Name of account: new_account_name
+  - Type: new_account_type_code
+    datatype: radio
     choices:
       - Waiver account: WV
       - eCheck: BankAccount
@@ -1023,10 +1028,6 @@ code: |
   resp = proxy_conn.update_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   update_global_payment_account = True
----
-code: |
-  resp = proxy_conn.create_waiver_account(waiver_account_name, is_global=waiver_is_global)
-  create_global_payment_account = True
 ---
 code: |
   resp = proxy_conn.remove_global_payment_account(global_payment_account_id)
