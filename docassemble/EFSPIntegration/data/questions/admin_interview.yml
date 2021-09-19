@@ -19,6 +19,7 @@ objects:
   - new_firm: ALPerson
   - updated_firm: ALPerson
   - new_service_contact: ALIndividual
+  - updated_service_contact: ALIndividual
 ---
 code: |
   user_admin_list = [
@@ -1078,9 +1079,77 @@ code: |
   del new_service_contact
   create_service_contact = True
 ---
+id: update service contact information
+question: |
+  Update service contact
+fields:
+  - Email address: updated_service_contact.email
+    datatype: email
+    default: ${ updated_service_contact.default_email }
+  - First name: updated_service_contact.name.first
+    default: ${ updated_service_contact.default_first }
+  - Middle name: updated_service_contact.name.middle
+    required: False
+    default: ${ updated_service_contact.default_middle }
+  - Last name: updated_service_contact.name.last
+    default: ${ updated_service_contact.default_last }
+  - Phone number: person_to_reg.phone_number
+    default: ${ updated_service_contact.default_phone }
+  - Street address: updated_service_contact.address.address
+    address autocomplete: True
+    required: False
+    default: ${ updated_service_contact.default_address }
+  - Unit: updated_service_contact.address.unit
+    default: ${ updated_service_contact.default_unit }
+    required: False
+  - City: updated_service_contact.address.city
+    default: ${ updated_service_contact.default_city }
+  - State: updated_service_contact.address.state
+    default: ${ updated_service_contact.default_state }
+    code: states_list()
+  - Zip: updated_service_contact.address.zip
+    default: ${ updated_service_contact.default_zip }
+  - Country: updated_service_contact.address.country
+    code: countries_list()
+    default: ${ updated_service_contact.default_country }
+
+---
+code: |    
+  current_service_contact = proxy_conn.get_service_contact(service_contact_id).data
+  if current_service_contact:
+    updated_service_contact.default_email = current_service_contact.get('email')
+    updated_service_contact.default_first = current_service_contact.get('firstName')
+    updated_service_contact.default_middle = current_service_contact.get('middleName')
+    updated_service_contact.default_last = current_service_contact.get('lastName')
+    updated_service_contact.default_phone = current_service_contact.get('phoneNumber')
+    updated_service_contact.default_address = current_service_contact.get('address',{}).get('addressLine1')
+    updated_service_contact.default_unit = current_service_contact.get('address',{}).get('addressLine2')
+    updated_service_contact.default_city = current_service_contact.get('address',{}).get('city')
+    updated_service_contact.default_state = current_service_contact.get('address',{}).get('state')
+    updated_service_contact.default_zip = current_service_contact.get('address',{}).get('zipCode')
+    updated_service_contact.default_country = current_service_contact.get('address',{}).get('country')
+  else:
+    updated_service_contact.default_email = ""
+    updated_service_contact.default_first = ""
+    updated_service_contact.default_middle = ""
+    updated_service_contact.default_last = ""
+    updated_service_contact.default_phone = ""
+    updated_service_contact.default_address = ""
+    updated_service_contact.default_unit = ""
+    updated_service_contact.default_city = ""
+    updated_service_contact.default_state = ""
+    updated_service_contact.default_zip = ""
+    updated_service_contact.default_country =     ""
+
+---
+need:
+  - updated_service_contact.name.first  
+  - updated_service_contact.address.address
+  - updated_service_contact.email
 code: |
   resp = proxy_conn.update_service_contact(service_contact_id,
-    ) # TODO(qs): update efm_client w/ real parameters
+    updated_service_contact) # TODO(qs): update efm_client w/ real parameters
+  del updated_service_contact
   del service_contact_id
   update_service_contact = True  
 ---
