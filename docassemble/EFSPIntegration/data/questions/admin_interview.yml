@@ -71,6 +71,11 @@ continue button field: all_done
 template: login_status_template
 subject: Login
 content: |
+  Tests:
+  
+  * Login to EFSP with existing Tyler creds 
+  * Update notification preferences
+
   Logged in: ${ tyler_login }
 
   ${ action_button_html(url_ask(
@@ -82,12 +87,14 @@ content: |
   ${ action_button_html(url_ask(
       [{'recompute': ['get_firm','show_resp']}]),
       label="Get firm") }
-      
-  ### Firm admin - Cross Vendor Functionality
-
-  * Login to EFSP with existing Tyler creds 
   
-  * Notification preferences
+  ${ action_button_html(url_ask(
+      [{'recompute': ['get_notification_preferences','show_resp']}]),
+      label="Get notification preferences") }
+
+   ${ action_button_html(url_ask(
+      [{'recompute': ['update_notification_preferences','show_resp']}]),
+      label="Update notification preferences") }
 ---
 template: code_cache_template
 subject: |
@@ -870,6 +877,43 @@ code: |
   resp = proxy_conn.check_filing(court_id, al_court_bundle)
   del court_id
   check_filing = True
+---
+code: |
+  resp = proxy_conn.get_notification_preferences()
+  get_notification_preferences = True
+---
+code: |
+  existing_notification_preferences = proxy_conn.get_notification_preferences()  
+---
+code: |
+  notification_options = proxy_conn.get_notification_options()
+---
+reconsider:
+  - existing_notification_preferences
+id: notification preferences
+question: |
+  Notification preferences
+fields:
+  - label: |
+      Select the updates that you would like to receive
+    field: interim_notification_selections
+    datatype: checkboxes
+    code: |
+      [{
+         y.get('code'): y.get('description'), 
+         'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
+       } for y in notification_options.data ]
+---
+code: |
+  # sample:
+  # {'code': 'SERVICEUNDELIVERABLE', 'isActive': False}
+  new_notification_preferences = [
+    {'code': item[0], 'isActive': item[1]} for item in interim_notification_selections.items()
+  ]
+  resp = proxy_conn.update_notification_preferences(new_notification_preferences)
+  del new_notification_preferences
+  del interim_notification_selections
+  update_notification_preferences = True
 ---
 # code: |
 #   resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
