@@ -38,7 +38,7 @@ code: |
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
     ('cancel_filing', 'Cancel Filing'),
-    ('dummy_filing', 'Dummy File'),
+    # ('dummy_filing', 'Dummy File'),
     ('check_filing', 'Check filing'),
   ]
 
@@ -384,6 +384,34 @@ question: |
   Filing id?
 fields:
   - Filing id: filing_id
+    datatype: combobox
+    code: |
+      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today()).data]
+---
+code: |
+  from datetime import datetime 
+
+  def filing_id_and_label(case):
+    tracking_id = case.get('caseTrackingID',{}).get('value')
+    try:
+      filing_id = case.get('documentIdentification',[{},{}])[1].get('identificationID',{}).get('value')
+    except IndexError:
+      filing_id = 'id-not-found'
+    filer_name = case.get('documentSubmitter',{}).get('entityRepresentation',{}).get('value',{}).get('personName',{}).get('personFullName',{}).get('value')
+    document_description = case.get('documentDescriptionText',{}).get('value')
+    # Filing code is plain English
+    filing_code = next(
+      filter(
+        lambda category: category.get('name') == "{urn:tyler:ecf:extensions:Common}FilingCode", 
+        case.get("documentCategoryText", [])
+        ),{}).get('value',{}).get('value')
+    try:
+      filing_date = as_datetime(datetime.utcfromtimestamp(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
+    except:
+      ''
+    filing_label = f"{filer_name} - {document_description} ({filing_code}) {filing_date}"
+    return { filing_id: filing_label }
+    # case_category_id = next(filter(lambda category: category.case.get('documentCategoryText',{})
 ---
 id: firm id
 question: |
@@ -599,6 +627,8 @@ comment: |
   #      ' <button>Click here if not working</button> </input>' +
 question: |
   New payment account
+# TODO: using url_args this way means you can only create one
+# payment account per session!
 subquestion: |
   % if url_args.get('completed', 'false') == 'true':
   You've created your new payment account!
