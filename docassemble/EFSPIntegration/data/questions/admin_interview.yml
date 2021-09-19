@@ -1148,7 +1148,7 @@ need:
   - updated_service_contact.email
 code: |
   resp = proxy_conn.update_service_contact(service_contact_id,
-    updated_service_contact) # TODO(qs): update efm_client w/ real parameters
+    updated_service_contact) # TODO(qs): are there additional params to add here?
   del updated_service_contact
   del service_contact_id
   update_service_contact = True  
