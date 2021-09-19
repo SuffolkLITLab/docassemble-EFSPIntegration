@@ -71,11 +71,6 @@ continue button field: all_done
 template: login_status_template
 subject: Login
 content: |
-  Tests:
-  
-  * Login to EFSP with existing Tyler creds 
-  * Update notification preferences
-
   Logged in: ${ tyler_login }
 
   ${ action_button_html(url_ask(
@@ -87,7 +82,11 @@ content: |
   ${ action_button_html(url_ask(
       [{'recompute': ['get_firm','show_resp']}]),
       label="Get firm") }
-  
+      
+  ### Firm admin - Cross Vendor Functionality
+
+  * Login to EFSP with existing Tyler creds 
+
   ${ action_button_html(url_ask(
       [{'recompute': ['get_notification_preferences','show_resp']}]),
       label="Get notification preferences") }
@@ -95,6 +94,8 @@ content: |
    ${ action_button_html(url_ask(
       [{'recompute': ['update_notification_preferences','show_resp']}]),
       label="Update notification preferences") }
+ 
+  * Notification preferences
 ---
 template: code_cache_template
 subject: |
@@ -393,12 +394,12 @@ fields:
   - Filing id: filing_id
     datatype: combobox
     code: |
-      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today()).data]
+      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1) ).data]
 ---
 code: |
   from datetime import datetime 
 
-  def filing_id_and_label(case):
+  def filing_id_and_label(case, style="FILING_ID"):
     tracking_id = case.get('caseTrackingID',{}).get('value')
     try:
       filing_id = case.get('documentIdentification',[{},{}])[1].get('identificationID',{}).get('value')
@@ -417,7 +418,10 @@ code: |
     except:
       ''
     filing_label = f"{filer_name} - {document_description} ({filing_code}) {filing_date}"
-    return { filing_id: filing_label }
+    if style == "FILING_ID":
+      return { filing_id: filing_label }
+    else:
+      return { tracking_id: filing_label }
     # case_category_id = next(filter(lambda category: category.case.get('documentCategoryText',{})
 ---
 id: firm id
@@ -512,6 +516,16 @@ fields:
     datatype: combobox
     code: |
       [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data]
+---
+id: tracking id
+question: |
+  Enter the case tracking ID
+fields:
+  - Case Tracking ID: firm_case_tracking_id
+    datatype: combobox
+    code: |
+      [filing_id_and_label(y,style="CASE_TRACKING_ID") for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1)).data]
+
 ---
 id: registration type
 question: |
@@ -704,7 +718,7 @@ fields:
     default: ${ today().minus(years=1).format("yyyy-MM-dd")}
   - End date: end_date
     datatype: date
-    default: ${ today().format("yyyy-MM-dd")}
+    default: ${ today().plus(days=1).format("yyyy-MM-dd")}
 
 ---
 code: |
@@ -888,21 +902,25 @@ code: |
 code: |
   notification_options = proxy_conn.get_notification_options()
 ---
-reconsider:
-  - existing_notification_preferences
+sets: interim_notification_selections
 id: notification preferences
 question: |
   Notification preferences
+subquestion: |
+  ${ notification_options }  
 fields:
-  - label: |
-      Select the updates that you would like to receive
-    field: interim_notification_selections
-    datatype: checkboxes
-    code: |
-      [{
-         y.get('code'): y.get('description'), 
-         'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
-       } for y in notification_options.data ]
+  - code: |
+      {
+        "label": "Select the updates that you would like to receive",
+        "field": 'interim_notification_selections',
+        "datatype": "checkboxes",
+        "options": [
+          {
+            y.get('code'): y.get('description'), 
+            'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
+          } for y in notification_options.data
+        ]
+      }
 ---
 code: |
   # sample:
@@ -1079,13 +1097,15 @@ fields:
 # TODO: add lookup based on case_tracking_id
 ---
 code: |
-  resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
+  resp = proxy_conn.attach_service_contact(service_contact_id, firm_case_tracking_id, case_party_id)
   del service_contact_id
+  del firm_case_tracking_id
   attach_service_contact = True
 ---
 code: |
-  resp = proxy_conn.detach_service_contact(service_contact_id)
+  resp = proxy_conn.detach_service_contact(service_contact_id, firm_case_tracking_id)
   del service_contact_id
+  del firm_case_tracking_id
   detach_service_contact = True
 ---
 code: |
