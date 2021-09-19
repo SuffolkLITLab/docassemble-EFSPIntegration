@@ -362,9 +362,10 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}')
     return self._call_proxy(send)
 
-  def update_service_contact(self, service_contact_id, **kwargs):
+  def update_service_contact(self, service_contact_id, service_contact:Individual):
+    service_contact_dict = serialize_person(service_contact)
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}', 
-        data=json.dumps(kwargs))
+        data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
 
   def create_service_contact(self, service_contact:Individual):
