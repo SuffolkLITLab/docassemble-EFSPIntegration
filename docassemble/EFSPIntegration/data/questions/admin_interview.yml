@@ -597,6 +597,12 @@ fields:
       new_service_contact.address_fields(default_state="IL", show_country=True)
   - Email: new_service_contact.email
     datatype: email
+  - Make this contact public: new_service_contact.is_public
+    datatype: yesno
+  - Add to master list: new_service_contact.is_in_master_list
+    datatype: yesno
+  - Admin copy (optional): new_service_contact.admin_copy
+    required: False
 ---
 id: create attorney
 question: |
@@ -1074,7 +1080,10 @@ need:
   - new_service_contact.email
 code: |
   resp = proxy_conn.create_service_contact(
-      new_service_contact
+      new_service_contact,
+      new_service_contact.is_public,
+      new_service_contact.is_in_master_list,
+      new_service_contact.admin_copy,
     )
   del new_service_contact
   create_service_contact = True
