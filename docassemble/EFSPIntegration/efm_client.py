@@ -370,6 +370,9 @@ class ProxyConnection:
 
   def create_service_contact(self, service_contact:Individual, is_public:bool, is_in_master_list:bool, admin_copy:str=None):     
     service_contact_dict = serialize_person(service_contact)
+    service_contact_dict['isPublic'] = is_public
+    service_contact_dict['isInFirmMaster'] = is_in_master_list
+    service_contact_dict['administrativeCopy'] = admin_copy
     send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/service-contacts', 
         data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
@@ -520,7 +523,7 @@ class ProxyConnection:
 def serialize_person(person:Union[Person,Individual])->Dict:
   """
   Converts a Docassemble Person or Individual into a dictionary suitable for
-  json.dumps and in format expected by the EFSPProxy
+  json.dumps and in format expected by Tyler-specific endpoints on the EFSPProxy
   """
   if isinstance(person, Individual):
     return_dict = {
@@ -530,7 +533,7 @@ def serialize_person(person:Union[Person,Individual])->Dict:
     }
   else:
     return_dict = {
-      "firmName": person.name.text,
+      "firmName": person.name.text if hasattr(person.name, 'text') else None,
     }
   return_dict.update({
     "address": {
