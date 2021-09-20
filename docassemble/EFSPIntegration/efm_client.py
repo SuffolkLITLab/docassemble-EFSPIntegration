@@ -362,13 +362,13 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}')
     return self._call_proxy(send)
 
-  def update_service_contact(self, service_contact_id, service_contact:Individual):
+  def update_service_contact(self, service_contact_id, service_contact:Individual, is_public:bool, is_in_master_list:bool, admin_copy:str=None):
     service_contact_dict = serialize_person(service_contact)
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}', 
         data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
 
-  def create_service_contact(self, service_contact:Individual):
+  def create_service_contact(self, service_contact:Individual, is_public:bool, is_in_master_list:bool, admin_copy:str=None):     
     service_contact_dict = serialize_person(service_contact)
     send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/service-contacts', 
         data=json.dumps(service_contact_dict))
@@ -534,11 +534,11 @@ def serialize_person(person:Union[Person,Individual])->Dict:
     }
   return_dict.update({
     "address": {
-      "addressLine1": person.address.address,
+      "addressLine1": person.address.address if hasattr(person.address, 'address') else None,
       "addressLine2": person.address.unit if hasattr(person.address, 'unit') else None,
-      "city": person.address.city,
-      "state": person.address.state,
-      "zipCode": person.address.zip,
+      "city": person.address.city if hasattr(person.address, 'city') else None,
+      "state": person.address.state if hasattr(person.address, 'state') else None,
+      "zipCode": person.address.zip if hasattr(person.address, 'zip') else None,
       "country": person.address.country if hasattr(person.address, 'country') else 'US',
     },
     "phoneNumber": person.phone_number if hasattr(person, 'phone_number') else None,
