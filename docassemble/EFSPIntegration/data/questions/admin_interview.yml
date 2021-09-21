@@ -67,7 +67,7 @@ subquestion: |
       eservice_template,
       ecf_template,
       filings_template) }
-continue button field: all_done
+event: all_done
 ---
 template: login_status_template
 subject: Login
