@@ -263,9 +263,9 @@ yesno: lead_doc.optional_services.there_is_another
 ---
 code: |
   my_code = lead_doc.optional_services[i].code
-  if optional_service_map[my_code]['multiplier']:
+  if optional_service_map.get(my_code,{}).get('multiplier'):
     lead_doc.optional_services[i].multiplier
-  if optional_service_map[my_code]['hasfeeprompt']:
+  if optional_service_map.get(my_code,{}).get('hasfeeprompt'):
     lead_doc.optional_services[i].fee_amount
   lead_doc.optional_services[i].complete = True
 ---
