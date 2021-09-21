@@ -194,6 +194,8 @@ fields:
     code: |
       document_type_options
 ---
+if: |
+  not exactly_one_required_filing_component(filing_component_options)
 question: |
   Filing Component
 fields:
@@ -201,6 +203,18 @@ fields:
     datatype: dropdown
     code: |
       filing_component_options
+---
+if: |
+  exactly_one_required_filing_component(filing_component_options)
+code: |
+  lead_doc.filing_component_code = next(iter(filing_component_options))[0]
+---
+code: |
+  def exactly_one_required_filing_component(filing_component_options):
+    if len(filing_component_options) > 1:
+      return False
+    filing_component_code = next(iter(filing_component_options))[0]
+    return filing_component_map.get(filing_component_code,{}).get('required')
 ---
 question: |
   Disclaimers
