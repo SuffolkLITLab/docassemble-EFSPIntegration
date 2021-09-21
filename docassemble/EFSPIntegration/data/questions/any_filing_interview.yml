@@ -51,6 +51,7 @@ code: |
     is_adding_new_parties = False
   else:
     interview_order_find_case
+    load_existing_case_defaults
     # existing_case_to_add_too = case_tracking_id
     is_adding_new_parties
 
@@ -107,6 +108,19 @@ code: |
 question: |
   Is this an initial filing?
 yesno: is_initial_filing
+---
+code: |
+  # NOTE we could refactor case_search.yml to use a datatype: object selector
+  # but I think this essentially works the same in the background
+  selected_existing_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases ),DAEmpty())
+---
+code: |
+  if selected_existing_case:
+    if selected_existing_case.category:
+      case_category = selected_existing_case.category
+    if selected_existing_case.case_type:
+      case_type = selected_existing_case.case_type
+  load_existing_case_defaults = True
 ---
 question: | 
   Location?
@@ -231,9 +245,13 @@ continue button field: show_disclaimers
 ---
 question: |
   Reference number
+subquestion: |
+  Optional -- add a unique reference number to track this case in your own
+  filing system.
 fields:
-  - Reference Number: reference_number
+  - Reference Number (optional): reference_number
     datatype: text
+    required: False
 ---
 question: |
   Are there any optional services that you want?

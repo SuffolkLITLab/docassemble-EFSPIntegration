@@ -156,11 +156,11 @@ code: |
         new_case.tracking_id =  entry.get('value',{}).get('caseTrackingID',{}).get('value')
         new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
         new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
-        
+       
         new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
-        
-        new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')
-        
+        # TODO: is the order of this array predictable? might it break if Tyler changes something?        
+        new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
+        new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')        
         new_case.date = as_datetime(datetime.utcfromtimestamp(new_case.case_details.get('value',{}).get('activityDateRepresentation',{}).get('value',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
         
     # except:
