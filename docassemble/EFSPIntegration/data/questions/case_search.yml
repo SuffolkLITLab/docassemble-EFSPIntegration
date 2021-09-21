@@ -16,7 +16,10 @@ code: |
     somebody.name.first
     court_id    
     get_cases_response
-    case_tracking_id = case_tracking_choice
+    if case_tracking_choice is None:
+      case_tracking_id
+    else:      
+      case_tracking_id = case_tracking_choice
   elif do_what_choice == 'lookup':
     case_docket_id
     court_id    
