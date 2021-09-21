@@ -50,7 +50,8 @@ code: |
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
   else:
-    existing_case_to_add_too = case_tracking_id
+    interview_order_find_case
+    # existing_case_to_add_too = case_tracking_id
     is_adding_new_parties
 
   users.gather()
