@@ -67,7 +67,7 @@ subquestion: |
       eservice_template,
       ecf_template,
       filings_template) }
-continue button field: all_done
+event: all_done
 ---
 template: login_status_template
 subject: Login
@@ -909,25 +909,21 @@ code: |
 code: |
   notification_options = proxy_conn.get_notification_options()
 ---
-sets: interim_notification_selections
+reconsider:
+  - existing_notification_preferences
 id: notification preferences
 question: |
   Notification preferences
-subquestion: |
-  ${ notification_options }  
 fields:
-  - code: |
-      {
-        "label": "Select the updates that you would like to receive",
-        "field": 'interim_notification_selections',
-        "datatype": "checkboxes",
-        "options": [
-          {
-            y.get('code'): y.get('description'), 
-            'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
-          } for y in notification_options.data
-        ]
-      }
+  - label: |
+      Select the updates that you would like to receive
+    field: interim_notification_selections
+    datatype: checkboxes
+    code: |
+      [{
+         y.get('code'): y.get('description'), 
+         'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
+       } for y in notification_options.data ]
 ---
 code: |
   # sample:
