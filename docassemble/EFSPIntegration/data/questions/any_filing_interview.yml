@@ -38,15 +38,15 @@ code: |
   can_check_efile
   if is_initial_filing:
     log(case_category)
-    tyler_case_category = case_category_map[case_category]['name']
-    tyler_case_type = case_type_map[case_type]['name']
+    tyler_case_category = case_category_map.get(case_category,{}).get('name')
+    tyler_case_type = case_type_map(case_type,{}).get('name')
     if case_subtype_options:
-      tyler_case_subtype = case_subtype_map[case_subtype]['name']
+      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
     tyler_payment_id
     user_ask_role
-    plaintiff_party_type = party_type_map[plaintiff_party_type_code]['name']
-    defendant_party_type = party_type_map[defendant_party_type_code]['name']
+    plaintiff_party_type = party_type_map.get(plaintiff_party_type_code).get('name')
+    defendant_party_type = party_type_map.get(defendant_party_type_code).get('name')
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
   else:
@@ -58,13 +58,13 @@ code: |
   users.gather()
   other_parties.gather()
   
-  tyler_filing_type = filing_type_map[filing_type]['name']
+  tyler_filing_type = filing_type_map.get(filing_type,{}).get('name')
   filing_description
   reference_number
   lead_doc.optional_services.gather(complete_attribute='complete')
-  lead_doc.document_type = document_type_map[lead_doc.document_type_code]['name']
+  lead_doc.document_type = document_type_map.get(lead_doc.document_type_code,{}).get('name')
   log('lead_doc code: ' + str(lead_doc.filing_component_code))
-  lead_doc.filing_component = filing_component_map[lead_doc.filing_component_code]['name']
+  lead_doc.filing_component = filing_component_map.get(lead_doc.filing_component_code,{}).get('name')
   lead_doc.enabled = True
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
@@ -286,7 +286,7 @@ fields:
 question: |
   Optional Service ${ i } fee amount?
 subquestion: |
-  ${ optional_service_map[lead_doc.optional_services[i].code]['feeprompttext'] }
+  ${ optional_service_map.get(lead_doc.optional_services[i].code).get('feeprompttext') }
 fields: 
   - Fee Amount: lead_doc.optional_services[i].fee_amount
     datatype: currency
@@ -381,7 +381,7 @@ code: |
       backing='attorneyID')
 ---
 code: |
-  tyler_payment_account_options = list(map(lambda vv: (vv['paymentAccountID'], vv['accountName']), proxy_conn.get_payment_account_list().data))
+  tyler_payment_account_options = list(map(lambda vv: (vv.get('paymentAccountID'), vv.get('accountName')), proxy_conn.get_payment_account_list().data))
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
@@ -392,8 +392,8 @@ code: |
 code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
-  if any(map(lambda vv: vv['isrequired'], party_type_map.values())):
-    party_type_options = list(filter(lambda vv: party_type_map[vv[0]]['isrequired'], party_type_options))
+  if any(map(lambda vv: vv.get('isrequired'), party_type_map.values())):
+    party_type_options = list(filter(lambda vv: party_type_map.get(vv[0]).get('isrequired'), party_type_options))
 ---
 code: |
   raw_opt_servs = proxy_conn.get_optional_services(court_id, filing_type).data
@@ -412,7 +412,7 @@ code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
 ---
 code: |
-  service_contact_options = list(map(lambda vv: (vv['serviceContactID'], f"{vv['firstName']} {vv['middleName']} {vv['lastName']}"), proxy_conn.get_service_contact_list().data))
+  service_contact_options = list(map(lambda vv: (vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}"), proxy_conn.get_service_contact_list().data))
 ---
 comment: |
   service_information
