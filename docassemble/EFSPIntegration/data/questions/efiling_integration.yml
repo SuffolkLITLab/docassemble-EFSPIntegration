@@ -175,17 +175,17 @@ subquestion: |
 
   ${ check_resp }
 
-  % elif len(remaining_to_check["optional_vars"]) > 0 or len(remaining_to_check["required_vars"]) > 0:
+  % elif len(remaining_to_check.get("optional_vars")) > 0 or len(remaining_to_check.get("required_vars")) > 0:
   
   You need to add some more questions to fill these variables:
 
   ## Required
 
-  % for var in remaining_to_check["required_vars"] + remaining_to_check["wrong_vars"]:
-  * ${ var["name"] }: ${ var["description"] }. Should be a ${ var["datatype"] }
-    % if len(var["choices"]) > 0:
+  % for var in remaining_to_check.get("required_vars") + remaining_to_check.get("wrong_vars"):
+  * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
+    % if len(var.get("choices")) > 0:
     and have these choices:
-    % for choice in var["choices"]:
+    % for choice in var.get("choices"):
       * ${ choice }
     % endfor
     % endif
@@ -193,11 +193,11 @@ subquestion: |
 
   ## Optional
 
-  % for var in remaining_to_check["optional_vars"]:
-  * ${ var["name"] }: ${ var["description"] }. Should be a ${ var["datatype"] }
-    % if len(var["choices"]) > 0:
+  % for var in remaining_to_check.get("optional_vars"):
+  * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
+    % if len(var.get("choices")) > 0:
     and have these choices:
-    % for choice in var["choices"]:
+    % for choice in var.get("choices"):
       * ${ choice }
     % endfor
     % endif
@@ -213,16 +213,16 @@ objects:
 id: follow up setup
 code: |
   follow_up_vars.there_are_any = True
-  for var in remaining_to_check["required_vars"]:
+  for var in remaining_to_check.get("required_vars",[]):
+    newName = var.get(["name"].replace('.', '_').replace('[', '_').replace(']', '_') )
+    new_var = follow_up_vars.initializeObject(newName, DAObject)
+    new_var.name = var.get("name")
+    new_var.description = var.get("description")
+  for var in remaining_to_check.get("wrong_vars",[]):
     newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
-    follow_up_vars.initializeObject(newName, DAObject)
-    follow_up_vars[newName].name = var["name"]
-    follow_up_vars[newName].description = var["description"]
-  for var in remaining_to_check["wrong_vars"]:
-    newName = var["name"].replace('.', '_').replace('[', '_').replace(']', '_')
-    follow_up_vars.initializeObject(newName, DAObject)
-    follow_up_vars[newName].name = var["name"]
-    follow_up_vars[newName].description = var["description"]
+    new_follow_up_var = follow_up_vars.initializeObject(newName, DAObject)
+    new_follow_up_var.name = var.get("name")
+    new_follow_up_var.description = var.get("description")
   follow_up_vars.there_is_another = False
   follow_up_vars.gathered = True
   follow_up_setup = True
@@ -265,7 +265,7 @@ code: |
       else:
         log(f'Something went wrong: {check_resp.error_msg}')
       
-    elif not remaining_to_check["required_vars"] and not remaining_to_check["wrong_vars"]:
+    elif not remaining_to_check.get("required_vars") and not remaining_to_check.get("wrong_vars"):
       ready_to_efile = True
     else:
       if efile_author_mode:
