@@ -117,6 +117,7 @@ columns:
 edit:
   - party_type_code  
 ---
+id: review parties
 continue button field: party_review_screen
 question: |
   Review parties
@@ -153,20 +154,19 @@ code: |
     x.as_pdf()
   x.completed =True
 ---
-continue button field: DEBUG_trial_court
-question: |
-  ${ proxy_conn.get_courts() }
----
+id: Additional parties
 question: |
   Are you adding any additional parties to this filing?
 yesno: is_adding_new_parties
 ---
+id: make a filing
 question: |
   Make a Filing
 subquestion: |
   Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
+id: return date
 question: |
   You can use this return date. Is this okay?
 subquestion: |
@@ -178,6 +178,7 @@ code: |
   del my_password
   tyler_login = True
 ---
+id: initial filing
 question: |
   Is this an initial filing?
 yesno: is_initial_filing
@@ -195,14 +196,16 @@ code: |
       case_type = selected_existing_case.case_type
   load_existing_case_defaults = True
 ---
+id: location
 question: | 
-  Location?
+  What court will you file this case in?
 fields:
   - Court Location: trial_court
     datatype: dropdown
     code: |
       trial_court_options
 ---
+id: case category
 question: |
   Case Category
 fields:
@@ -211,6 +214,7 @@ fields:
     code: |
       sorted(case_category_options,key=lambda cat: cat[1])
 ---
+id: case type
 question: |
   Case Type
 fields:
@@ -219,6 +223,7 @@ fields:
     code: |
       sorted(case_type_options,key=lambda cat: cat[1])
 ---
+id: case subtype
 question: |
   Case Subtype
 fields:
@@ -227,6 +232,7 @@ fields:
     code: |
       sorted(case_subtype_options,key=lambda cat: cat[1])
 ---
+id: filing attorney
 question: |
   Filing Attorney
 subquestion: |
@@ -244,8 +250,15 @@ fields:
     required: |
       filing_attorney_required_datafield.get('isrequired')
 ---
+reconsider:
+  - tyler_payment_account_options
+id: payment account
 question: |
   Payment Account
+subquestion: |
+  Select an existing account below, or add a payment account
+  using the 
+  [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
@@ -253,6 +266,7 @@ fields:
       tyler_payment_account_options
 ---
 generic object: ALDocument
+id: filing type
 question: |
   Filing Type
 fields:
@@ -261,6 +275,7 @@ fields:
     code: |
       filing_type_options
 ---
+id: filing description
 question: |
   Filing Description
 fields: 
@@ -280,6 +295,7 @@ code: |
   if filing_description_datafield.get('isvisible') == False: # Treat None as visible
     filing_description = ''
 ---
+id: party type of x
 generic object: ALIndividual
 question: |
   Party type of ${ x }?
@@ -292,9 +308,14 @@ fields:
 code: |
   if showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('plaintiff', party_type_options):
     users[0].party_type_code = matching_tuple_option('plaintiff', party_type_options)
+  elif showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('petitioner', party_type_options):
+    users[0].party_type_code = matching_tuple_option('petitioner', party_type_options)    
   elif matching_tuple_option('defendant', party_type_options):
     users[0].party_type_code =  matching_tuple_option('defendant', party_type_options)
+  elif matching_tuple_option('respondent', party_type_options):
+    users[0].party_type_code =  matching_tuple_option('respondent', party_type_options)    
 ---
+id: party type of users
 question: |
   Party type of ${ users[i] }?
 fields:
@@ -304,6 +325,7 @@ fields:
       party_type_options
     default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
 ---
+id: party type of other parties
 question: |
   Party type of ${ other_parties[i] }?
 fields:
@@ -318,6 +340,7 @@ code: |
   def matching_tuple_option(option:str, options:List[Tuple]):
     return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
 ---
+id: document type
 generic object: ALDocument
 question: |
   Document type
@@ -331,6 +354,7 @@ fields:
       x.document_type_options
     default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
 ---
+id: filing component
 generic object: ALDocument
 if: |
   not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
@@ -356,6 +380,7 @@ code: |
     filing_component_code = next(iter(fc_opts))[0]
     return fc_map.get(filing_component_code,{}).get('required')
 ---
+id: disclaimers
 question: |
   Disclaimers
 subquestion: |
@@ -369,6 +394,7 @@ subquestion: |
   % endif
 continue button field: show_disclaimers
 ---
+id: reference number
 question: |
   Reference number
 subquestion: |
@@ -379,6 +405,7 @@ fields:
     datatype: text
     required: False
 ---
+id: return date
 question: |
   Return Date?
 fields:
@@ -386,6 +413,7 @@ fields:
     datatype: date
     min: ${ today() }
 ---
+id: any optional services
 generic object: ALDocument
 question: |
   Are there any optional services that you want?
@@ -396,6 +424,7 @@ code: |
   if not x.optional_service_options:
     x.optional_services.there_are_any = False
 ---
+id: another optional service
 generic object: ALDocument
 question: |
   Are there any other optional services that you want?
@@ -410,6 +439,7 @@ code: |
     x.optional_services[i].fee_amount
   x.optional_services[i].complete = True
 ---
+id: optional service type
 generic object: ALDocument
 question: |
   Optional Services Type ${ i }
@@ -419,6 +449,7 @@ fields:
     code: |
       x.optional_service_options
 ---
+id: optional service multiplier
 generic object: ALDocument
 question: |
   Optional Service ${ i } multiplier?
@@ -426,6 +457,7 @@ fields:
   - Multiplier: x.optional_services[i].multiplier
     datatype: integer
 ---
+id: cross reference type
 question: |
   What type of cross reference is this?
 fields:
@@ -440,10 +472,12 @@ validation code: |
     validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'])
   
 ---
+id: another cross reference
 question: |
   Do you have any other types of cross references?
 yesno: cross_references.there_is_another
 ---
+id: optional service fee amount
 generic object: ALDocument
 question: |
   Optional Service ${ i } fee amount?
@@ -453,6 +487,7 @@ fields:
   - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
 ---
+id: user resp for payment
 question: |
   User responsible for payment
 fields:
@@ -483,14 +518,22 @@ code: |
   service_contacts[i].party_association
   service_contacts[i].complete = True
 ---
+# TODO: hack, but should work? Not sure if works for pro se filers
+reconsider: service_contact_options
+id: service contact
 question: |
   Service Contact
+subquestion: |
+  Select an existing contact below, or add a contact
+  using the 
+  [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
 fields: 
   - Contact Id: service_contacts[i].contact_id
     datatype: dropdown
     code: |
       service_contact_options
 ---
+id: service type
 question: |
   Service Type
 fields: 
@@ -499,6 +542,7 @@ fields:
     code: | 
       service_type_options
 ---
+id: service party association
 question: |
   Service Party Association?
 subquestion: |
@@ -528,9 +572,14 @@ fields:
     datatype: email
     default: ${ showifdef('my_username') }
 ---
+id: your form is submitted
 event: summary_page
 question: |
   Your form is submitted!
+subquestion: |
+  You can still download a copy for your records.
+  
+  ${ al_court_bundle.download_list_html()}
 #subquestion: |
 #  % if ready_to_efile and not (defined('efile') and efile):
 #  Click the "E-File" button below te e-file your form at ${ trial_court }.
@@ -538,10 +587,12 @@ question: |
 #  ${ action_button_html(url_ask([{'recompute': ['efile']}]), label='E-file', icon='file-export')}
 #  % endif
 ---
+id: submitted page
 event: submitted_page
 question: |
   Yay
 ---
+id: something went wrong
 event: go_back_screen
 question: |
   Something went wrong
