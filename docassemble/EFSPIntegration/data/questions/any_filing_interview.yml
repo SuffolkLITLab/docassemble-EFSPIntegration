@@ -83,7 +83,7 @@ code: |
   #submitted_page
 ---
 code: |
-  tyler_filing_type = filing_type_map[filing_type]['name']
+  tyler_filing_type = filing_type_map.get(filing_type,{}).get'name')
 ---
 code: |
   return_date = proxy_conn.get_return_date(court_id, user_return_date, al_court_bundle)
@@ -253,7 +253,7 @@ subquestion: |
   % else:
   %for dis in disclaimers: 
   
-  * ${ dis['requirementText'] }
+  * ${ dis.get('requirementText') }
   % endfor
   % endif
 continue button field: show_disclaimers
