@@ -13,6 +13,10 @@ fields:
     hide if: user_forgot_password
   - I forgot my password: user_forgot_password
     datatype: yesno    
+under: |
+  [Change my password](${ url_ask([{'recompute': ['tyler_login','self_change_password', 'show_resp', 'tyler_login']}]) })
+  
+  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
 ---
 code: |
   if not user_forgot_password:
@@ -42,6 +46,9 @@ event: reset_password_screen
 question: |
   % if tyler_reset_password_resp.is_ok():
   Your password reset was requested
+  
+  [Resend activation email](${ url_ask(
+      [{'recompute': ['self_resend_activation','show_resp']}]) })
   % else:
   Something went wrong when we tried to reset your password
   % endif
