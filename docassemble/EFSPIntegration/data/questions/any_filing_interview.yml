@@ -44,8 +44,6 @@ code: |
   welcome
   tyler_login
   trial_court
-  # court_policy
-  filing_description_datafield
   can_check_efile
   if is_initial_filing:
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
@@ -66,6 +64,7 @@ code: |
 
   users.gather(complete_attribute='complete')
   other_parties.gather(complete_attribute='complete')
+  reconsider('missing_required_party_types')
   if missing_required_party_types:
     party_review_screen
   filing_description
@@ -118,10 +117,7 @@ columns:
 edit:
   - party_type_code  
 ---
-reconsider:
-  - missing_required_party_types
-sets: party_review_screen
-continue button field: fake_review_screen_field
+continue button field: party_review_screen
 question: |
   Review parties
 subquestion: |
@@ -233,11 +229,20 @@ fields:
 ---
 question: |
   Filing Attorney
+subquestion: |
+  % if filing_attorney_required_datafield.get('isrequired'):
+  Only attorneys may file in this court
+  % else:
+  Leave the attorney field blank if you are filing this on your own
+  behalf.
+  % endif
 fields:
   - Filing Attorney: tyler_filing_attorney
     datatype: dropdown
     code: |
       tyler_filing_attorney_options
+    required: |
+      filing_attorney_required_datafield.get('isrequired')
 ---
 question: |
   Payment Account
@@ -576,9 +581,10 @@ code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
 ---
 code: |
-  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data
-  if not filing_description_datafield:
-    filing_description_datafield = {}
+  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
+---
+code: |  
+  filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
