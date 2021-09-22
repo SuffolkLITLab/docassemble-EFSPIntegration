@@ -1,11 +1,19 @@
 ---
 modules:
-  - .efm_client
+  - .efm_client  
 ---
 include:
   - login_qs.yml
   - case_search.yml
   - docassemble.AssemblyLine:al_package.yml  
+---
+features:
+  question back button: True
+  navigation back button: False
+---
+default screen parts:
+  back button label: |
+    Back
 ---
 metadata:
   title: |
