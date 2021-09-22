@@ -13,7 +13,7 @@ code: |
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
-  - other_parties: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
+  - other_parties: ALPeopleList # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_content=False, include_exhibit_cover_pages=False)
