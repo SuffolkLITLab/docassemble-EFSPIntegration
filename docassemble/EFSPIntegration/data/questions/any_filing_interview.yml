@@ -44,7 +44,8 @@ code: |
   welcome
   tyler_login
   trial_court
-  court_policy
+  # court_policy
+  filing_description_datafield
   can_check_efile
   if is_initial_filing:
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
@@ -213,19 +214,18 @@ question: |
 fields: 
   - label: |
       Filing Description
-      % if not court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsRequired', False):
+      % if not filing_description_datafield.get('isrequired'):
       (optional)
       % endif      
     field: filing_description
     datatype: text
     required: |
-      court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsRequired', False)
+      filing_description_datafield.get('isrequired', False)
 ---
 code: |
   # If policy prohibits sending the filing description, don't ask the question
-  # TODO: how should the proxy handle this?
-  filing_description_visible = court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsVisible')
-  if filing_description_visible == False: # Treat None as visible
+  # TODO: how should the proxy handle this? '' is not the same as undefined
+  if filing_description_datafield.get('isvisible') == False: # Treat None as visible
     filing_description = ''
 ---
 generic object: ALIndividual
@@ -527,6 +527,11 @@ code: |
 ---
 code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
+---
+code: |
+  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data
+  if not filing_description_datafield:
+    filing_description_datafield = {}
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
