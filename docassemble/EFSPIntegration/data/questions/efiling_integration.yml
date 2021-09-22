@@ -175,7 +175,7 @@ subquestion: |
 
   ${ check_resp }
 
-  % elif len(remaining_to_check.get("optional_vars")) > 0 or len(remaining_to_check.get("required_vars")) > 0:
+  % elif remaining_to_check.get("optional_vars") or remaining_to_check.get("required_vars"):
   
   You need to add some more questions to fill these variables:
 
@@ -183,7 +183,7 @@ subquestion: |
 
   % for var in remaining_to_check.get("required_vars") + remaining_to_check.get("wrong_vars"):
   * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
-    % if len(var.get("choices")) > 0:
+    % if var.get("choices"):
     and have these choices:
     % for choice in var.get("choices"):
       * ${ choice }
@@ -195,9 +195,9 @@ subquestion: |
 
   % for var in remaining_to_check.get("optional_vars"):
   * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
-    % if len(var.get("choices")) > 0:
+    % if var.get("choices"):
     and have these choices:
-    % for choice in var.get("choices"):
+    % for choice in var.get("choices",[]):
       * ${ choice }
     % endfor
     % endif

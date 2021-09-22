@@ -22,7 +22,7 @@ objects:
   - service_contacts: DAList.using(object_type=DAObject)
 ---
 objects:
-  - cross_references: DADict.using(there_are_any=True)
+  - cross_references: DADict.using(there_are_any=len(cross_ref_types))
 ---
 code: |
   lead_doc.enabled = True
@@ -47,34 +47,33 @@ code: |
     tyler_filing_attorney
     tyler_payment_id
     user_ask_role
-    plaintiff_party_type = party_type_map.get(plaintiff_party_type_code).get('name')
-    defendant_party_type = party_type_map.get(defendant_party_type_code).get('name')
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
   else:
     interview_order_find_case
     load_existing_case_defaults
-    # existing_case_to_add_too = case_tracking_id
+    previous_case_id = case_tracking_id
+    user_started_case
     is_adding_new_parties
 
-  users.gather()
-  other_parties.gather()
+  users.gather(complete_attribute='complete')
+  other_parties.gather(complete_attribute='complete')
   
-  tyler_filing_type
   filing_description
   reference_number
-  lead_doc_stuff
+  lead_doc.completed
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
   cross_references.gather()
   al_court_bundle.as_pdf()
-  users[0].email
   
   if full_court_info.data['allowreturndate']:
     return_date
     show_allowed_return_date
 
   if can_check_efile:
+    if is_initial_filing:
+      user[0].email
     ready_to_efile
 
   show_disclaimers
@@ -82,18 +81,23 @@ code: |
   summary_page
   #submitted_page
 ---
+generic object: ALIndividual
 code: |
-  tyler_filing_type = filing_type_map.get(filing_type,{}).get'name')
+  x.party_type = party_type_map.get(x.party_type_code).get('name')
+  x.complete = True
 ---
 code: |
   return_date = proxy_conn.get_return_date(court_id, user_return_date, al_court_bundle)
 ---
+generic object: ALDocument
 code: |
-  lead_doc.optional_services.gather(complete_attribute='complete')
-  lead_doc.document_type = document_type_map.get(lead_doc.document_type_code,{}).get(name')
-  lead_doc.filing_component = filing_component_map.get(lead_doc.filing_component_code{}).get('name')
-  lead_doc.as_pdf()
-  lead_doc_stuff =True
+  x.optional_services.gather(complete_attribute='complete')
+  x.filing_type
+  x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
+  x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
+  x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
+  x.as_pdf()
+  x.completed =True
 ---
 continue button field: DEBUG_trial_court
 question: |
@@ -185,10 +189,11 @@ fields:
     code: |
       tyler_payment_account_options
 ---
+generic object: ALDocument
 question: |
   Filing Type
 fields:
-  - Filing Type: filing_type
+  - Filing Type: x.filing_type
     datatype: dropdown
     code: |
       filing_type_options
@@ -199,51 +204,48 @@ fields:
   - Filing Description: filing_description
     datatype: text
 ---
+generic object: ALIndividual
 question: |
-  Plantiff party type?
+  Party type of ${ x }?
 fields:
-  - Plaintiff Party Type: plaintiff_party_type_code
+  - Plaintiff Party Type: x.party_type_code
     datatype: dropdown
     code: |
       party_type_options
 ---
-question: |
-  Defendant party type?
-fields:
-  - Defendant Party Type: defendant_party_type_code
-    datatype: dropdown
-    code: |
-      party_type_options
----
+generic object: ALDocument
 question: |
   Document Type
 fields:
-  - Document type: lead_doc.document_type_code
+  - Document type: x.document_type_code
     datatype: dropdown
     code: |
-      document_type_options
+      x.document_type_options
 ---
+generic object: ALDocument
 if: |
-  not exactly_one_required_filing_component(filing_component_options)
+  not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 question: |
   Filing Component
 fields:
-  - Filing Component: lead_doc.filing_component_code
+  - Filing Component: x.filing_component_code
     datatype: dropdown
     code: |
-      filing_component_options
+      x.filing_component_options
 ---
+generic object: ALDocument
 if: |
-  exactly_one_required_filing_component(filing_component_options)
+  exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 code: |
-  lead_doc.filing_component_code = next(iter(filing_component_options))[0]
+  x.filing_component_code = next(iter(x.filing_component_options))[0]
 ---
+generic object: ALDocument
 code: |
-  def exactly_one_required_filing_component(filing_component_options):
-    if len(filing_component_options) > 1:
+  def exactly_one_required_filing_component(fc_opts, fc_map):
+    if len(fc_opts) > 1:
       return False
-    filing_component_code = next(iter(filing_component_options))[0]
-    return filing_component_map.get(filing_component_code,{}).get('required')
+    filing_component_code = next(iter(fc_opts))[0]
+    return fc_map.get(filing_component_code,{}).get('required')
 ---
 question: |
   Disclaimers
@@ -275,34 +277,39 @@ fields:
     datatype: date
     min: ${ today() }
 ---
+generic object: ALDocument
 question: |
   Are there any optional services that you want?
-yesno: lead_doc.optional_services.there_are_any
+yesno: x.optional_services.there_are_any
 ---
+generic object: ALDocument
 question: |
   Are there any other optional services that you want?
-yesno: lead_doc.optional_services.there_is_another
+yesno: x.optional_services.there_is_another
 ---
+generic object: ALDocument
 code: |
-  my_code = lead_doc.optional_services[i].code
-  if optional_service_map.get(my_code,{}).get('multiplier'):
-    lead_doc.optional_services[i].multiplier
-  if optional_service_map.get(my_code,{}).get('hasfeeprompt'):
-    lead_doc.optional_services[i].fee_amount
-  lead_doc.optional_services[i].complete = True
+  my_code = x.optional_services[i].code
+  if x.optional_service_map.get(my_code,{}).get('multiplier'):
+    x.optional_services[i].multiplier
+  if x.optional_service_map.get(my_code,{}).get('hasfeeprompt'):
+    x.optional_services[i].fee_amount
+  x.optional_services[i].complete = True
 ---
+generic object: ALDocument
 question: |
   Optional Services Type ${ i }
 fields:
-  - Optional Services: lead_doc.optional_services[i].code
+  - Optional Services: x.optional_services[i].code
     datatype: dropdown
     code: |
-      optional_service_options
+      x.optional_service_options
 ---
+generic object: ALDocument
 question: |
   Optional Service ${ i } multiplier?
 fields:
-  - Multiplier: lead_doc.optional_services[i].multiplier
+  - Multiplier: x.optional_services[i].multiplier
     datatype: integer
 ---
 question: |
@@ -323,12 +330,13 @@ question: |
   Do you have any other types of cross references?
 yesno: cross_references.there_is_another
 ---
+generic object: ALDocument
 question: |
   Optional Service ${ i } fee amount?
 subquestion: |
-  ${ optional_service_map.get(lead_doc.optional_services[i].code).get('feeprompttext') }
+  ${ x.optional_service_map.get(x.optional_services[i].code).get('feeprompttext') }
 fields: 
-  - Fee Amount: lead_doc.optional_services[i].fee_amount
+  - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
 ---
 question: |
@@ -438,18 +446,21 @@ code: |
   if any(map(lambda vv: vv.get('isrequired'), party_type_map.values())):
     party_type_options = list(filter(lambda vv: party_type_map.get(vv[0]).get('isrequired'), party_type_options))
 ---
+generic object: ALDocument
 code: |
-  raw_opt_servs = proxy_conn.get_optional_services(court_id, filing_type).data
-  optional_service_options, optional_service_map = choices_and_map(raw_opt_servs)
+  raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
+  x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
 ---
+generic object: ALDocument
 code: |
-  raw_components = proxy_conn.get_filing_components(court_id, filing_type)
+  raw_components = proxy_conn.get_filing_components(court_id, x.filing_type)
   log('raw_components: ' + str(raw_components))
-  filing_component_options, filing_component_map = choices_and_map(raw_components.data)
-  log('map: ' + str(filing_component_map))
+  x.filing_component_options, x.filing_component_map = choices_and_map(raw_components.data)
+  log('map: ' + str(x.filing_component_map))
 ---
+generic object: ALDocument
 code: |
-  document_type_options, document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, filing_type).data)
+  x.document_type_options, x.document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, x.filing_type).data)
 ---
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
