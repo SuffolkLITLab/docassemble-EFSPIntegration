@@ -44,6 +44,7 @@ code: |
   welcome
   tyler_login
   trial_court
+  court_policy
   can_check_efile
   if is_initial_filing:
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
@@ -99,8 +100,8 @@ code: |
 ---
 generic object: ALDocument
 code: |
-  x.optional_services.gather(complete_attribute='complete')
   x.filing_type
+  x.optional_services.gather(complete_attribute='complete')
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
   x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
   x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
@@ -210,8 +211,22 @@ fields:
 question: |
   Filing Description
 fields: 
-  - Filing Description: filing_description
+  - label: |
+      Filing Description
+      % if not court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsRequired', False):
+      (optional)
+      % endif      
+    field: filing_description
     datatype: text
+    required: |
+      court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsRequired', False)
+---
+code: |
+  # If policy prohibits sending the filing description, don't ask the question
+  # TODO: how should the proxy handle this?
+  filing_description_visible = court_policy.get('developmentPolicyParameters',{}).get('value',{}).get('FilingFilingDescription',{}).get('IsVisible')
+  if filing_description_visible == False: # Treat None as visible
+    filing_description = ''
 ---
 generic object: ALIndividual
 question: |
@@ -509,6 +524,9 @@ code: |
 ---
 code: |
   tyler_payment_account_options = list(map(lambda vv: (vv.get('paymentAccountID'), vv.get('accountName')), proxy_conn.get_payment_account_list().data))
+---
+code: |
+  court_policy = proxy_conn.get_policy(court_id).data or {}
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
