@@ -23,15 +23,13 @@ objects:
 ---
 code: |
   user_admin_list = [
-    ('tyler_login', 'Login'),
-    ('get_firm', 'Get Firm'),
-    ('update_firm', 'Update Firm'),
-    ('self_change_password', 'Self Change Password'),
-    ('rm_user', 'Remove user'),
-    ('get_user_list', 'Get All Users'),
     ('get_user', 'Get User'),
     ('self_resend_activation', 'Resend Self Activation Email'),
     ('resend_activation', 'Resend Other Activation Email'),
+    ('get_user_list', 'Get All Users'),
+    ('get_firm', 'Get Firm'),
+    ('rm_user', 'Remove user'),
+    ('update_firm', 'Update Firm'),
   ]
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
@@ -85,7 +83,7 @@ content: |
   As ${ my_username }
   
   ${ action_button_html(url_ask(
-      [{'recompute': ['self_change_password', 'show_resp']}]),
+      [{'recompute': ['self_change_password', 'show_resp', 'tyler_login']}]),
       label="Change your password") }
 
   ${ action_button_html(url_ask(
@@ -332,7 +330,7 @@ content: |
 ---
 id: email
 question: |
-  Self email?
+  What is your email address?
 fields:
   - email: email
 ---
