@@ -319,6 +319,11 @@ question: |
 yesno: x.optional_services.there_are_any
 ---
 generic object: ALDocument
+code: |
+  if not x.optional_service_options:
+    x.optional_services.there_are_any = False
+---
+generic object: ALDocument
 question: |
   Are there any other optional services that you want?
 yesno: x.optional_services.there_is_another
