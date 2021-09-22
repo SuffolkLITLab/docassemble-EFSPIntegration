@@ -13,10 +13,10 @@ code: |
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
-  - other_parties: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
+  - other_parties: ALPeopleList # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
-  - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc")
+  - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
 ---
 objects:
   - service_contacts: DAList.using(object_type=DAObject)
@@ -32,6 +32,12 @@ objects:
 ---
 objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court")
+---
+code: |
+  if is_initial_filing:
+    al_form_type = 'starts_case'
+  else:
+    al_form_type = 'existing_case'
 ---
 mandatory: True
 code: |
@@ -58,13 +64,16 @@ code: |
 
   users.gather(complete_attribute='complete')
   other_parties.gather(complete_attribute='complete')
-  
+  reconsider('missing_required_party_types')
+  if missing_required_party_types:
+    party_review_screen
   filing_description
   reference_number
   lead_doc.completed
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
   cross_references.gather()
+  # TODO: as_pdf() is slow and may not be right if no document uploaded
   al_court_bundle.as_pdf()
   
   if full_court_info.data['allowreturndate']:
@@ -83,36 +92,81 @@ code: |
 ---
 generic object: ALIndividual
 code: |
+  str(x.name)
   x.party_type = party_type_map.get(x.party_type_code).get('name')
   x.complete = True
+---
+code: |
+  no_missing_required_party_types_temp = True
+  for p_type in party_type_map.values():
+    no_missing_required_party_types_temp &= (
+      any(filter(lambda p: p.party_type_code == p_type.get('code'), users)) or
+      any(filter(lambda p: p.party_type_code == p_type.get('code'), other_parties))
+      )
+  missing_required_party_types = not no_missing_required_party_types_temp
+  del no_missing_required_party_types_temp
+---
+generic object: ALPeopleList
+table: x.review_type_table
+rows: x
+columns:
+  - Name: |
+      row_item.name.full()
+  - Type: |
+      party_type_map.get(row_item.party_type_code,{}).get('name')
+edit:
+  - party_type_code  
+---
+id: review parties
+continue button field: party_review_screen
+question: |
+  Review parties
+subquestion: |
+  % if missing_required_party_types:
+  ### Warning: you are missing a required party type!
+  
+  This case requires that you have at least one:
+  
+  % for p_type in party_type_map.values():
+  * ${ p_type.get('name') }
+  % endfor
+  
+  % endif
+  #### Parties on your side of the case
+  ${ users.review_type_table }
+  ${ users.add_action() }
+  
+  #### Other parties
+  ${ other_parties.review_type_table }
+  ${ other_parties.add_action() }
 ---
 code: |
   return_date = proxy_conn.get_return_date(court_id, user_return_date, al_court_bundle)
 ---
 generic object: ALDocument
 code: |
-  x.optional_services.gather(complete_attribute='complete')
   x.filing_type
+  x.optional_services.gather(complete_attribute='complete')
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
   x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
   x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
-  x.as_pdf()
+  if x.exhibits.has_exhibits:
+    x.as_pdf()
   x.completed =True
 ---
-continue button field: DEBUG_trial_court
-question: |
-  ${ proxy_conn.get_courts() }
----
+id: Additional parties
 question: |
   Are you adding any additional parties to this filing?
 yesno: is_adding_new_parties
 ---
+id: make a filing
 question: |
   Make a Filing
 subquestion: |
   Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
+id: return date
 question: |
   You can use this return date. Is this okay?
 subquestion: |
@@ -124,6 +178,7 @@ code: |
   del my_password
   tyler_login = True
 ---
+id: initial filing
 question: |
   Is this an initial filing?
 yesno: is_initial_filing
@@ -141,48 +196,69 @@ code: |
       case_type = selected_existing_case.case_type
   load_existing_case_defaults = True
 ---
+id: location
 question: | 
-  Location?
+  What court will you file this case in?
 fields:
   - Court Location: trial_court
     datatype: dropdown
     code: |
       trial_court_options
 ---
+id: case category
 question: |
   Case Category
 fields:
   - Case Category: case_category
     datatype: dropdown
     code: |
-      case_category_options
+      sorted(case_category_options,key=lambda cat: cat[1])
 ---
+id: case type
 question: |
   Case Type
 fields:
   - Case Type: case_type
     datatype: dropdown
     code: |
-      case_type_options
+      sorted(case_type_options,key=lambda cat: cat[1])
 ---
+id: case subtype
 question: |
   Case Subtype
 fields:
   - Case Subtype: case_subtype
     datatype: dropdown
     code: |
-      case_subtype_options
+      sorted(case_subtype_options,key=lambda cat: cat[1])
 ---
+id: filing attorney
 question: |
   Filing Attorney
+subquestion: |
+  % if filing_attorney_required_datafield.get('isrequired'):
+  Only attorneys may file in this court
+  % else:
+  Leave the attorney field blank if you are filing this on your own
+  behalf.
+  % endif
 fields:
   - Filing Attorney: tyler_filing_attorney
     datatype: dropdown
     code: |
       tyler_filing_attorney_options
+    required: |
+      filing_attorney_required_datafield.get('isrequired')
 ---
+reconsider:
+  - tyler_payment_account_options
+id: payment account
 question: |
   Payment Account
+subquestion: |
+  Select an existing account below, or add a payment account
+  using the 
+  [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
@@ -190,6 +266,7 @@ fields:
       tyler_payment_account_options
 ---
 generic object: ALDocument
+id: filing type
 question: |
   Filing Type
 fields:
@@ -198,30 +275,86 @@ fields:
     code: |
       filing_type_options
 ---
+id: filing description
 question: |
   Filing Description
 fields: 
-  - Filing Description: filing_description
+  - label: |
+      Filing Description
+      % if not filing_description_datafield.get('isrequired'):
+      (optional)
+      % endif      
+    field: filing_description
     datatype: text
+    required: |
+      filing_description_datafield.get('isrequired', False)
 ---
+code: |
+  # If policy prohibits sending the filing description, don't ask the question
+  # TODO: how should the proxy handle this? '' is not the same as undefined
+  if filing_description_datafield.get('isvisible') == False: # Treat None as visible
+    filing_description = ''
+---
+id: party type of x
 generic object: ALIndividual
 question: |
   Party type of ${ x }?
 fields:
-  - Plaintiff Party Type: x.party_type_code
-    datatype: dropdown
+  - Party Type: x.party_type_code
+    input type: radio
     code: |
       party_type_options
 ---
+code: |
+  if showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('plaintiff', party_type_options):
+    users[0].party_type_code = matching_tuple_option('plaintiff', party_type_options)
+  elif showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('petitioner', party_type_options):
+    users[0].party_type_code = matching_tuple_option('petitioner', party_type_options)    
+  elif matching_tuple_option('defendant', party_type_options):
+    users[0].party_type_code =  matching_tuple_option('defendant', party_type_options)
+  elif matching_tuple_option('respondent', party_type_options):
+    users[0].party_type_code =  matching_tuple_option('respondent', party_type_options)    
+---
+id: party type of users
+question: |
+  Party type of ${ users[i] }?
+fields:
+  - Party Type: users[i].party_type_code
+    input type: radio
+    code: |
+      party_type_options
+    default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
+---
+id: party type of other parties
+question: |
+  Party type of ${ other_parties[i] }?
+fields:
+  - Party Type: other_parties[i].party_type_code
+    input type: radio
+    code: |
+      party_type_options
+    default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
+
+---
+code: |
+  def matching_tuple_option(option:str, options:List[Tuple]):
+    return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
+---
+id: document type
 generic object: ALDocument
 question: |
-  Document Type
+  Document type
+subquestion: |
+  If a judge has ordered that this case is sealed, select
+  "Confidential". You should also attach a copy of the judge's order.
 fields:
   - Document type: x.document_type_code
-    datatype: dropdown
+    input type: radio
     code: |
       x.document_type_options
+    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
 ---
+id: filing component
 generic object: ALDocument
 if: |
   not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
@@ -247,6 +380,7 @@ code: |
     filing_component_code = next(iter(fc_opts))[0]
     return fc_map.get(filing_component_code,{}).get('required')
 ---
+id: disclaimers
 question: |
   Disclaimers
 subquestion: |
@@ -260,6 +394,7 @@ subquestion: |
   % endif
 continue button field: show_disclaimers
 ---
+id: reference number
 question: |
   Reference number
 subquestion: |
@@ -270,6 +405,7 @@ fields:
     datatype: text
     required: False
 ---
+id: return date
 question: |
   Return Date?
 fields:
@@ -277,11 +413,18 @@ fields:
     datatype: date
     min: ${ today() }
 ---
+id: any optional services
 generic object: ALDocument
 question: |
   Are there any optional services that you want?
 yesno: x.optional_services.there_are_any
 ---
+generic object: ALDocument
+code: |
+  if not x.optional_service_options:
+    x.optional_services.there_are_any = False
+---
+id: another optional service
 generic object: ALDocument
 question: |
   Are there any other optional services that you want?
@@ -296,6 +439,7 @@ code: |
     x.optional_services[i].fee_amount
   x.optional_services[i].complete = True
 ---
+id: optional service type
 generic object: ALDocument
 question: |
   Optional Services Type ${ i }
@@ -305,6 +449,7 @@ fields:
     code: |
       x.optional_service_options
 ---
+id: optional service multiplier
 generic object: ALDocument
 question: |
   Optional Service ${ i } multiplier?
@@ -312,6 +457,7 @@ fields:
   - Multiplier: x.optional_services[i].multiplier
     datatype: integer
 ---
+id: cross reference type
 question: |
   What type of cross reference is this?
 fields:
@@ -326,10 +472,12 @@ validation code: |
     validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'])
   
 ---
+id: another cross reference
 question: |
   Do you have any other types of cross references?
 yesno: cross_references.there_is_another
 ---
+id: optional service fee amount
 generic object: ALDocument
 question: |
   Optional Service ${ i } fee amount?
@@ -339,6 +487,7 @@ fields:
   - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
 ---
+id: user resp for payment
 question: |
   User responsible for payment
 fields:
@@ -348,19 +497,43 @@ fields:
       users
 ---
 code: |
+  if len(users) == 1:
+    # TODO: should this be user name as above, or an object reference?
+    user_responsible_for_payment = str(users[0])
+    explain_user_paying
+---
+id: you are responsible for payment
+question: |
+  Payment of fees (if any)
+subquestion: |
+  Because you are the only filer in this case, we have selected you as the
+  user responsible for the fees.
+  
+  You will have a chance to review fees at the end of this form.
+continue button field: explain_user_paying  
+---
+code: |
   service_contacts[i].contact_id
   service_contacts[i].service_type
   service_contacts[i].party_association
   service_contacts[i].complete = True
 ---
+# TODO: hack, but should work? Not sure if works for pro se filers
+reconsider: service_contact_options
+id: service contact
 question: |
   Service Contact
+subquestion: |
+  Select an existing contact below, or add a contact
+  using the 
+  [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
 fields: 
   - Contact Id: service_contacts[i].contact_id
     datatype: dropdown
     code: |
       service_contact_options
 ---
+id: service type
 question: |
   Service Type
 fields: 
@@ -369,6 +542,7 @@ fields:
     code: | 
       service_type_options
 ---
+id: service party association
 question: |
   Service Party Association?
 subquestion: |
@@ -377,17 +551,35 @@ fields:
   - PartyAssociation: service_contacts[i].party_association
     datatype: text
 ---
+id: existing service contacts
 question: |
-  Any service contacts?
+  Do you want to add any existing service contacts?
 yesno: service_contacts.there_are_any
 ---
+id: Any more existing service contacts
 question: |
-  Any more service contacts?
+  Any more existing service contacts?
 yesno: service_contacts.there_is_another
 ---
+id: your email
+question: |
+  Confirm your email address
+subquestion: |
+  You need to provide an email address to file this form.
+  We will use this address to update you on your filing status.
+fields:
+  - Email: users[0].email
+    datatype: email
+    default: ${ showifdef('my_username') }
+---
+id: your form is submitted
 event: summary_page
 question: |
   Your form is submitted!
+subquestion: |
+  You can still download a copy for your records.
+  
+  ${ al_court_bundle.download_list_html()}
 #subquestion: |
 #  % if ready_to_efile and not (defined('efile') and efile):
 #  Click the "E-File" button below te e-file your form at ${ trial_court }.
@@ -395,10 +587,12 @@ question: |
 #  ${ action_button_html(url_ask([{'recompute': ['efile']}]), label='E-file', icon='file-export')}
 #  % endif
 ---
+id: submitted page
 event: submitted_page
 question: |
   Yay
 ---
+id: something went wrong
 event: go_back_screen
 question: |
   Something went wrong
@@ -433,6 +627,15 @@ code: |
 ---
 code: |
   tyler_payment_account_options = list(map(lambda vv: (vv.get('paymentAccountID'), vv.get('accountName')), proxy_conn.get_payment_account_list().data))
+---
+code: |
+  court_policy = proxy_conn.get_policy(court_id).data or {}
+---
+code: |
+  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
+---
+code: |  
+  filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
