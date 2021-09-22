@@ -55,6 +55,7 @@ id: Admin tasks
 question: | 
   Admin Tasks
 subquestion: |
+  % if logged_in_user_is_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
       firm_admin_users_template,
@@ -67,6 +68,9 @@ subquestion: |
       eservice_template,
       ecf_template,
       filings_template) }
+  % else:
+  ${ tabbed_templates_html("Tests", login_status_template) }
+  % endif
 event: all_done
 ---
 template: login_status_template
