@@ -41,7 +41,7 @@ code: |
   can_check_efile
   if is_initial_filing:
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
-    tyler_case_type = case_type_map(case_type,{}).get('name')
+    tyler_case_type = case_type_map.get(case_type,{}).get('name')
     if case_subtype_options:
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
@@ -73,7 +73,7 @@ code: |
 
   if can_check_efile:
     if is_initial_filing:
-      user[0].email
+      users[0].email
     ready_to_efile
 
   show_disclaimers
