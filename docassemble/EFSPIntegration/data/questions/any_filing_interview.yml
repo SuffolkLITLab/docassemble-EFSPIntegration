@@ -16,7 +16,7 @@ objects:
   - other_parties: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
 ---
 objects:
-  - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc")
+  - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_content=False, include_exhibit_cover_pages=False)
 ---
 objects:
   - service_contacts: DAList.using(object_type=DAObject)
@@ -71,6 +71,7 @@ code: |
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
   cross_references.gather()
+  # TODO: as_pdf() is slow and may not be right if no document uploaded
   al_court_bundle.as_pdf()
   
   if full_court_info.data['allowreturndate']:
@@ -103,7 +104,8 @@ code: |
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
   x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
   x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
-  x.as_pdf()
+  if x.exhibits.has_exhibits:
+    x.as_pdf()
   x.completed =True
 ---
 continue button field: DEBUG_trial_court
@@ -251,12 +253,16 @@ code: |
 ---
 generic object: ALDocument
 question: |
-  Document Type
+  Document type
+subquestion: |
+  If a judge has ordered that this case is sealed, select
+  "Confidential". You should also attach a copy of the judge's order.
 fields:
   - Document type: x.document_type_code
-    datatype: dropdown
+    input type: radio
     code: |
       x.document_type_options
+    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
 ---
 generic object: ALDocument
 if: |
@@ -389,6 +395,22 @@ fields:
       users
 ---
 code: |
+  if len(users) == 1:
+    # TODO: should this be user name as above, or an object reference?
+    user_responsible_for_payment = str(users[0])
+    explain_user_paying
+---
+id: you are responsible for payment
+question: |
+  Payment of fees (if any)
+subquestion: |
+  Because you are the only filer in this case, we have selected you as the
+  user responsible for the fees.
+  
+  You will have a chance to review fees at the end of this form.
+continue button field: explain_user_paying  
+---
+code: |
   service_contacts[i].contact_id
   service_contacts[i].service_type
   service_contacts[i].party_association
@@ -418,13 +440,26 @@ fields:
   - PartyAssociation: service_contacts[i].party_association
     datatype: text
 ---
+id: existing service contacts
 question: |
-  Any service contacts?
+  Do you want to add any existing service contacts?
 yesno: service_contacts.there_are_any
 ---
+id: Any more existing service contacts
 question: |
-  Any more service contacts?
+  Any more existing service contacts?
 yesno: service_contacts.there_is_another
+---
+id: your email
+question: |
+  Confirm your email address
+subquestion: |
+  You need to provide an email address to file this form.
+  We will use this address to update you on your filing status.
+fields:
+  - Email: users[0].email
+    datatype: email
+    default: ${ showifdef('my_username') }
 ---
 event: summary_page
 question: |
