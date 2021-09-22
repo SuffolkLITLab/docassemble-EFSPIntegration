@@ -211,9 +211,6 @@ fields:
   - Filing Description: filing_description
     datatype: text
 ---
-code: |
-  user_ask_role
----
 generic object: ALIndividual
 question: |
   Party type of ${ x }?
