@@ -33,6 +33,12 @@ objects:
 objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court")
 ---
+code: |
+  if is_initial_filing:
+    al_form_type = 'starts_case'
+  else:
+    al_form_type = 'existing_case'
+---
 mandatory: True
 code: |
   welcome
@@ -155,7 +161,7 @@ fields:
   - Case Category: case_category
     datatype: dropdown
     code: |
-      case_category_options
+      sorted(case_category_options,key=lambda cat: cat[1])
 ---
 question: |
   Case Type
@@ -163,7 +169,7 @@ fields:
   - Case Type: case_type
     datatype: dropdown
     code: |
-      case_type_options
+      sorted(case_type_options,key=lambda cat: cat[1])
 ---
 question: |
   Case Subtype
@@ -171,7 +177,7 @@ fields:
   - Case Subtype: case_subtype
     datatype: dropdown
     code: |
-      case_subtype_options
+      sorted(case_subtype_options,key=lambda cat: cat[1])
 ---
 question: |
   Filing Attorney
@@ -204,12 +210,15 @@ fields:
   - Filing Description: filing_description
     datatype: text
 ---
+code: |
+  user_ask_role
+---
 generic object: ALIndividual
 question: |
   Party type of ${ x }?
 fields:
   - Plaintiff Party Type: x.party_type_code
-    datatype: dropdown
+    input type: radio
     code: |
       party_type_options
 ---
