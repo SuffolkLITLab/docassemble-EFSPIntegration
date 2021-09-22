@@ -26,6 +26,18 @@ code: |
   # TODO(brycew): handle improper login info
   tyler_login = True
 ---
+depends on:
+  - tyler_login
+  - tyler_login_resp
+code: |
+  user_details = proxy_conn.get_user(tyler_login_resp.data.get('TYLER-ID'))
+  if user_details.data:
+    # this is a bit redundant because only a firm admin has the ability
+    # to use the get_user endpoint
+    logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
+  else:
+    logged_in_user_is_admin = False
+---
 event: reset_password_screen
 question: |
   % if tyler_reset_password_resp.is_ok():
