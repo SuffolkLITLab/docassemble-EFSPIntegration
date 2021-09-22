@@ -89,6 +89,7 @@ code: |
 ---
 generic object: ALIndividual
 code: |
+  str(x.name)
   x.party_type = party_type_map.get(x.party_type_code).get('name')
   x.complete = True
 ---
@@ -217,10 +218,39 @@ generic object: ALIndividual
 question: |
   Party type of ${ x }?
 fields:
-  - Plaintiff Party Type: x.party_type_code
+  - Party Type: x.party_type_code
     input type: radio
     code: |
       party_type_options
+---
+code: |
+  if showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('plaintiff', party_type_options):
+    users[0].party_type_code = matching_tuple_option('plaintiff', party_type_options)
+  elif matching_tuple_option('defendant', party_type_options):
+    users[0].party_type_code =  matching_tuple_option('defendant', party_type_options)
+---
+question: |
+  Party type of ${ users[i] }?
+fields:
+  - Party Type: users[i].party_type_code
+    input type: radio
+    code: |
+      party_type_options
+    default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
+---
+question: |
+  Party type of ${ other_parties[i] }?
+fields:
+  - Party Type: other_parties[i].party_type_code
+    input type: radio
+    code: |
+      party_type_options
+    default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
+
+---
+code: |
+  def matching_tuple_option(option:str, options:List[Tuple]):
+    return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
 ---
 generic object: ALDocument
 question: |
