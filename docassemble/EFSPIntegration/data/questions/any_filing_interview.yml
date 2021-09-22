@@ -11,6 +11,10 @@ include:
 code: |
   proxy_conn = ProxyConnection()
 ---
+features:
+  question back button: True
+  navigation back button: False
+---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
   - other_parties: ALPeopleList # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
