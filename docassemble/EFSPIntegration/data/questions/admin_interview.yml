@@ -83,6 +83,10 @@ content: |
       label="Login") }
   
   As ${ my_username }
+  
+  ${ action_button_html(url_ask(
+      [{'recompute': ['self_change_password', 'show_resp']}]),
+      label="Change your password") }
 
   ${ action_button_html(url_ask(
       [{'recompute': ['get_firm','show_resp']}]),
