@@ -16,8 +16,8 @@ objects:
   - new_attorney: ALIndividual
   - updated_attorney: ALIndividual
   - updated_user: ALIndividual     
-  - new_firm: ALPerson
-  - updated_firm: ALPerson
+  - new_firm: Person
+  - updated_firm: Person
   - new_service_contact: ALIndividual
   - updated_service_contact: ALIndividual
 ---
