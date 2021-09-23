@@ -401,7 +401,22 @@ question: |
 subquestion: |
   % if not disclaimers:
   No Disclaimers!
-  % else:
+  % endif
+fields:
+  - no label: acknowledge_disclaimers
+    datatype: checkboxes
+    choices:
+      - I certify that I have read and followed the instructions below: user_agrees_to_disclaimers
+    minlength: 1
+    show if:
+      code: |
+        len(disclaimers)
+    validation messages:
+      minlength: |
+        You must acknowledge the disclaimers in order to continue
+        with your filing.
+under: |
+  % if disclaimers:
   %for dis in disclaimers: 
   
   * ${ dis.get('requirementText') }
