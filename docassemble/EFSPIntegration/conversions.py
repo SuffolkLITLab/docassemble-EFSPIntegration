@@ -1,3 +1,5 @@
+from datetime import datetime
+from docassemble.base.util import DADateTime, as_datetime
 from typing import List, Dict, Tuple, Any
 
 def convert_court_to_id(trial_court) -> str:
@@ -31,3 +33,7 @@ def pretty_display(data, tab_depth=0):
   else:
     out = (' ' * tab_depth) + str(data) + '\n'
   return out
+
+def tyler_timestamp_to_datetime(tyler_timestamp:int)->DADateTime:
+  return as_datetime(datetime.utcfromtimestamp(tyler_timestamp/1000))
+
