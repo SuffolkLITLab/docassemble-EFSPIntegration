@@ -650,8 +650,6 @@ code: |
 code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
-  if any(map(lambda vv: vv.get('isrequired'), party_type_map.values())):
-    party_type_options = list(filter(lambda vv: party_type_map.get(vv[0]).get('isrequired'), party_type_options))
 ---
 generic object: ALDocument
 code: |
