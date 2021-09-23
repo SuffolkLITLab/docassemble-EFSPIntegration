@@ -630,7 +630,11 @@ code: |
       backing='attorneyID')
 ---
 code: |
-  tyler_payment_account_options = list(map(lambda vv: (vv.get('paymentAccountID'), vv.get('accountName')), proxy_conn.get_payment_account_list().data))
+  res = proxy_conn.get_payment_account_list().data
+  if res:
+    tyler_payment_account_options = [(account.get('paymentAccountId'), account.get('accountName')) for account in res if account.get('active',{}).get('value')]
+  else:
+    tyler_payment_account_options = []
 ---
 code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
