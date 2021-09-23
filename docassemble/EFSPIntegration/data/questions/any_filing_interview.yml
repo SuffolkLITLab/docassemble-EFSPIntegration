@@ -263,6 +263,8 @@ subquestion: |
   Select an existing account below, or add a payment account
   using the 
   [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
+  
+  Refresh this page when you have finished adding the account.
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
@@ -531,6 +533,8 @@ subquestion: |
   Select an existing contact below, or add a contact
   using the 
   [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
+  
+  If you add a new contact, refresh this screen to view the new contact.
 fields: 
   - Contact Id: service_contacts[i].contact_id
     datatype: dropdown
@@ -557,12 +561,12 @@ fields:
 ---
 id: existing service contacts
 question: |
-  Do you want to add any existing service contacts?
+  Do you want to add a service contact?
 yesno: service_contacts.there_are_any
 ---
 id: Any more existing service contacts
 question: |
-  Any more existing service contacts?
+  Any more service contacts?
 yesno: service_contacts.there_is_another
 ---
 id: your email
