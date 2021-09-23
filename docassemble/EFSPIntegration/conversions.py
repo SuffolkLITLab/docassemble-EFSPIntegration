@@ -1,6 +1,7 @@
+import re
 from datetime import datetime
 from docassemble.base.util import DADateTime, as_datetime
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Callable
 
 def convert_court_to_id(trial_court) -> str:
   # TODO(brycew): actually implement
@@ -37,3 +38,14 @@ def pretty_display(data, tab_depth=0):
 def tyler_timestamp_to_datetime(tyler_timestamp:int)->DADateTime:
   return as_datetime(datetime.utcfromtimestamp(tyler_timestamp/1000))
 
+def validate_tyler_regex(dataField:Dict)->Callable:
+  """
+  Return a function that validates a given input with the provided regex,
+  suitable for use with Docassemble's `validate:` question modifier
+  """
+  def fn_validate(input):
+    if re.match(dataField.get('regularexpression'), input):
+      return True
+    validation_error(dataField.get('validationmessage'))
+  return fn_validate
+  
