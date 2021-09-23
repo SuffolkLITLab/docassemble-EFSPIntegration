@@ -305,7 +305,19 @@ content: |
   * EFSP Cases - Case Search - Non Integrated CMS
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['interview_order_find_case', 'display_found_case']}]),
+    [{'undefine': [
+      'do_what_choice',
+      'somebody.name.first',
+      'court_id',
+      'case_search_task_status',
+      'case_search_waiting_screen',
+      'warn_no_results',
+      'case_tracking_id',
+      'found_case',
+      'case_docket_id',
+      'get_case_response',
+    ]},
+    {'recompute': ['interview_order_find_case', 'display_found_case']}]),
     label="Find a case") }
 ---
 id: display case
