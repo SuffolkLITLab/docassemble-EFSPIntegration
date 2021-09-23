@@ -12,6 +12,7 @@ import requests
 from docassemble.base.functions import all_variables, get_config
 from docassemble.base.util import IndividualName, DAObject, log, Person, Individual, DADateTime, as_datetime
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
+from docassemble.AssemblyLine.al_general import ALIndividual
 from datetime import datetime
 
 __all__ = ['ApiResponse','ProxyConnection']
@@ -471,14 +472,15 @@ class ProxyConnection:
         data={'doc_id': doc_id, 'estimated_duration': estimated_duration, 'start_date' : start_date, 'end_date': end_date})
     return self._call_proxy(send)
   
-
-  def get_cases(self, court_id:str, person_name:IndividualName=None, docket_id:str=None) -> ApiResponse:
-    #query_params = [('person_name', person_name), ('docket_id', docket_id)]
-    #filtered_params = list(filter(lambda p: p[1] is not None, query_params))
-    #print(filtered_params)
-    #query_strs = urlencode(filtered_params)
+  def get_cases(self, court_id:str, person:ALIndividual=None, docket_id:str=None):
+    if person.person_type == 'business':
+      return self._get_cases(court_id, business_name=person.name.first, docket_id=docket_id)
+    else:
+      return self._get_cases(court_id, person_name=person.name, docket_id=docket_id)
+  
+  def _get_cases(self, court_id:str, person_name:IndividualName=None, business_name:str=None, docket_id:str=None) -> ApiResponse:
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases', 
-        data=json.dumps({'person_name': person_name, 'docket_id': docket_id}))
+        data=json.dumps({'person_name': person_name, 'business_name': business_name, 'docket_id': docket_id}))
     return self._call_proxy(send)
 
   def get_case(self, court_id:str, case_id:str):

@@ -43,7 +43,7 @@ choices:
   - I know the tracking ID of the case: tracking_id
 ---
 objects:
-  - somebody: Individual
+  - somebody: ALIndividual
 ---
 id: tracking id
 question: |
@@ -57,20 +57,16 @@ subquestion: |
   
 yesno: confirm_case_tracking_id
 ---
+sets:
+  - somebody.name.first
 id: party name
 question: |
   Party name to find
 subquestion: |
   Enter the name of a party involved in the case
 fields:
-  - First: somebody.name.first
-  - Middle: somebody.name.middle
-    required: False
-  - Last: somebody.name.last
-  - Suffix: somebody.name.suffix
-    required: False
-    code: |
-      name_suffix()
+  code: |
+    somebody.name_fields(person_or_business='unknown')
 ---
 id: court
 question: |
@@ -91,8 +87,8 @@ code: |
 need:
   - proxy_conn.authed_user_id
 code: |
-  docket_id = None  
-  get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last}, docket_id)
+  docket_id = None
+  get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_id=docket_id)
 ---
 id: docket id
 question: |
@@ -147,7 +143,7 @@ code: |
 
     from datetime import datetime
     #try: # trap name errors, etc. so Docassemble will only run this code once
-    first_pass = get_cases_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last})
+    first_pass = get_cases_response = proxy_conn.get_cases(court_id, person=somebody)
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
