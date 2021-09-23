@@ -474,17 +474,25 @@ fields:
 ---
 id: cross reference type
 question: |
-  What type of cross reference is this?
+  Cross references
+# This works in Illinois at least--error message should be shown
+# before user types, since it explains a confusing concept
+subquestion: |
+  % if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired'):
+  ${ next(iter(cross_ref_type_map.values()),{}).get('customvalidationfailuremessage') }
+  % endif
 fields:
   - Type of Reference: cross_references.new_item_name
     datatype: dropdown
     code: |
       cross_ref_types
+    default: |
+      ${ next(iter(cross_ref_type_map)) if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired') else None }
   - Reference text: cross_references.new_item_value
 validation code: |
   regex_str = cross_ref_type_map[cross_references.new_item_name]['validationregex']
   if not re.search(regex_str, cross_references.new_item_value):
-    validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'])
+    validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'], field="cross_references.new_item_value")
   
 ---
 id: another cross reference
