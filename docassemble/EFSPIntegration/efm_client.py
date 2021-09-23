@@ -254,7 +254,7 @@ class ProxyConnection:
   
   def self_update_user(self, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
-    send = lambda: self.proxy_client.patch(self.base_url + f'/user', data=json.dumps(updated_user))
+    send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/user', data=json.dumps(updated_user))
     return self._call_proxy(send)
   
   def update_user(self, id:str, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
