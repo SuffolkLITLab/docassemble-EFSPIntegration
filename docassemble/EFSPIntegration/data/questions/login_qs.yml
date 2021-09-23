@@ -2,6 +2,7 @@
 code: |
   proxy_conn = ProxyConnection()
 ---
+id: eFile Login
 question: |
   eFile IL Login Info
 subquestion: |
@@ -12,33 +13,86 @@ fields:
     datatype: password
     hide if: user_forgot_password
   - I forgot my password: user_forgot_password
-    datatype: yesno    
-under: |
-  [Change my password](${ url_ask([{'recompute': ['tyler_login','self_change_password', 'show_resp', 'tyler_login']}]) })
-  
-  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
+    datatype: yesno
+  #- Change my password: change_user_password
+  #  datatype: yesno
+  #  hide if: user_forgot_password
+  #  # The interview that includes this needs to provide change_password
+  #  # logic, including redirecting to login screen after password change
 ---
 code: |
-  if not user_forgot_password:
+  if showifdef('user_forgot_password'):
+    tyler_reset_password_resp = proxy_conn.reset_user_password(my_username)
+    reset_password_screen    
+  else:
     tyler_login_resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
     del my_password
     if not tyler_login_resp.is_ok():
       login_failed_screen
-  if user_forgot_password:
-    tyler_reset_password_resp = proxy_conn.reset_user_password(my_username)
-    reset_password_screen
+  tyler_login = True      
   # TODO(brycew): handle improper login info
-  tyler_login = True
+---
+code: |
+  resp = proxy_conn.self_change_password(current_password, new_user_password)
+  del current_password, new_user_password, confirm_new_password
+  self_change_password = True
+---
+id: changed password
+question: |
+  % if resp.is_ok():
+  Your password has been updated
+  % else:
+  Your password change failed
+  % endif
+subquestion: |
+  ${ resp }
+continue button field: changed_password_screen  
+---
+id: current password
+question: |
+  Current password?
+fields:
+  - Password: current_password
+    datatype: password
+---
+id: password
+question: |
+  New Password?
+fields:
+  - New password: new_user_password
+    datatype: password
+  - Confirm new password: confirm_new_password
+    datatype: password
+validation code: |
+  if not new_user_password == confirm_new_password:
+    validation_error("Your passwords do not match.", field="confirm_new_password")    
+---
+id: change password
+question: |
+  Change password
+fields:
+  - Current password: current_password
+    datatype: password
+  - New password: new_user_password
+    datatype: password
+  - Confirm new password: confirm_new_password
+    datatype: password
+validation code: |
+  if not new_user_password == confirm_new_password:
+    validation_error("Your passwords do not match.", field="confirm_new_password")
 ---
 depends on:
   - tyler_login
   - tyler_login_resp
 code: |
-  user_details = proxy_conn.get_user(tyler_login_resp.data.get('TYLER-ID'))
-  if user_details.data:
-    # this is a bit redundant because only a firm admin has the ability
-    # to use the get_user endpoint
-    logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
+  if tyler_login_resp.data:
+    user_details = proxy_conn.get_user(tyler_login_resp.data.get('TYLER-ID'))
+    if user_details.data:
+      # this is a bit redundant because only a firm admin has the ability
+      # to use the get_user endpoint
+      logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
+    else:
+      logged_in_user_is_admin = False
   else:
     logged_in_user_is_admin = False
 ---
@@ -55,6 +109,32 @@ question: |
 buttons:
   - restart
 ---
+id: results
+question: |
+  Results of your request
+subquestion: |
+  % if isinstance(resp.data, list):
+
+  % for idx, elem in enumerate(resp.data):
+  * idx: ${ idx }
+
+    % if isinstance(elem, dict):
+    % for k, inner_elem in elem.items():
+      * ${ k }: ${ inner_elem }
+
+    % endfor
+    % else:
+      * ${ elem }
+    % endif
+
+  % endfor
+
+  % else:
+  ${ resp }
+  % endif
+continue button field: show_resp
+---
+id: Login failed
 event: login_failed_screen
 question: |
   Tyler Login failed
