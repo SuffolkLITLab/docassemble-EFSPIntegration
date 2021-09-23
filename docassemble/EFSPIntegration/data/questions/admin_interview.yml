@@ -482,6 +482,8 @@ depends on: payment_account_id
 code: |
   payment_account_id_resp = proxy_conn.get_payment_account(payment_account_id)
 ---
+reconsider:
+  - payment_account_id_resp
 depends on:
   - payment_account_id
 id: update payment account
