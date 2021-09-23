@@ -49,6 +49,9 @@ code: |
   tyler_login
   trial_court
   can_check_efile
+  if can_check_efile:
+    if is_initial_filing:
+      users[0].email
   if is_initial_filing:
     tyler_case_category = case_category_map.get(case_category,{}).get('name')
     tyler_case_type = case_type_map.get(case_type,{}).get('name')
@@ -172,9 +175,15 @@ continue button field: welcome
 ---
 id: return date
 question: |
-  You can use this return date. Is this okay?
+  The next available return date is below
 subquestion: |
+  % if return_date.is_ok() and return_date.data.get('systemEventDateTime'):
+  ${ tyler_timestamp_to_datetime( return_date.data.get('systemEventDateTime').get('value') ) }
+  % else:
+  Something went wrong retrieving a return date
+  
   ${ return_date }
+  % endif
 continue button field: show_allowed_return_date
 ---
 code: |
@@ -279,7 +288,7 @@ fields:
   - Filing Type: x.filing_type
     datatype: dropdown
     code: |
-      filing_type_options
+      sorted(filing_type_options, key=lambda option: option[1])
 ---
 id: filing description
 question: |
