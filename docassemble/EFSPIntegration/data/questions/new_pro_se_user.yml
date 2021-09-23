@@ -5,6 +5,9 @@ modules:
 code: |
   proxy_conn = ProxyConnection()
 ---
+include: 
+  - login_qs.yml
+---
 mandatory: True
 code: |
   introduction
@@ -71,6 +74,14 @@ question: |
 subquestion: |
   % if resp.is_ok():
   You will get an email from eFileIl asking you to activate your account.
+  
+  
+  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
+
   % endif
 buttons:
   - restart
+---
+code: |
+  resp = proxy_conn.self_resend_activation_email(person_to_reg.email)
+  self_resend_activation = True
