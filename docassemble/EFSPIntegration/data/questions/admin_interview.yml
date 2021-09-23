@@ -24,7 +24,8 @@ objects:
   - person_to_reg: ALIndividual
   - new_attorney: ALIndividual
   - updated_attorney: ALIndividual
-  - updated_user: ALIndividual     
+  - updated_user: ALIndividual    
+  - updated_self: ALIndividual
   - new_firm: Person
   - updated_firm: Person
   - new_service_contact: ALIndividual
@@ -94,6 +95,10 @@ content: |
       label="Login") }
   
   As ${ my_username }
+  
+  ${ action_button_html(url_ask(
+      [{'recompute': ['updated_user','self_update_user','show_resp']}]),
+      label="Update self") }
   
   ${ action_button_html(url_ask(
       [{'recompute': ['self_change_password', 'show_resp', 'tyler_login']}]),
@@ -595,6 +600,23 @@ fields:
   - Last name: updated_user.name.last
     default: ${ updated_user.default_last }
 ---
+reconsider:
+  - updated_self.default_email
+id: update self information
+question: |
+  Update user information
+fields:
+  - Email address: updated_self.email
+    datatype: email
+    default: ${ updated_self.default_email }
+  - First name: updated_self.name.first
+    default: ${ updated_self.default_first }
+  - Middle name: updated_self.name.middle
+    required: False
+    default: ${ updated_self.default_middle }
+  - Last name: updated_self.name.last
+    default: ${ updated_self.default_last }    
+---
 sets:
   - new_service_contact.name.first
   - new_service_contact.address.address  
@@ -762,6 +784,19 @@ code: |
     updated_user.default_last = ''
     updated_user.default_email = ''
 ---
+code: |
+  user_resp = proxy_conn.get_user()  # Get self
+  if user_resp.data:
+    updated_self.default_first = user_resp.data.get('firstName','')
+    updated_self.default_middle = user_resp.data.get('middleName','')
+    updated_self.default_last = user_resp.data.get('lastName','')
+    updated_self.default_email = user_resp.data.get('email','')
+  else:
+    updated_self.default_first = ''
+    updated_self.default_middle = ''
+    updated_self.default_last = ''
+    updated_self.default_email = ''
+---
 depends on: attorney_id
 code: |
   atty_resp = proxy_conn.get_attorney(attorney_id)
@@ -784,7 +819,17 @@ code: |
     last_name=updated_user.name.last,
     middle_name=updated_user.name.middle )
   del user_id
+  del updated_user
   update_user = True
+---
+code: |
+  resp = proxy_conn.self_update_user( 
+    email=updated_self.email,
+    first_name=updated_self.name.first,
+    last_name=updated_self.name.last,
+    middle_name=updated_self.name.middle )
+  del updated_self
+  self_update_user = True
 ---
 depends on:
   - user_id
