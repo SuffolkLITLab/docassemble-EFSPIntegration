@@ -36,10 +36,13 @@ code: |
     ('self_resend_activation', 'Resend Self Activation Email'),
     ('resend_activation', 'Resend Other Activation Email'),
     ('get_user_list', 'Get All Users'),
-    ('get_firm', 'Get Firm'),
     ('rm_user', 'Remove user'),
-    ('update_firm', 'Update Firm'),
   ]
+  firm_admin_list = [
+    ('get_firm', 'Get Firm'),
+    ('update_firm', 'Update Firm'),  
+  ]
+  
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
     ('get_filings', 'See Filings'),
@@ -65,6 +68,7 @@ subquestion: |
   % if logged_in_user_is_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
+      firm_admin_template,
       firm_admin_users_template,
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
@@ -99,10 +103,6 @@ content: |
       [{'recompute': ['get_firm','show_resp']}]),
       label="Get firm") }
       
-  ### Firm admin - Cross Vendor Functionality
-
-  * Login to EFSP with existing Tyler creds 
-
   ${ action_button_html(url_ask(
       [{'recompute': ['get_notification_preferences','show_resp']}]),
       label="Get notification preferences") }
@@ -110,8 +110,17 @@ content: |
    ${ action_button_html(url_ask(
       [{'recompute': ['update_notification_preferences','show_resp']}]),
       label="Update notification preferences") }
- 
-  * Notification preferences
+---
+template: firm_admin_template
+subject: |
+  Firm
+content: |
+  % for elem in firm_admin_list:
+  ${ action_button_html(url_ask(
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+
+  % endfor  
 ---
 template: code_cache_template
 subject: |
@@ -456,14 +465,6 @@ fields:
     datatype: combobox
     code: |
       [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data ]
-
----
-id: current password
-question: |
-  Current password?
-fields:
-  - Password: current_password
-    datatype: password
 ---
 id: payment account id
 question: |
@@ -513,13 +514,6 @@ question: |
   Global payment account id?
 fields:
   - Global payment account id: global_payment_account_id
----
-id: new password
-question: |
-  New password?
-fields:
-  - Password: new_user_password
-    datatype: password      
 ---
 id: service contact id
 question: |
@@ -1213,6 +1207,8 @@ code: |
   del new_user_password
   change_password = True
 ---
+need:
+  - new_user_password
 code: |
   resp = proxy_conn.self_change_password(current_password, new_user_password)
   del current_password, new_user_password
