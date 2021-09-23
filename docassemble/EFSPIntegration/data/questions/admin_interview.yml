@@ -1,6 +1,7 @@
 ---
 modules:
   - .efm_client  
+  - .conversions
 ---
 include:
   - login_qs.yml
@@ -950,16 +951,6 @@ code: |
   del interim_notification_selections
   update_notification_preferences = True
 ---
-# code: |
-#   resp = proxy_conn.CancelFilingStatus(court_id, filing_id)
-#   del court_id
-#   del filing_id
-#   cancel_filing = True
-# ---
-code: |
-  resp = proxy_conn.get_firm()
-  get_firm = True
----
 code: |
   firm_details = proxy_conn.get_firm()
   if firm_details.data:
@@ -1227,34 +1218,16 @@ code: |
   del current_password, new_user_password
   self_change_password = True
 ---
-code: |
-  resp = proxy_conn.get_firm()
-  get_firm = True
----
 id: results
 question: |
   Results of your request
 subquestion: |
-  % if isinstance(resp.data, list):
-
-  % for idx, elem in enumerate(resp.data):
-  * idx: ${ idx }
-
-    % if isinstance(elem, dict):
-    % for k, inner_elem in elem.items():
-      * ${ k }: ${ inner_elem }
-
-    % endfor
-    % else:
-      * ${ elem }
-    % endif
-
-  % endfor
-
-  % else:
-  ${ resp }
-  % endif
+  ${ pretty_display(resp.data) }
 continue button field: show_resp
+---
+code: |
+  resp = proxy_conn.get_firm()
+  get_firm = True
 ---
 id: results role update
 question: |
