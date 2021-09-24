@@ -53,30 +53,27 @@ subquestion: |
   within 2 weeks.
   
   We recommend you continue down below to download the form for your own records.
-
-  % else:
-  Something went wrong delivering your form to the ${trial_court}.  
-  Try again later or call the Court’s Emergency HelpLine 833-91-COURT (833-912-6878). 
-  
-  The Emergency HelpLine is open:  
-  8:30am - 4:30pm,  
-  Monday - Friday.  
-
   % endif
+  
+  Below is a copy of the document that you uploaded:
+  
+  ${ al_court_bundle.as_pdf() }
 
 help:
   label: |
     ${ 'What went wrong?' if efile_resp.response_code != 200 else 'Details' }
   content: |
     Some debugging information:
+    
+    * Case category: ${ case_category } ${ case_category_map.get(case_category) }
+    * Case type: ${ case_type } ${ case_type_map.get(case_type) }
+    * Lead document type: ${ lead_doc.tyler_filing_type }
+    * Document security: ${ lead_doc.document_type }
 
     ${ efile_resp }
 continue button field: show_resp
 continue button label: Back to download screen
 ---
-need:
-  - comments_to_clerk
-  - package_version_number
 id: ready to efile
 question: |
   Final Review With Cover Page
@@ -106,13 +103,6 @@ subquestion: |
   % if ready_to_efile:
   Press below to deliver the form.
   % endif
-fields:
-  - Send me a copy: should_cc_user
-    datatype: yesno
-  - Email address: cc_email
-    datatype: email
-    show if: should_cc_user
-    default: ${users[0].email if defined('users[0].email') else ''}
 continue button field: efile_user_reviewed
 continue button label: Send to court
 ---

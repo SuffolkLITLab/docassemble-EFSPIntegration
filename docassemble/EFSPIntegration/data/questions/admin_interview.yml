@@ -129,10 +129,14 @@ content: |
 ---
 template: code_cache_template
 subject: |
-  Refresh Codes
+  Codes
 content: |
   Code cache refresh is initiated in the backend only.
   It takes ~ 20 minutes to fully refresh codes.
+  
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_datafield', 'show_resp']}]),
+    label="Get datafield") }
 ---
 template: firm_admin_users_template
 subject: |
@@ -644,15 +648,16 @@ question: |
   Create a new service contact
 fields:
   - code: |
-      new_service_contact.name_fields()
+      new_service_contact.name_fields(show_suffix=False)
   - code: |
       new_service_contact.address_fields(default_state="IL", show_country=True)
   - Email: new_service_contact.email
     datatype: email
-  - Make this contact public: new_service_contact.is_public
+  - Make this contact public (requires special permissions): new_service_contact.is_public
     datatype: yesno
   - Add to master list: new_service_contact.is_in_master_list
     datatype: yesno
+    default: True
   - Admin copy (optional): new_service_contact.admin_copy
     required: False
 ---
@@ -661,13 +666,15 @@ question: |
   Create attorney
 subquestion: |
   Comment: Tyler validates the bar number, so you must use a real 
-  number. It's possible that 6224951 is our test number to use.
+  number.
 fields:
   - Bar number: new_attorney.bar_number
   - First name: new_attorney.name.first
   - Middle name: new_attorney.name.middle
     required: False
   - Last name: new_attorney.name.last
+help: |
+  Try using "6224951" as the bar number.
 ---
 id: update attorney
 question: |
@@ -1280,16 +1287,28 @@ code: |
   del current_password, new_user_password
   self_change_password = True
 ---
+id: field
+question: |
+  Data field
+fields:
+  - Field Name: field_name
+---
+code: |
+  resp=proxy_conn.get_datafield(court_id, field_name)
+  del court_id
+  del field_name
+  get_datafield = True
+---
+code: |
+  resp = proxy_conn.get_firm()
+  get_firm = True  
+---
 id: results
 question: |
   Results of your request
 subquestion: |
   ${ pretty_display(resp.data) }
 continue button field: show_resp
----
-code: |
-  resp = proxy_conn.get_firm()
-  get_firm = True
 ---
 id: results role update
 question: |
