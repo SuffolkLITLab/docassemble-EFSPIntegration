@@ -22,6 +22,36 @@ objects:
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
 ---
+code: |
+  # Every filing type needs an associated document
+  lead_doc.exhibits.has_exhibits = True
+  lead_doc.exhibits.there_are_any = True
+---
+generic object: ALExhibitList
+id: any exhibits
+question: |
+  Please upload your documents
+subquestion: |
+  You will have a chance to upload multiple documents. 
+  You can also add additional pages to this document.
+fields:
+  - First document title: x[0].title
+    maxlength: 60 # longer might break TOC
+  - Upload the first document: x[0].pages
+    datatype: files
+    maximum image size: 1024
+    image upload type: jpeg        
+    accept: |
+      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
+validation code: |
+  if sum(exhibit.size_in_bytes() for exhibit in x[0].pages) > (15 * 1024 * 1024):
+    validation_error("Upload a file smaller than 15 MB.")
+  try:
+    pdf_concatenate(x[0].pages)
+  except:
+    validation_error("Unable to convert this file. Please upload a new one.", field="x[0].pages")
+  x[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
+---
 objects:
   - service_contacts: DAList.using(object_type=DAObject)
 ---
