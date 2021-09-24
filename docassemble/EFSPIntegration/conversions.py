@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from docassemble.base.util import DADateTime, as_datetime
+from docassemble.base.util import DADateTime, as_datetime, validation_error
 from typing import List, Dict, Tuple, Any, Callable
 
 def convert_court_to_id(trial_court) -> str:
@@ -44,8 +44,21 @@ def validate_tyler_regex(dataField:Dict)->Callable:
   suitable for use with Docassemble's `validate:` question modifier
   """
   def fn_validate(input):
-    if re.match(dataField.get('regularexpression'), input):
+    if not dataField:
+      return True # Don't want to stop on-screen validation if we can't retrieve the code
+    if re.match(dataField.get('regularexpression'), str(input)):
       return True
-    validation_error(dataField.get('validationmessage'))
+    validation_message = dataField.get('validationmessage')
+    if not validation_message:
+      validation_message =  'Enter a valid value'
+      # Hardcode the fallback validation message for 1-999. Inexplicably, no validation message
+      # supplied for 1-999 in Illinois but I think this will stay the same for a long time
+      if dataField.get('regularexpression') == r'^([1-9][0-9]{0,2})$':
+        validation_message = "Enter a number betweeen 1-999"
+      elif dataField.get('regularexpression') == r'^([0-9]{0,9}(\.([0-9]{0,2}))?)$':
+        validation_message = "Enter a number between 0-999,999,999"
+      elif dataField.get('regularexpression') == r'^[0-9]*$':
+        validation_message = "Enter only digits"
+    validation_error(validation_message)
   return fn_validate
   
