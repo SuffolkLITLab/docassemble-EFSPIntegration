@@ -16,6 +16,9 @@ features:
   navigation back button: False
 ---
 objects:
+  - lead_contact: ALIndividual
+---
+objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
   - other_parties: ALPeopleList # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
 ---
@@ -101,11 +104,13 @@ code: |
 
   users.gather(complete_attribute='complete')
   other_parties.gather(complete_attribute='complete')
-  reconsider('missing_required_party_types')
-  if missing_required_party_types:
-    party_review_screen
-  filing_description
-  reference_number
+  if is_initial_filing:
+    lead_contact = users[0]
+    reconsider('missing_required_party_types')
+    if missing_required_party_types:
+      party_review_screen
+  else:
+    lead_contact.name.first
   lead_doc.completed
   user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
@@ -154,6 +159,16 @@ columns:
 edit:
   - party_type_code  
 ---
+sets:
+  - lead_contact.name.first
+question: |
+  Who should be contacted about this filing?
+fields:
+  - email: lead_contact.email
+    datatype: email
+  - code: |
+      lead_contact.name_fields()
+---
 id: review parties
 continue button field: party_review_screen
 question: |
@@ -183,12 +198,15 @@ code: |
 generic object: ALDocument
 code: |
   x.filing_type
+  x.filing_description
+  x.reference_number
   x.optional_services.gather(complete_attribute='complete')
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
   x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
   x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
   if x.exhibits.has_exhibits:
     x.as_pdf()
+  x.filing_parties
   x.completed =True
 ---
 id: Additional parties
@@ -237,6 +255,9 @@ code: |
       case_category = selected_existing_case.category
     if selected_existing_case.case_type:
       case_type = selected_existing_case.case_type
+    full_case_query = proxy_conn.get_case(court_id, selected.tracking_id)
+    # TODO(brycew): get party info from existing case to select filing parties 
+    exising_case_parties = None
   load_existing_case_defaults = True
 ---
 id: location
@@ -320,6 +341,7 @@ fields:
     code: |
       sorted(filing_type_options, key=lambda option: option[1])
 ---
+generic object: ALDocument
 id: filing description
 question: |
   Filing Description
@@ -329,16 +351,17 @@ fields:
       % if not filing_description_datafield.get('isrequired'):
       (optional)
       % endif      
-    field: filing_description
+    field: x.filing_description
     datatype: text
     required: |
       filing_description_datafield.get('isrequired', False)
 ---
+generic object: ALDocument
 code: |
   # If policy prohibits sending the filing description, don't ask the question
   # TODO: how should the proxy handle this? '' is not the same as undefined
   if filing_description_datafield.get('isvisible') == False: # Treat None as visible
-    filing_description = ''
+    x.filing_description = ''
 ---
 id: your name
 sets:
@@ -520,6 +543,7 @@ under: |
   % endif
 continue button field: show_disclaimers
 ---
+generic object: ALDocument
 id: reference number
 question: |
   Reference number
@@ -527,7 +551,7 @@ subquestion: |
   Optional -- add a unique reference number to track this case in your own
   filing system.
 fields:
-  - Reference Number (optional): reference_number
+  - Reference Number (optional): x.reference_number
     datatype: text
     required: False
 ---
@@ -621,20 +645,37 @@ fields:
   - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
 ---
+generic object: ALDocument
 id: user resp for payment
 question: |
   User responsible for payment
 fields:
-  - User for payment: user_responsible_for_payment
-    datatype: dropdown
+  - User for payment: x.filing_parties_dict
+    datatype: multiselect
     code: |
-      users
+      list(map(lambda nau: ('users[' + nau[0] + ']', nau[1]), enumerate(users)))
+    required: is_initial_filing
 ---
+generic object: ALDocument
+id: existing parties resp for payment
+question: |
+  Existing parties responsible for payment
+fields: 
+  - Parties for payment: x.existing_parties_payment_dict
+    datatype: multiselect
+    code: |
+      list(map(lambda u: (u.id, u), existing_case_parties))
+---
+generic object: ALDocument
 code: |
-  if len(users) == 1:
-    # TODO: should this be user name as above, or an object reference?
-    user_responsible_for_payment = str(users[0])
+  if is_initial_filing and len(users) == 1:
+    x.filing_parties = ['users[0]']
     explain_user_paying
+  elif is_initial_filing:
+    x.filing_parties_dict
+    x.filing_parties = x.true_values()
+  else:
+    x.filing_parties_dict
 ---
 id: you are responsible for payment
 question: |
