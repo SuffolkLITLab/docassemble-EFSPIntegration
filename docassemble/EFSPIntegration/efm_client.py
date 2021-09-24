@@ -476,9 +476,9 @@ class ProxyConnection:
     if person.person_type == 'business':
       return self._get_cases(court_id, business_name=person.name.first, docket_id=docket_id)
     else:
-      return self._get_cases(court_id, person_name=person.name, docket_id=docket_id)
+      return self._get_cases(court_id, person_name=person.name.as_serializable(), docket_id=docket_id)
   
-  def _get_cases(self, court_id:str, person_name:IndividualName=None, business_name:str=None, docket_id:str=None) -> ApiResponse:
+  def _get_cases(self, court_id:str, person_name:dict=None, business_name:str=None, docket_id:str=None) -> ApiResponse:
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases', 
         data=json.dumps({'person_name': person_name, 'business_name': business_name, 'docket_id': docket_id}))
     return self._call_proxy(send)
