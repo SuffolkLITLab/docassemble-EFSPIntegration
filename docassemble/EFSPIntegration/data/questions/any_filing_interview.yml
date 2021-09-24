@@ -340,6 +340,72 @@ code: |
   if filing_description_datafield.get('isvisible') == False: # Treat None as visible
     filing_description = ''
 ---
+id: your name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+question:  |
+  What is your name?
+fields:
+  - code: |
+      users[0].name_fields(show_suffix=False)
+---
+sets:
+  - users[i].name.first
+  - users[i].name.last
+id: other users names
+question: |
+  What is the name of the ${ ordinal(i) } person who is part of the case with you?
+fields:
+  - code: |
+      users[i].name_fields(show_suffix=False)
+---
+sets:
+  - other_parties[i].name.first
+id: names of opposing parties
+question: |
+  Name of ${ ordinal(i) } person on the opposing side of this case
+fields:
+  - code: |
+      other_parties[i].name_fields(person_or_business='unsure', show_suffix=False)
+---
+id: name of ALIndividual
+sets:
+  - x.name.first
+  - x.name.last
+generic object: ALIndividual
+question: |
+  What is ${x.object_possessive('name')}?
+fields:
+  - code: |
+      x.name_fields(show_suffix=False)
+---
+comment: |
+  I removed language specific to defendant/plaintiff because
+  there are several case types where that concept doesn't make sense.
+  E.g., adoption has adoptive parent/child. But we can't special case
+  each situation.
+  
+  Tyler doesn't care about users/other_parties--we ony use users to determine
+  fee responsibility.
+id: is there an opposing party?
+question: |
+  Is there an opposing party in this case?
+subquestion: |
+  An **opposing party** is someone who is on the other side of a legal case.
+  
+  % if user_started_case:
+  Answer yes if there is a person or organization you are suing or taking to court.
+  % else:
+  Answer yes if someone else has sued you or is bringing you to court.
+  % endif
+yesno: other_parties.there_are_any
+---
+id: any other opposing parties
+question: |
+  Is there any other opposing party?
+yesno: other_parties.there_is_another  
+---
 id: party type of x
 generic object: ALIndividual
 question: |
