@@ -340,6 +340,29 @@ code: |
   if filing_description_datafield.get('isvisible') == False: # Treat None as visible
     filing_description = ''
 ---
+id: is the user the plaintiff or defendant?
+question: |
+  Did you start this case, or are you responding to a case
+  that someone else started?
+subquestion: |
+  ${ collapse_template(plaintiff_defendant_help_template) }
+fields: 
+  - Your role in this case: user_ask_role
+    datatype: radio
+    choices:
+      - I started or I am starting a new case: plaintiff
+      - I am responding to a case someone else started: defendant
+---
+template: plaintiff_defendant_help_template
+subject: |
+  How do I know?
+content: |
+  If you are the first person to file a form in the case, you 
+  started the case. You are usually the "Plaintiff" or the "Petitioner."
+
+  If you are responding to a case or court papers someone else filed, you
+  are usually the "Defendant" or the "Respondent."
+---
 id: your name
 sets:
     - users[0].name.first
@@ -578,10 +601,22 @@ fields:
 id: optional service multiplier
 generic object: ALDocument
 question: |
-  Optional Service ${ i } multiplier?
+  How many "${ x.optional_service_map.get(x.optional_services[i].code).get('name') }"
+  do you want?
+subquestion: |
+  Choose the number of ${ x.optional_service_map.get(x.optional_services[i].code).get('name') } that you want below.
+  
+  Usually this means the number of copies. This may affect
+  the total fee for this service.  
 fields:
   - Multiplier: x.optional_services[i].multiplier
     datatype: integer
+    min: 1
+    validate: |
+      validate_tyler_regex(multiplier_datafield)
+---
+code: |
+  multiplier_datafield = proxy_conn.get_datafield(court_id, 'OptionalServicesMultipleCopies').data or {}
 ---
 id: cross reference type
 question: |
