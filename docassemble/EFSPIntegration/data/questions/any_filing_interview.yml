@@ -112,7 +112,6 @@ code: |
   else:
     lead_contact.name.first
   lead_doc.completed
-  user_responsible_for_payment
   service_contacts.gather(complete_attribute='complete')
   cross_references.gather()
   # TODO: as_pdf() is slow and may not be right if no document uploaded
@@ -506,13 +505,27 @@ if: |
 code: |
   x.filing_component_code = next(iter(x.filing_component_options))[0]
 ---
-generic object: ALDocument
 code: |
   def exactly_one_required_filing_component(fc_opts, fc_map):
     if len(fc_opts) > 1:
       return False
     filing_component_code = next(iter(fc_opts))[0]
     return fc_map.get(filing_component_code,{}).get('required')
+---
+# TODO(brycew): Need to force required filing types too
+code: |
+  def any_required(fc_opts, fc_map):
+    new_list = list(filter(lambda ff: fc_map.get(ff, {}).get('required'), fc_opts))
+    if new_list:
+      return True
+    else:
+      return False
+  def only_required_if_any(fc_opts, fc_map):
+    new_list = list(filter(lambda ff: fc_map.get(ff, {}).get('required'), fc_opts))
+    if new_list:
+      return new_list
+    else:
+      return fc_opts
 ---
 id: disclaimers
 question: |
