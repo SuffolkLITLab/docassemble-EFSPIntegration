@@ -15,16 +15,21 @@ code: |
   if do_what_choice == 'search':
     somebody.name.first
     court_id    
-    get_cases_response
-    if case_tracking_choice is None:
-      case_tracking_id
-    else:      
-      case_tracking_id = case_tracking_choice
+    if not case_search_task_status.ready():
+      case_search_waiting_screen
+    else:
+      if case_tracking_choice is None:
+        warn_no_results
+        case_tracking_id
+      else:      
+        case_tracking_id = case_tracking_choice
+        found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
   elif do_what_choice == 'lookup':
     case_docket_id
     court_id    
     get_case_response
-    display_case
+    # display_case
+    found_case = get_case_response.data
     case_tracking_id = get_case_response.data.get('value',{}).get('caseTrackingID',{}).get('value')
   else:
     case_tracking_id
@@ -32,6 +37,14 @@ code: |
       del case_tracking_id
       case_tracking_id
   interview_order_find_case = True      
+---
+id: no cases found
+question: |
+  No cases found
+subquestion: |
+  You can either enter a case tracking ID or hit "back" to 
+  try a new search.
+continue button field: warn_no_results
 ---
 id: case lookup
 question: |
@@ -84,11 +97,21 @@ field: _cont
 code: |
   all_courts = proxy_conn.get_courts().data
 ---
-need:
-  - proxy_conn.authed_user_id
+event: case_search_waiting_screen
+question: |
+  Your search is in progress, please wait
+---
 code: |
-  docket_id = None
-  get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_id=docket_id)
+  case_search_task_status = background_action('case_search_task', 'refresh')
+---
+event: case_search_task
+code: |
+  background_response_action('case_search_done', case_response = proxy_conn.get_cases(court_id, {"first": somebody.name.first, "last":somebody.name.last}, None))
+---
+event: case_search_done
+code: |
+  get_cases_response = action_argument('case_response')
+  background_response()
 ---
 id: docket id
 question: |
@@ -125,7 +148,7 @@ content: |
   % endfor  
 ---
 id: display case
-event: display_case
+continue button field: display_case
 question: |
   Results
 subquestion: |
