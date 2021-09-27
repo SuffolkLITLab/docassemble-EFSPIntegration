@@ -106,7 +106,7 @@ code: |
 ---
 event: case_search_task
 code: |
-  background_response_action('case_search_done', case_response = proxy_conn.get_cases(court_id, person, None))
+  background_response_action('case_search_done', case_response = proxy_conn.get_cases(court_id, somebody, None))
 ---
 event: case_search_done
 code: |
