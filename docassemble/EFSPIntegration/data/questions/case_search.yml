@@ -50,6 +50,35 @@ code: |
     display_case
     interview_order_find_case = True
 ---
+if: |
+  do_what_choice == 'non-indexed-case':
+code: |
+  if can_file_non_indexed_case:
+    non_indexed_docket_number
+  else:
+    no_non_indexed_cases
+---  
+code: |
+  court_code_results = proxy_conn.get_court(court_id).data
+  if court_code_results:
+    can_file_non_indexed_case = court_code_results.get('allowfilingintononindexedcase') or False
+  else:
+    can_file_non_indexed_case = False    
+---
+id: ask non-indexed docket number
+question: |
+  Docket number
+subquestion: |
+  Enter the docket number for the non-indexed case
+fields:
+  - Docket number: non_indexed_docket_number
+# TODO: input validation  
+---
+id: no non-indexed cases
+question: |
+  ${ court_id} does not allow filing into non-indexed cases
+continue button field: no_non_indexed_cases  
+---
 id: no cases found
 question: |
   No cases found
@@ -61,10 +90,25 @@ continue button field: warn_no_results
 id: case lookup
 question: |
   Case lookup
+subquestion: |
+  ${ collapse_template(explain_case_search_choices_template) }
 field: do_what_choice
 choices:
   - Find a case by party name: party_search
   - Find a case by Docket Number: docket_lookup
+  - I want to file into a non-indexed case: non-indexed-case
+---
+template: explain_case_search_choices_template
+subject: |
+  What is a non-indexed case?
+content: |
+  Some courts only allow you to search part of the court's
+  docket. If that applies to the court you want to file into,
+  you can still file but you must use the case number so that
+  a clerk can match your filing to the case.
+---
+objects:
+  - somebody: ALIndividual
 ---
 sets:
   - somebody.name.first
