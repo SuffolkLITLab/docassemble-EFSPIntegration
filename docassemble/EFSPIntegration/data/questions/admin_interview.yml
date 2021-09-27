@@ -213,6 +213,10 @@ content: |
     label='Get service contact list') }
 
   ${ action_button_html(url_ask(
+    [{'recompute': ['get_public_list', 'show_resp']}]),
+    label='Get public service contact list') }
+
+  ${ action_button_html(url_ask(
     [{'recompute': ['get_service_contact', 'show_resp']}]),
     label='Get service contact') }
 

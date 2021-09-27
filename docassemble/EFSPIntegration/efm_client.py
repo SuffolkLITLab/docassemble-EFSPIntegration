@@ -408,9 +408,9 @@ class ProxyConnection:
     return self._call_proxy(send)
 
   def get_public_list(self):
-    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/public-service-contacts')
+    send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public')
     return self._call_proxy(send)
-
+  
   def get_courts(self, filable_only:bool=False):
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts?filable_only={filable_only}')
     return self._call_proxy(send)
