@@ -255,7 +255,7 @@ code: |
       case_category = selected_existing_case.category
     if selected_existing_case.case_type:
       case_type = selected_existing_case.case_type
-    full_case_query = proxy_conn.get_case(court_id, selected.tracking_id)
+    full_case_query = proxy_conn.get_case(court_id, selected_existing_case.tracking_id)
     # TODO(brycew): get party info from existing case to select filing parties 
     exising_case_parties = None
   load_existing_case_defaults = True
@@ -724,10 +724,9 @@ code: |
     explain_user_paying
   elif is_initial_filing:
     x.filing_parties_dict
-    x.filing_parties = x.filing_parties_dict.true_values()
+    x.filing_parties = list(x.filing_parties_dict.true_values())
   else:
-    x.filing_parties_dict
-    x.filing_parties = x.filing_parties_dict.true_values()    
+    x.filing_parties = list(x.existing_parties_payment_dict.true_values())
 ---
 code: |
   filing_parties = next(lead_doc.filing_parties)
