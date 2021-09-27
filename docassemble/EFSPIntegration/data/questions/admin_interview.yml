@@ -678,7 +678,12 @@ fields:
     required: False
   - Last name: new_attorney.name.last
 help: |
-  Try using "6224951" as the bar number.
+  Two real bar numbers belonging to staff at ILAO who agreed to let us
+  use for testing purposes: 
+  
+  * 6290610
+  * 6331982
+  
 ---
 id: update attorney
 question: |
