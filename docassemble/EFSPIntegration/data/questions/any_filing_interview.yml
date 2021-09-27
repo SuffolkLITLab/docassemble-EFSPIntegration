@@ -801,7 +801,11 @@ fields:
 id: your form is submitted
 event: summary_page
 question: |
+  % if efile_resp.is_ok():
   Your form is submitted!
+  % else:
+  Something went wrong submitting your form.
+  % endif
 subquestion: |
   You can still download a copy for your records.
   
