@@ -46,6 +46,7 @@ code: |
   
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
+    ('get_court','Get detailed court information'),
     ('get_filings', 'See Filings'),
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
@@ -944,6 +945,11 @@ code: |
 code: |
   resp = proxy_conn.get_courts()
   get_courts = True
+---
+code: |
+  resp = proxy_conn.get_court(court_id)
+  del court_id
+  get_court = True
 ---
 code: |
   resp = proxy_conn.get_filing_list(court_id, start_date, end_date)
