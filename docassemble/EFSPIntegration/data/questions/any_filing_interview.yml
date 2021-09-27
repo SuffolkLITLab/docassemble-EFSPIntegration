@@ -19,8 +19,8 @@ objects:
   - lead_contact: ALIndividual
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties)
-  - other_parties: ALPeopleList # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
+  - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties, complete_attribute='complete')
+  - other_parties: ALPeopleList.using(complete_attribute='complete') # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
@@ -56,7 +56,7 @@ validation code: |
   x[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
 ---
 objects:
-  - service_contacts: DAList.using(object_type=DAObject)
+  - service_contacts: DAList.using(object_type=DAObject, complete_attribute='complete')
 ---
 objects:
   - cross_references: DADict.using(there_are_any=len(cross_ref_types))
@@ -102,17 +102,18 @@ code: |
     user_started_case
     is_adding_new_parties
 
-  users.gather(complete_attribute='complete')
-  other_parties.gather(complete_attribute='complete')
+  users.gather()
+  other_parties.gather()
   if is_initial_filing:
     lead_contact = users[0]
     reconsider('missing_required_party_types')
     if missing_required_party_types:
       party_review_screen
+      
   else:
     lead_contact.name.first
   lead_doc.completed
-  service_contacts.gather(complete_attribute='complete')
+  service_contacts.gather()
   cross_references.gather()
   # TODO: as_pdf() is slow and may not be right if no document uploaded
   al_court_bundle.as_pdf()
