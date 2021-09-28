@@ -44,7 +44,7 @@ class ProxyConnection:
   def __init__(self, url:str=None, api_key:str=None):
     temp_efile_config = get_config('efile proxy', {})
     if url is None:
-      url = temp_efile_config.get('url')
+      url = temp_efile_config.get('url', '')
     if api_key is None:
       api_key = temp_efile_config.get('api key')
 
@@ -129,7 +129,9 @@ class ProxyConnection:
         # self.authed_user_id = data['userID']
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(
-        f'Could not connect to the Proxy server at {self.base_url}')
+        f'Could not connect to the Proxy server at {self.base_url}: {ex}')
+    except requests.exceptions.MissingSchema as ex:
+      return ProxyConnection.user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
     return ProxyConnection.user_visible_resp(resp)
 
   def register_user(self, person, registration_type:str, password:str=None, firm_name_or_id:str=None):
