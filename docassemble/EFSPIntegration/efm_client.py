@@ -457,6 +457,14 @@ class ProxyConnection:
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
+  
+  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
+    _recursive_give_data_url(court_bundle)
+    all_vars_obj = all_variables()
+    all_vars = json.dumps(all_vars_obj)
+    send = lambda: self.proxy_client.post(self.base_url + f'/courts/{court_id}/filing/fees',
+          data=all_vars)
+    return self._call_proxy(send)    
 
   def get_return_date(self, court_id:str, req_return_date, court_bundle:ALDocumentBundle):
     _recursive_give_data_url(court_bundle)
