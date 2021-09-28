@@ -55,6 +55,7 @@ if: |
 code: |
   if can_file_non_indexed_case:
     non_indexed_docket_number
+    found_case = DAObject(case_tracking_id=case_tracking_id)
   else:
     no_non_indexed_cases
 ---  
@@ -67,12 +68,30 @@ code: |
 ---
 id: ask non-indexed docket number
 question: |
-  Docket number
+  Case number
 subquestion: |
-  Enter the docket number for the non-indexed case
+  Enter the case number for the non-indexed case
+
+  ${ collapse_template(case_number_format_template) }
+  
+  ${ collapse_template(case_number_format_cook_county_template) }
+  
 fields:
-  - Docket number: non_indexed_docket_number
-# TODO: input validation  
+  - Case number: non_indexed_docket_number
+# TODO: input validation is not possible--no required format for
+# case number in Illinois
+---
+template: case_number_format_template
+subject: |
+  How to enter your case number (Except Cook County)
+content: |
+  [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
+---
+template: case_number_format_cook_county_template
+subject: |
+  How to enter your case number (Chicago/Cook County only)
+content: |
+  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
 ---
 id: no non-indexed cases
 question: |
@@ -95,7 +114,7 @@ subquestion: |
 field: do_what_choice
 choices:
   - Find a case by party name: party_search
-  - Find a case by Docket Number: docket_lookup
+  - Find a case by Case Number: docket_lookup
   - I want to file into a non-indexed case: non-indexed-case
 ---
 template: explain_case_search_choices_template
@@ -150,9 +169,14 @@ code: |
 ---
 id: docket id
 question: |
-  Docket ID
+  Case number
+subquestion: |
+  ${ collapse_template(case_number_format_template) }
+  
+  ${ collapse_template(case_number_format_cook_county_template) }
+
 fields:
-  - Docket id: case_docket_id
+  - Case number: case_docket_id
 ---
 need:
   - proxy_conn.authed_user_id
