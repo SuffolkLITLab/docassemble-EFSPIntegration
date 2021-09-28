@@ -28,59 +28,14 @@ objects:
 code: |
   # Every filing type needs an associated document
   lead_doc.exhibits.has_exhibits = True
-  lead_doc.exhibits.there_are_any = True
 ---
-generic object: ALExhibitDocument
-id: exhibit i
-question: |
-  Upload the ${ ordinal(i) } document
-subquestion: |
-  You will have a chance to upload additional pages for this document later.  
-fields:
-  #  - Document type: x.document_type_code
-  #    input type: radio
-  #    code: |
-  #      x.document_type_options
-  #    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
-  #    # Comment: it would be nice to give this a more user-friendly name
-  #    # and description, but it appears document type can be used for more
-  #    # than just confidential/not-confidential
-  #    help: |
-  #      If a judge has ordered that this case is sealed, select
-  #      "Confidential". You should also attach a copy of the judge's order.
-  - Filing Type: x.filing_type
-    datatype: dropdown
-    code: |
-      sorted(filing_type_options, key=lambda option: option[1])
-  - label: |
-      Description
-      % if not filing_description_datafield.get('isrequired'):
-      (optional)
-      % endif      
-    field: x.filing_description
-    datatype: text
-    required: |
-      filing_description_datafield.get('isrequired', False)    
-  - Reference Number (optional): x.reference_number
-    datatype: text
-    required: False
-  - Document: x.exhibits[i].pages
-    datatype: files
-    maximum image size: 1024
-    image upload type: jpeg        
-    accept: |
-      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
-validation code: |
-  if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[i].pages) > (15 * 1024 * 1024):
-    validation_error("Upload a file smaller than 15 MB.")
-  try:
-    pdf_concatenate(x.exhibits[i].pages)
-  except:
-    validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[i].pages")
-  if defined('x.exhibits[i].pages'):    
-    x.exhibits[i].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
+code: |
+  # You can only have exactly one exhibit per ALExhibitDocument
+  # for this filing interview
+  al_court_bundle[i].exhibits.has_exhibits = True
+  al_court_bundle[i].exhibits.ask_number = True
+  al_court_bundle[i].exhibits.target_number = 1
 ---
-generic object: ALExhibitDocument
 id: any exhibits
 question: |
   Please upload your documents
@@ -99,7 +54,7 @@ fields:
   #  help: |
   #    If a judge has ordered that this case is sealed, select
   #    "Confidential". You should also attach a copy of the judge's order.
-  - Filing Type: x.filing_type
+  - Filing Type: al_court_bundle[i].filing_type
     datatype: dropdown
     code: |
       sorted(filing_type_options, key=lambda option: option[1])
@@ -108,32 +63,64 @@ fields:
       % if not filing_description_datafield.get('isrequired'):
       (optional)
       % endif      
-    field: x.filing_description
+    field: al_court_bundle[i].filing_description
     datatype: text
     required: |
       filing_description_datafield.get('isrequired', False)    
-  - Reference Number (optional): x.reference_number
+  - Reference Number (optional): al_court_bundle[i].reference_number
     datatype: text
     required: False
-  - Document: x.exhibits[0].pages
+  - Document: al_court_bundle[i].exhibits[0].pages
     datatype: files
     maximum image size: 1024
     image upload type: jpeg        
     accept: |
       "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
 validation code: |
-  if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[0].pages) > (15 * 1024 * 1024):
+  if sum(exhibit.size_in_bytes() for exhibit in al_court_bundle[i].exhibits[0].pages) > (15 * 1024 * 1024):
     validation_error("Upload a file smaller than 15 MB.")
   try:
-    pdf_concatenate(x.exhibits[0].pages)
+    pdf_concatenate(al_court_bundle[i].exhibits[0].pages)
   except:
-    validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[0].pages")
-  x.exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
-
+    validation_error("Unable to convert this file. Please upload a new one.", field="al_court_bundle[i].exhibits[0].pages")
+  al_court_bundle[i].exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
 ---
 generic object: ALExhibitDocument
 code: |
-  x.exhibits[i].title = x.filing_description if x.filing_description else filing_type_map.get(x.filing_type,{}).get('name')
+  al_court_bundle[i].exhibits[j].title = al_court_bundle[i].filing_description if al_court_bundle[i].filing_description else filing_type_map.get(al_court_bundle[i].filing_type,{}).get('name')
+---
+id: another exhibit
+question: |
+  You have ${ al_court_bundle.number_gathered() } document(s) so far. Do you have another document
+  you want to upload?
+#subquestion: |
+#  ${ collapse_template(x.in_progress_exhibits) }
+field: al_court_bundle[i].there_is_another
+buttons:
+  - Finished adding documents: False
+  - Add another document: True
+---
+generic object: ALExhibitList
+template: x.in_progress_exhibits
+subject: |
+  Preview your documents so far
+content: |
+  ${ x.rearrange_exhibits_table }
+---
+generic object: ALExhibitList
+table: x.rearrange_exhibits_table
+rows: x
+allow reordering: True
+delete buttons: True
+columns:
+  - ${ al_exhibit_title_label }: |
+      row_item.title
+  - ${ al_exhibit_preview_label }: |
+      row_item.pages.show(width="50%")
+  - ${ al_exhibit_total_pages_label }: |
+      row_item.pages.num_pages()
+edit:
+  - rearrange_pages  
 ---
 objects:
   - service_contacts: DAList.using(object_type=DAObject, complete_attribute='complete')
@@ -148,7 +135,7 @@ objects:
   - lead_doc.optional_services: DAList.using(object_type=DAObject)
 ---
 objects:
-  - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court")
+  - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court", object_type=ALExhibitDocument, complete_attribute = 'completed', there_are_any=True)
 ---
 code: |
   if is_initial_filing:
@@ -192,6 +179,8 @@ code: |
   else:
     lead_contact.name.first
   lead_doc.completed
+  al_court_bundle.gather()
+  
   service_contacts.gather()
   cross_references.gather()
   # TODO: as_pdf() is slow and may not be right if no document uploaded
