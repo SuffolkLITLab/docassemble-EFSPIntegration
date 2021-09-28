@@ -187,8 +187,7 @@ code: |
     lead_contact = users[0]
     reconsider('missing_required_party_types')
     if missing_required_party_types:
-      party_review_screen
-      
+      party_review_screen      
   else:
     lead_contact.name.first
   lead_doc.completed
@@ -204,12 +203,34 @@ code: |
   if can_check_efile:
     if is_initial_filing:
       users[0].email
+    #TODO(qs): if not a waiver account...
     ready_to_efile
+    review_fees
 
   show_disclaimers
   efile
   summary_page
   #submitted_page
+---
+id: review_fees
+question: |
+  Review filing fees
+subquestion: |
+  Your payment account will be charged the following fees:
+  
+  ${ fees_resp }
+fields:
+  - no label: review_fees
+    datatype: checkboxes
+    choices:
+      - I agree to pay the listed fees: agrees_to_pay_fees
+    minlength: 1
+    validation messages:
+      minlength: |
+        You must agree to pay the fees listed above.
+---
+code: |
+  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
 ---
 generic object: ALIndividual
 code: |
