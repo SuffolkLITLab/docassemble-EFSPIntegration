@@ -172,7 +172,6 @@ code: |
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
     tyler_payment_id
-    PaymentID # TODO: temporary fix
     user_ask_role
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
@@ -475,10 +474,6 @@ fields:
     datatype: dropdown
     code: |
       tyler_payment_account_options
----
-code: |
-  # TODO: temporary workaround
-  PaymentID = tyler_payment_id
 ---
 generic object: ALDocument
 id: filing type
