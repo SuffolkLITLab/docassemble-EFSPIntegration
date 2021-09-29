@@ -26,16 +26,25 @@ objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
 ---
 code: |
-  # Every filing type needs an associated document
-  lead_doc.exhibits.has_exhibits = True
+  al_court_bundle.clear()
+  al_court_bundle.append(lead_doc)
+  
+  append_lead_doc = True
 ---
+generic object: ALDocument
+code: |
+  # Every filing type needs an associated document
+  x.exhibits.has_exhibits = True
+---
+generic object: ALDocument
 code: |
   # You can only have exactly one exhibit per ALExhibitDocument
   # for this filing interview
-  al_court_bundle[i].exhibits.has_exhibits = True
-  al_court_bundle[i].exhibits.ask_number = True
-  al_court_bundle[i].exhibits.target_number = 1
+  x.exhibits.has_exhibits = True
+  x.exhibits.ask_number = True
+  x.exhibits.target_number = 1
 ---
+generic object: ALDocument
 id: any exhibits
 question: |
   Please upload your documents
@@ -54,7 +63,7 @@ fields:
   #  help: |
   #    If a judge has ordered that this case is sealed, select
   #    "Confidential". You should also attach a copy of the judge's order.
-  - Filing Type: al_court_bundle[i].filing_type
+  - Filing Type: x.filing_type
     datatype: dropdown
     code: |
       sorted(filing_type_options, key=lambda option: option[1])
@@ -63,31 +72,35 @@ fields:
       % if not filing_description_datafield.get('isrequired'):
       (optional)
       % endif      
-    field: al_court_bundle[i].filing_description
+    field: x.filing_description
     datatype: text
     required: |
       filing_description_datafield.get('isrequired', False)    
-  - Reference Number (optional): al_court_bundle[i].reference_number
+  - Reference Number (optional): x.reference_number
     datatype: text
     required: False
-  - Document: al_court_bundle[i].exhibits[0].pages
+  - Document: x.exhibits[0].pages
     datatype: files
     maximum image size: 1024
     image upload type: jpeg        
     accept: |
       "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
 validation code: |
-  if sum(exhibit.size_in_bytes() for exhibit in al_court_bundle[i].exhibits[0].pages) > (15 * 1024 * 1024):
+  if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[0].pages) > (15 * 1024 * 1024):
     validation_error("Upload a file smaller than 15 MB.")
   try:
-    pdf_concatenate(al_court_bundle[i].exhibits[0].pages)
+    pdf_concatenate(x.exhibits[0].pages)
   except:
-    validation_error("Unable to convert this file. Please upload a new one.", field="al_court_bundle[i].exhibits[0].pages")
-  al_court_bundle[i].exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
+    validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[0].pages")
+  x.exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
 ---
 generic object: ALExhibitDocument
 code: |
-  al_court_bundle[i].exhibits[j].title = al_court_bundle[i].filing_description if al_court_bundle[i].filing_description else filing_type_map.get(al_court_bundle[i].filing_type,{}).get('name')
+  x.exhibits[i].title = x.filing_description if x.filing_description else filing_type_map.get(x.filing_type,{}).get('name')
+---  
+generic object: ALExhibitDocument
+code: |
+  x.filename = space_to_underscore(x.filing_description)
 ---
 id: another exhibit
 question: |
@@ -95,7 +108,7 @@ question: |
   you want to upload?
 #subquestion: |
 #  ${ collapse_template(x.in_progress_exhibits) }
-field: al_court_bundle[i].there_is_another
+field: al_court_bundle.there_is_another
 buttons:
   - Finished adding documents: False
   - Add another document: True
@@ -128,14 +141,16 @@ objects:
 objects:
   - cross_references: DADict.using(there_are_any=len(cross_ref_types))
 ---
+generic object: ALExhibitDocument
 code: |
-  lead_doc.enabled = True
+  x.enabled = True
+---
+generic object: ALExhibitDocument
+objects:
+  - x.optional_services: DAList.using(object_type=DAObject)
 ---
 objects:
-  - lead_doc.optional_services: DAList.using(object_type=DAObject)
----
-objects:
-  - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court", object_type=ALExhibitDocument, complete_attribute = 'completed', there_are_any=True)
+  - al_court_bundle: ALDocumentBundle.using(filename="full_bundle.pdf", title="All forms to submit to the court", object_type=ALExhibitDocument, complete_attribute = 'completed', gathered=False, auto_gather=True, there_are_any=True)
 ---
 code: |
   if is_initial_filing:
@@ -178,7 +193,10 @@ code: |
       party_review_screen      
   else:
     lead_contact.name.first
+  
   lead_doc.completed
+  append_lead_doc    
+  al_court_bundle.auto_gather=True  
   al_court_bundle.gather()
   
   service_contacts.gather()
