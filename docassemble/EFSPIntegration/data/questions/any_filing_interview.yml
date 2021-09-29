@@ -8,6 +8,69 @@ include:
   - docassemble.AssemblyLine:al_package.yml
   - case_search.yml
 ---
+mandatory: True
+code: |
+  welcome
+  tyler_login
+  trial_court
+  can_check_efile
+  if can_check_efile:
+    if is_initial_filing:
+      users[0].email
+  if is_initial_filing:
+    tyler_case_category = case_category_map.get(case_category,{}).get('name')
+    tyler_case_type = case_type_map.get(case_type,{}).get('name')
+    if case_subtype_options:
+      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
+    tyler_filing_attorney
+    tyler_payment_id
+    user_ask_role
+    # TODO(brycew): add party type and other items in the complete attr block
+    is_adding_new_parties = False
+  else:
+    interview_order_find_case
+    load_existing_case_defaults
+    previous_case_id = case_tracking_id
+    user_started_case
+    is_adding_new_parties
+
+  users.gather()
+  other_parties.gather()
+  if is_initial_filing:
+    lead_contact = users[0]
+    reconsider('missing_required_party_types')
+    if missing_required_party_types:
+      party_review_screen
+      
+  else:
+    lead_contact.name.first
+  
+  lead_doc.completed
+  append_lead_doc    
+  al_court_bundle.auto_gather=True  
+  al_court_bundle.gather()
+  
+  service_contacts.gather()
+  cross_references.gather()
+  # TODO: as_pdf() is slow and may not be right if no document uploaded
+  al_court_bundle.as_pdf()
+  
+  if full_court_info.data['allowreturndate']:
+    return_date
+    show_allowed_return_date
+
+  if can_check_efile:
+    if is_initial_filing:
+      users[0].email
+    #TODO(qs): if not a waiver account...
+    ready_to_efile
+    review_fees
+
+  show_disclaimers
+  efile
+  summary_page
+  #submitted_page
+---
 code: |
   proxy_conn = ProxyConnection()
 ---
@@ -24,6 +87,7 @@ objects:
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
+  
 ---
 code: |
   al_court_bundle.clear()
@@ -157,68 +221,6 @@ code: |
     al_form_type = 'starts_case'
   else:
     al_form_type = 'existing_case'
----
-mandatory: True
-code: |
-  welcome
-  tyler_login
-  trial_court
-  can_check_efile
-  if can_check_efile:
-    if is_initial_filing:
-      users[0].email
-  if is_initial_filing:
-    tyler_case_category = case_category_map.get(case_category,{}).get('name')
-    tyler_case_type = case_type_map.get(case_type,{}).get('name')
-    if case_subtype_options:
-      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
-    tyler_filing_attorney
-    tyler_payment_id
-    user_ask_role
-    # TODO(brycew): add party type and other items in the complete attr block
-    is_adding_new_parties = False
-  else:
-    interview_order_find_case
-    load_existing_case_defaults
-    previous_case_id = case_tracking_id
-    user_started_case
-    is_adding_new_parties
-
-  users.gather()
-  other_parties.gather()
-  if is_initial_filing:
-    lead_contact = users[0]
-    reconsider('missing_required_party_types')
-    if missing_required_party_types:
-      party_review_screen      
-  else:
-    lead_contact.name.first
-  
-  lead_doc.completed
-  append_lead_doc    
-  al_court_bundle.auto_gather=True  
-  al_court_bundle.gather()
-  
-  service_contacts.gather()
-  cross_references.gather()
-  # TODO: as_pdf() is slow and may not be right if no document uploaded
-  al_court_bundle.as_pdf()
-  
-  if full_court_info.data['allowreturndate']:
-    return_date
-    show_allowed_return_date
-
-  if can_check_efile:
-    if is_initial_filing:
-      users[0].email
-    #TODO(qs): if not a waiver account...
-    ready_to_efile
-    review_fees
-
-  show_disclaimers
-  efile
-  summary_page
-  #submitted_page
 ---
 id: review_fees
 question: |
