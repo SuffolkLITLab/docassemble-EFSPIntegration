@@ -188,8 +188,7 @@ code: |
     lead_contact = users[0]
     reconsider('missing_required_party_types')
     if missing_required_party_types:
-      party_review_screen
-      
+      party_review_screen      
   else:
     lead_contact.name.first
   lead_doc.completed
@@ -205,12 +204,65 @@ code: |
   if can_check_efile:
     if is_initial_filing:
       users[0].email
+    #TODO(qs): if not a waiver account...
     ready_to_efile
+    review_fees
 
   show_disclaimers
   efile
   summary_page
   #submitted_page
+---
+id: review_fees
+question: |
+  Review filing fees
+subquestion: |
+  Your payment account will be charged the following fees:
+  
+  % if has_fees:
+  ${ fees_table }
+  
+  **Total: ${ currency(fee_total(fees_resp)) }**
+  % else:
+  There are no fees associated with this filing.
+  % endif  
+fields:
+  - no label: review_fees
+    datatype: checkboxes
+    choices:
+      - I agree to pay the listed fees of ${ currency(fee_total(fees_resp)) }: agrees_to_pay_fees
+    minlength: 1
+    validation messages:
+      minlength: |
+        You must agree to pay the fees listed above.
+    show if:
+      code: |
+        has_fees
+continue button field: review_fees        
+---
+depends on:
+  - fees_resp
+code: |
+  has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
+---
+code: |
+  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
+---
+depends on:
+  - fees_resp
+table: fees_table
+rows: |
+  [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
+columns:
+  - Reason: |
+      row_item.get('allowanceChargeReason',{}).get('value')
+  - Amount: |
+      currency(row_item.get('amount',{}).get('value',0))
+---
+code: |
+  def fee_total(my_resp):
+    if my_resp.data:
+      return my_resp.data.get('feesCalculationAmount',{}).get('value')      
 ---
 generic object: ALIndividual
 code: |
