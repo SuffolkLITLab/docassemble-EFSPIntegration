@@ -172,6 +172,7 @@ code: |
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
     tyler_payment_id
+    PaymentID # TODO: temporary fix
     user_ask_role
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
@@ -219,19 +220,50 @@ question: |
 subquestion: |
   Your payment account will be charged the following fees:
   
-  ${ fees_resp }
+  % if has_fees:
+  ${ fees_table }
+  
+  **Total: ${ currency(fee_total(fees_resp)) }**
+  % else:
+  There are no fees associated with this filing.
+  % endif  
 fields:
   - no label: review_fees
     datatype: checkboxes
     choices:
-      - I agree to pay the listed fees: agrees_to_pay_fees
+      - I agree to pay the listed fees of ${ currency(fee_total(fees_resp)) }: agrees_to_pay_fees
     minlength: 1
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
+    show if:
+      code: |
+        has_fees
+continue button field: review_fees        
+---
+depends on:
+  - fees_resp
+code: |
+  has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
 ---
 code: |
   fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
+---
+depends on:
+  - fees_resp
+table: fees_table
+rows: |
+  [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
+columns:
+  - Reason: |
+      row_item.get('allowanceChargeReason',{}).get('value')
+  - Amount: |
+      currency(row_item.get('amount',{}).get('value',0))
+---
+code: |
+  def fee_total(my_resp):
+    if my_resp.data:
+      return my_resp.data.get('feesCalculationAmount',{}).get('value')      
 ---
 generic object: ALIndividual
 code: |
@@ -443,6 +475,10 @@ fields:
     datatype: dropdown
     code: |
       tyler_payment_account_options
+---
+code: |
+  # TODO: temporary workaround
+  PaymentID = tyler_payment_id
 ---
 generic object: ALDocument
 id: filing type

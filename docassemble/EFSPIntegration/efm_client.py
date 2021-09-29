@@ -462,7 +462,7 @@ class ProxyConnection:
     _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
-    send = lambda: self.proxy_client.post(self.base_url + f'/courts/{court_id}/filing/fees',
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filing/fees',
           data=all_vars)
     return self._call_proxy(send)    
 
