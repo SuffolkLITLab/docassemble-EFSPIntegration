@@ -168,7 +168,7 @@ code: |
 ---  
 generic object: ALExhibitDocument
 code: |
-  x.filename = space_to_underscore(x.filing_description)
+  x.filename = space_to_underscore(x.exhibits[0].title)
 ---
 id: another exhibit
 question: |
