@@ -74,11 +74,11 @@ class ProxyConnection:
     try:
       resp = send_func()
       if resp.status_code == 401:
-        auth_resp = self.authenticate_user()
-        if auth_resp.response_code == 200:
-          resp = send_func()
-        else:
-          reconsider(self.credentials_code_block)
+        # auth_resp = self.authenticate_user()
+        # if auth_resp.response_code == 200:
+        #  resp = send_func()
+        #else:
+        reconsider(self.credentials_code_block)
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
     return ProxyConnection.user_visible_resp(resp)
