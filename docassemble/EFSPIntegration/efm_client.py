@@ -409,6 +409,11 @@ class ProxyConnection:
       url += urlencode({'case_party_id': case_party_id})
     send = lambda: self.proxy_client.delete(url)
     return self._call_proxy(send)
+  
+  def get_attached_cases(self, court_id:str, service_contact_id:str):
+    url = self.base_url + f'cases/courts/{court_id}/service-contacts/{service_contact_id}/cases'
+    send = lambda: self.proxy_client.get(url)
+    return self._call_proxy(send)
 
   def get_public_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public')
