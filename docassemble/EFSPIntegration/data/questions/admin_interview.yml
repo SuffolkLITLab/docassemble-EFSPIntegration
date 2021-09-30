@@ -590,6 +590,9 @@ fields:
     datatype: password
     
   - Phone number: person_to_reg.phone_number
+    validate: phone_number_is_valid
+    maxlength: 20
+    # TODO: should we use the real regex? Feels unnecessary
   - Firm name: person_to_reg.firm_name
     show if:
       variable: reg_type
@@ -1060,7 +1063,10 @@ question: |
 fields:
   - Firm name: updated_firm.name.text
     default: ${ updated_firm.default_name }
-  - Phone number: updated_firm.phone_number    
+  - Phone number: updated_firm.phone_number  
+    validate: phone_number_is_valid
+    maxlength: 20
+    # TODO: should we use the real regex? Feels unnecessary  
     default: ${ updated_firm.default_phone }
   - Street address: updated_firm.address.address
     address autocomplete: True    
@@ -1186,6 +1192,9 @@ fields:
   - Last name: updated_service_contact.name.last
     default: ${ updated_service_contact.default_last }
   - Phone number: person_to_reg.phone_number
+    validate: phone_number_is_valid
+    maxlength: 20
+    # TODO: should we use the real regex? Feels unnecessary  
     default: ${ updated_service_contact.default_phone }
   - Street address: updated_service_contact.address.address
     address autocomplete: True

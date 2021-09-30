@@ -10,7 +10,7 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject, log, Person, Individual, DADateTime, as_datetime
+from docassemble.base.util import IndividualName, DAObject, log, Person, Individual, DADateTime, as_datetime, reconsider
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
 from datetime import datetime
@@ -47,7 +47,7 @@ def _recursive_give_data_url(bundle):
         del doc.enabled
 
 class ProxyConnection:
-  def __init__(self, url:str=None, api_key:str=None):
+  def __init__(self, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login'):
     temp_efile_config = get_config('efile proxy', {})
     if url is None:
       url = temp_efile_config.get('url')
@@ -68,14 +68,17 @@ class ProxyConnection:
     self.verbose = False
     self.authed_user_id = None
     self.set_verbose_logging(True)
-
+    self.credentials_code_block = credentials_code_block
+    
   def _call_proxy(self, send_func):
     try:
       resp = send_func()
       if resp.status_code == 401:
-        auth_resp = self.authenticate_user()
-        if auth_resp.response_code == 200:
-          resp = send_func()
+        # auth_resp = self.authenticate_user()
+        # if auth_resp.response_code == 200:
+        #  resp = send_func()
+        #else:
+        reconsider(self.credentials_code_block)
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
     return ProxyConnection.user_visible_resp(resp)
