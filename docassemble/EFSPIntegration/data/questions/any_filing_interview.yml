@@ -392,11 +392,6 @@ subquestion: |
   % endif
 continue button field: show_allowed_return_date
 ---
-code: |
-  resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
-  del my_password
-  tyler_login = True
----
 id: initial filing
 question: |
   Are you filing into a new case or an existing one?
