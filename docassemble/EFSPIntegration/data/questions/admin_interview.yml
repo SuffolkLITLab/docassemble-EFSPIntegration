@@ -240,6 +240,12 @@ content: |
   ${ action_button_html(url_ask(
     [{'recompute': ['detach_service_contact', 'show_resp']}]),
     label='Detach service contact') }
+
+  ${ action_button_html(url_ask(
+    [{'recompute': ['get_attached_cases', 'show_resp']}]),
+    label='View attached cases') }
+
+    
 ---
 template: firm_admin_payment_template
 subject: |
@@ -1162,6 +1168,12 @@ code: |
   resp = proxy_conn.get_service_contact(service_contact_id)
   del service_contact_id
   get_service_contact = True
+---
+code: |
+  resp = proxy_conn.get_attached_cases(court_id, service_contact_id)
+  del court_id
+  del service_contact_id
+  get_attached_cases = True
 ---
 need:
   - new_service_contact.name.first  
