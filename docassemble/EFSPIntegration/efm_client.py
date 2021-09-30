@@ -415,6 +415,11 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(url)
     return self._call_proxy(send)
 
+  def get_case_service_history(self, court_id:str, case_tracking_id:str):
+    url = self.base_url + f"cases/courts/{court_id}/cases/{case_tracking_id}/service-information-history"
+    send = lambda: self.proxy_client.get(url)
+    return self._call_proxy(send)
+  
   def get_public_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public')
     return self._call_proxy(send)

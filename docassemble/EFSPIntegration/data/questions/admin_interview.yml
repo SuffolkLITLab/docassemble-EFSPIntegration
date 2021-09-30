@@ -334,6 +334,23 @@ content: |
     ]},
     {'recompute': ['interview_order_find_case', 'display_found_case']}]),
     label="Find a case") }
+    
+  ${ action_button_html(url_ask(
+    [{'undefine': [
+      'do_what_choice',
+      'somebody.name.first',
+      'court_id',
+      'case_search_task_status',
+      'case_search_waiting_screen',
+      'warn_no_results',
+      'case_tracking_id',
+      'found_case',
+      'case_docket_id',
+      'get_case_response',
+    ]},
+    {'recompute': ['interview_order_find_case', 'get_case_service_history', 'show_resp']}]),
+    label="Get case service history") }
+    
 ---
 id: display case
 question: |
@@ -1289,6 +1306,12 @@ code: |
   del service_contact_id
   del firm_case_tracking_id
   detach_service_contact = True
+---
+code: |
+  resp = proxy_conn.get_case_service_history(court_id, case_tracking_id)
+  del court_id
+  del case_tracking_id
+  get_case_service_history = True
 ---
 code: |
   resp = proxy_conn.get_global_payment_account_list()
