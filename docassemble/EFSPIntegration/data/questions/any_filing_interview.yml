@@ -28,57 +28,7 @@ objects:
 code: |
   # Every filing type needs an associated document
   lead_doc.exhibits.has_exhibits = True
-  lead_doc.exhibits.there_are_any = True
----
-generic object: ALExhibitDocument
-id: exhibit i
-question: |
-  Upload the ${ ordinal(i) } document
-subquestion: |
-  You will have a chance to upload additional pages for this document later.  
-fields:
-  #  - Document type: x.document_type_code
-  #    input type: radio
-  #    code: |
-  #      x.document_type_options
-  #    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
-  #    # Comment: it would be nice to give this a more user-friendly name
-  #    # and description, but it appears document type can be used for more
-  #    # than just confidential/not-confidential
-  #    help: |
-  #      If a judge has ordered that this case is sealed, select
-  #      "Confidential". You should also attach a copy of the judge's order.
-  - Filing Type: x.filing_type
-    datatype: dropdown
-    code: |
-      sorted(filing_type_options, key=lambda option: option[1])
-  - label: |
-      Description
-      % if not filing_description_datafield.get('isrequired'):
-      (optional)
-      % endif      
-    field: x.filing_description
-    datatype: text
-    required: |
-      filing_description_datafield.get('isrequired', False)    
-  - Reference Number (optional): x.reference_number
-    datatype: text
-    required: False
-  - Document: x.exhibits[i].pages
-    datatype: files
-    maximum image size: 1024
-    image upload type: jpeg        
-    accept: |
-      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
-validation code: |
-  if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[i].pages) > (15 * 1024 * 1024):
-    validation_error("Upload a file smaller than 15 MB.")
-  try:
-    pdf_concatenate(x.exhibits[i].pages)
-  except:
-    validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[i].pages")
-  if defined('x.exhibits[i].pages'):    
-    x.exhibits[i].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
+  lead_doc.exhibits.there_are_any = True 
 ---
 generic object: ALExhibitDocument
 id: any exhibits
@@ -88,17 +38,6 @@ subquestion: |
   You will have a chance to upload multiple documents. 
   You can also add additional pages to this document.
 fields:
-  #- Document type: x.document_type_code
-  #  input type: radio
-  #  code: |
-  #    x.document_type_options
-  #  default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
-  #  # Comment: it would be nice to give this a more user-friendly name
-  #  # and description, but it appears document type can be used for more
-  #  # than just confidential/not-confidential
-  #  help: |
-  #    If a judge has ordered that this case is sealed, select
-  #    "Confidential". You should also attach a copy of the judge's order.
   - Filing Type: x.filing_type
     datatype: dropdown
     code: |
@@ -120,7 +59,12 @@ fields:
     maximum image size: 1024
     image upload type: jpeg        
     accept: |
-      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
+      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"
+  - Add a courtesy email: x.has_courtesy_copies
+    datatype: yesno
+  - Courtesy emails (one per line): x.courtesy_copies_raw
+    datatype: area  
+    show if: x.has_courtesy_copies
 validation code: |
   if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[0].pages) > (15 * 1024 * 1024):
     validation_error("Upload a file smaller than 15 MB.")
@@ -129,7 +73,13 @@ validation code: |
   except:
     validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[0].pages")
   x.exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
-
+  
+  if x.has_courtesy_copies:
+    x.courtesy_copies = x.courtesy_copies_raw.splitlines()
+    for copy in x.courtesy_copies:
+      if not '@' in copy:
+        validation_error("Enter a valid email address.", field="x.courtesy_copies_raw")
+        break     
 ---
 generic object: ALExhibitDocument
 code: |
