@@ -9,6 +9,73 @@ include:
   - case_search.yml
 ---
 code: |
+  user_wants_efile = True # This interview is always for e-filing
+---
+mandatory: True
+code: |
+  welcome
+  tyler_login
+  users[0].email  
+  trial_court
+  can_check_efile
+  if is_initial_filing:
+    tyler_case_category = case_category_map.get(case_category,{}).get('name')
+    tyler_case_type = case_type_map.get(case_type,{}).get('name')
+    if case_subtype_options:
+      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
+    tyler_filing_attorney
+    tyler_payment_id
+    user_ask_role
+    # TODO(brycew): add party type and other items in the complete attr block
+    is_adding_new_parties = False
+  else:
+    interview_order_find_case
+    load_existing_case_defaults
+    previous_case_id = case_tracking_id
+    user_started_case
+    is_adding_new_parties
+
+  users.gather()
+  other_parties.gather()
+  if is_initial_filing:
+    lead_contact = users[0]
+    reconsider('missing_required_party_types')
+    if missing_required_party_types:
+      party_review_screen
+      
+  else:
+    lead_contact.name.first
+  
+  lead_doc.completed
+  append_lead_doc    
+  al_court_bundle.auto_gather=True  
+  al_court_bundle.gather()
+  
+  service_contacts.gather()
+  cross_references.gather()
+  # TODO: as_pdf() is slow and may not be right if no document uploaded
+  al_court_bundle.as_pdf()
+  
+  if full_court_info.data['allowreturndate']:
+    return_date
+    show_allowed_return_date
+
+  if is_initial_filing and len(users) == 1:
+    explain_user_paying
+
+  if can_check_efile:
+    if is_initial_filing:
+      users[0].email
+    #TODO(qs): if not a waiver account...
+    ready_to_efile
+    review_fees
+
+  show_disclaimers
+  efile
+  summary_page
+  #submitted_page
+---
+code: |
   proxy_conn = ProxyConnection()
 ---
 features:
@@ -24,13 +91,28 @@ objects:
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
+  
 ---
 code: |
-  # Every filing type needs an associated document
-  lead_doc.exhibits.has_exhibits = True
-  lead_doc.exhibits.there_are_any = True 
+  al_court_bundle.clear()
+  al_court_bundle.append(lead_doc)
+  
+  append_lead_doc = True
 ---
-generic object: ALExhibitDocument
+generic object: ALDocument
+code: |
+  # Every filing type needs an associated document
+  x.exhibits.has_exhibits = True
+---
+generic object: ALDocument
+code: |
+  # You can only have exactly one exhibit per ALExhibitDocument
+  # for this filing interview
+  x.exhibits.has_exhibits = True
+  x.exhibits.ask_number = True
+  x.exhibits.target_number = 1
+---
+generic object: ALDocument
 id: any exhibits
 question: |
   Please upload your documents
@@ -73,7 +155,7 @@ validation code: |
   except:
     validation_error("Unable to convert this file. Please upload a new one.", field="x.exhibits[0].pages")
   x.exhibits[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
-  
+
   if x.has_courtesy_copies:
     x.courtesy_copies = x.courtesy_copies_raw.splitlines()
     for copy in x.courtesy_copies:
@@ -84,6 +166,43 @@ validation code: |
 generic object: ALExhibitDocument
 code: |
   x.exhibits[i].title = x.filing_description if x.filing_description else filing_type_map.get(x.filing_type,{}).get('name')
+---  
+generic object: ALExhibitDocument
+code: |
+  x.filename = space_to_underscore(x.exhibits[0].title)
+---
+id: another exhibit
+question: |
+  You have ${ al_court_bundle.number_gathered() } document(s) so far. Do you have another document
+  you want to upload?
+#subquestion: |
+#  ${ collapse_template(x.in_progress_exhibits) }
+field: al_court_bundle.there_is_another
+buttons:
+  - Finished adding documents: False
+  - Add another document: True
+---
+generic object: ALExhibitList
+template: x.in_progress_exhibits
+subject: |
+  Preview your documents so far
+content: |
+  ${ x.rearrange_exhibits_table }
+---
+generic object: ALExhibitList
+table: x.rearrange_exhibits_table
+rows: x
+allow reordering: True
+delete buttons: True
+columns:
+  - ${ al_exhibit_title_label }: |
+      row_item.title
+  - ${ al_exhibit_preview_label }: |
+      row_item.pages.show(width="50%")
+  - ${ al_exhibit_total_pages_label }: |
+      row_item.pages.num_pages()
+edit:
+  - rearrange_pages  
 ---
 objects:
   - service_contacts: DAList.using(object_type=DAObject, complete_attribute='complete')
@@ -91,77 +210,22 @@ objects:
 objects:
   - cross_references: DADict.using(there_are_any=len(cross_ref_types))
 ---
+generic object: ALExhibitDocument
 code: |
-  lead_doc.enabled = True
+  x.enabled = True
+---
+generic object: ALExhibitDocument
+objects:
+  - x.optional_services: DAList.using(object_type=DAObject)
 ---
 objects:
-  - lead_doc.optional_services: DAList.using(object_type=DAObject)
----
-objects:
-  - al_court_bundle: ALDocumentBundle.using(elements=[lead_doc], filename="full_bundle.pdf", title="All forms to submit to the court")
+  - al_court_bundle: ALDocumentBundle.using(filename="full_bundle.pdf", title="All forms to submit to the court", object_type=ALExhibitDocument, complete_attribute = 'completed', gathered=False, auto_gather=True, there_are_any=True)
 ---
 code: |
   if is_initial_filing:
     al_form_type = 'starts_case'
   else:
     al_form_type = 'existing_case'
----
-mandatory: True
-code: |
-  welcome
-  tyler_login
-  trial_court
-  can_check_efile
-  if can_check_efile:
-    if is_initial_filing:
-      users[0].email
-  if is_initial_filing:
-    tyler_case_category = case_category_map.get(case_category,{}).get('name')
-    tyler_case_type = case_type_map.get(case_type,{}).get('name')
-    if case_subtype_options:
-      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
-    tyler_filing_attorney
-    tyler_payment_id
-    user_ask_role
-    # TODO(brycew): add party type and other items in the complete attr block
-    is_adding_new_parties = False
-  else:
-    interview_order_find_case
-    load_existing_case_defaults
-    previous_case_id = case_tracking_id
-    user_started_case
-    is_adding_new_parties
-
-  users.gather()
-  other_parties.gather()
-  if is_initial_filing:
-    lead_contact = users[0]
-    reconsider('missing_required_party_types')
-    if missing_required_party_types:
-      party_review_screen      
-  else:
-    lead_contact.name.first
-  lead_doc.completed
-  service_contacts.gather()
-  cross_references.gather()
-  # TODO: as_pdf() is slow and may not be right if no document uploaded
-  al_court_bundle.as_pdf()
-  
-  if full_court_info.data['allowreturndate']:
-    return_date
-    show_allowed_return_date
-
-  if can_check_efile:
-    if is_initial_filing:
-      users[0].email
-    #TODO(qs): if not a waiver account...
-    ready_to_efile
-    review_fees
-
-  show_disclaimers
-  efile
-  summary_page
-  #submitted_page
 ---
 id: review_fees
 question: |
@@ -335,8 +399,14 @@ code: |
 ---
 id: initial filing
 question: |
-  Is this an initial filing?
-yesno: is_initial_filing
+  Are you filing into a new case or an existing one?
+field: filing_interview_initial_or_existing
+choices:
+  - I am starting a new case: initial_document
+  - I am adding a document to an existing case: existing_case
+---
+code: |
+  is_initial_filing = filing_interview_initial_or_existing == 'initial_document'
 ---
 code: |
   # NOTE we could refactor case_search.yml to use a datatype: object selector
@@ -424,31 +494,31 @@ fields:
     datatype: dropdown
     code: |
       tyler_payment_account_options
----
-generic object: ALDocument
-id: filing type
-question: |
-  Filing Type
-fields:
-  - Filing Type: x.filing_type
-    datatype: dropdown
-    code: |
-      sorted(filing_type_options, key=lambda option: option[1])
----
-generic object: ALDocument
-id: filing description
-question: |
-  Filing Description
-fields: 
-  - label: |
-      Filing Description
-      % if not filing_description_datafield.get('isrequired'):
-      (optional)
-      % endif      
-    field: x.filing_description
-    datatype: text
-    required: |
-      filing_description_datafield.get('isrequired', False)
+# ---
+# generic object: ALDocument
+# id: filing type
+# question: |
+#   Filing Type
+# fields:
+#   - Filing Type: x.filing_type
+#     datatype: dropdown
+#     code: |
+#       sorted(filing_type_options, key=lambda option: option[1])
+# ---
+# generic object: ALDocument
+# id: filing description
+# question: |
+#   Filing Description
+# fields: 
+#   - label: |
+#       Filing Description
+#       % if not filing_description_datafield.get('isrequired'):
+#       (optional)
+#       % endif      
+#     field: x.filing_description
+#     datatype: text
+#     required: |
+#       filing_description_datafield.get('isrequired', False)
 ---
 generic object: ALDocument
 code: |
@@ -479,6 +549,13 @@ content: |
 
   If you are responding to a case or court papers someone else filed, you
   are usually the "Defendant" or the "Respondent."
+---
+# code: |
+#   # TODO: is this something we can assume? someone might be filing
+#   # the first document in a case where they are a defendant, such
+#   # as a mental health petition for discharge.
+#   if filing_interview_initial_or_existing == 'initial_document':
+#     user_ask_role = 'plaintiff'
 ---
 id: your name
 sets:
@@ -697,7 +774,9 @@ fields:
 id: any optional services
 generic object: ALDocument
 question: |
-  Are there any optional services that you want?
+  Optional services - ${ x.exhibits[0].title }
+subquestion: |
+  Do you want to add any optional services for this document?
 yesno: x.optional_services.there_are_any
 ---
 generic object: ALDocument
@@ -708,8 +787,11 @@ code: |
 id: another optional service
 generic object: ALDocument
 question: |
-  Are there any other optional services that you want?
+  Are there any other optional services that you want for ${ x.title }?
 yesno: x.optional_services.there_is_another
+---
+code: |
+  al_court_bundle[i].title = al_court_bundle[i].exhibits[0].title
 ---
 generic object: ALDocument
 code: |
@@ -815,7 +897,7 @@ generic object: ALDocument
 code: |
   if is_initial_filing and len(users) == 1:
     x.filing_parties = ['users[0]']
-    explain_user_paying
+    # explain_user_paying
   elif is_initial_filing:
     x.filing_parties_dict
     x.filing_parties = list(x.filing_parties_dict.true_values())
