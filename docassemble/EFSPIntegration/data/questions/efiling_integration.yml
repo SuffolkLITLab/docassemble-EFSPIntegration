@@ -225,6 +225,7 @@ code: |
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
+  del resp
 ---
 #depends on:
 #  - trial_court

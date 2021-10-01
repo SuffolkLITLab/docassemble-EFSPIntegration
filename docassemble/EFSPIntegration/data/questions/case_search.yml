@@ -1,6 +1,7 @@
 ---
 modules:
   - .efm_client
+  - .conversions
 ---
 include:
   - login_qs.yml
@@ -8,35 +9,40 @@ include:
 objects: 
   - found_cases: DAList.using(object_type=DAObject, auto_gather=False)  
 ---
+objects:
+  - somebody: ALIndividual
+---
 #mandatory: True
 id: interview order
 code: |
   do_what_choice
-  if do_what_choice == 'search':
+  if do_what_choice == 'party_search':
     somebody.name.first
-    court_id    
     if not case_search_task_status.ready():
       case_search_waiting_screen
     else:
       if case_tracking_choice is None:
         warn_no_results
         case_tracking_id
-      else:      
+      else:
         case_tracking_id = case_tracking_choice
         found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
-  elif do_what_choice == 'lookup':
+  elif do_what_choice == 'docket_lookup':
     case_docket_id
-    court_id    
-    get_case_response
-    # display_case
-    found_case = get_case_response.data
-    case_tracking_id = get_case_response.data.get('value',{}).get('caseTrackingID',{}).get('value')
+    while not docket_case_response.is_ok():
+      display_case
+      del case_docket_id, docket_case_response, display_case
+      case_docket_id
+    display_case
+    case_tracking_id = docket_case_response.data[0].get('value',{}).get('caseTrackingID',{}).get('value')
+    found_case = DAObject()
+    parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id)
   else:
     case_tracking_id
     while not confirm_case_tracking_id:
       del case_tracking_id
       case_tracking_id
-  interview_order_find_case = True      
+  interview_order_find_case = True
 ---
 id: no cases found
 question: |
@@ -51,12 +57,9 @@ question: |
   Case lookup
 field: do_what_choice
 choices:
-  - Find a case by party name: search
-  - Find a case by Docket Number: lookup
+  - Find a case by party name: party_search
+  - Find a case by Docket Number: docket_lookup
   - I know the tracking ID of the case: tracking_id
----
-objects:
-  - somebody: ALIndividual
 ---
 id: tracking id
 question: |
@@ -89,11 +92,6 @@ fields:
     code: |
       all_courts
 ---
-id: debug courts
-question:  |
-  ${ all_courts }
-field: _cont
----
 code: |
   all_courts = proxy_conn.get_courts().data
 ---
@@ -121,8 +119,10 @@ fields:
 ---
 need:
   - proxy_conn.authed_user_id
+depends on:
+  - case_docket_id
 code: |
-  get_case_response = proxy_conn.get_case(court_id, case_docket_id)
+  docket_case_response = proxy_conn.get_cases(court_id, docket_id=case_docket_id)
 ---
 id: results
 question: |
@@ -152,9 +152,9 @@ continue button field: display_case
 question: |
   Results
 subquestion: |
-  ```
-  ${ json.dumps(get_case_response.data) } 
-  ```
+
+  ${ pretty_display(docket_case_response.data) } 
+
 ---
 need:
   - court_id
@@ -164,24 +164,12 @@ id: get cleaned up results
 code: |
     found_cases.clear()
 
-    from datetime import datetime
     #try: # trap name errors, etc. so Docassemble will only run this code once
     first_pass = get_cases_response = proxy_conn.get_cases(court_id, person=somebody)
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
-        new_case.details = entry
-        new_case.court_id = court_id
-        new_case.tracking_id =  entry.get('value',{}).get('caseTrackingID',{}).get('value')
-        new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
-        new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
-       
-        new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
-        # TODO: is the order of this array predictable? might it break if Tyler changes something?        
-        new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
-        new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')        
-        new_case.date = as_datetime(datetime.utcfromtimestamp(new_case.case_details.get('value',{}).get('activityDateRepresentation',{}).get('value',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
-        
+        parse_case_info(proxy_conn, new_case, entry, court_id)
     # except:
     #  message("Something went wrong")
     

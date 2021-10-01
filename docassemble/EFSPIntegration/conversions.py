@@ -73,3 +73,40 @@ def get_person_name_and_id(party:dict):
   person = party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification')
   first_rep = next(iter(person),{})
   return {first_rep.get('identificationID',{}).get('value'): person_name_str}
+
+def chain_xml(xml_val, elem_list):
+  val = xml_val
+  for elem in elem_list:
+    if isinstance(val, dict):
+      val = val.get(elem, {})
+    else:
+      val = val[elem]
+  return val
+
+def parse_case_info(proxy_conn, new_case, entry, court_id):
+  new_case.details = entry
+  new_case.court_id = court_id
+  new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
+  new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
+  new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
+       
+  new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
+  # TODO: is the order of this array predictable? might it break if Tyler changes something?        
+  new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
+  new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')        
+  new_case.date = as_datetime(datetime.utcfromtimestamp(new_case.case_details.get('value',{}).get('activityDateRepresentation',{}).get('value',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
+  
+def case_xml_to_parties(case_xml):
+  rest_list = chain_xml(case_xml, ['value', 'rest'])
+  tyler_aug = [aug for aug in rest_list if 'tyler.ecf' in aug.get('declaredType')][0]
+  return chain_xml(tyler_aug, ['value', 'caseParticipant'])
+
+def parties_xml_to_choices(parties_xml):
+  choices = []
+  for party in parties_xml:
+    entity = chain_xml(party, ['value', 'entityRepresentation', 'value'])
+    name = entity.get('personName', {})
+    full_name = f"{name.get('personGivenName', {}).get('value','')} {name.get('personMiddleName', {}).get('value','')} {name.get('personSurName',{}).get('value','')}"
+    per_id = chain_xml(entity, ['personOtherIdentification', 0, 'identificationID', 'value'])
+    choices.append((per_id, name))
+  return choices
