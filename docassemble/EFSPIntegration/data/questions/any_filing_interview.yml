@@ -14,8 +14,7 @@ code: |
 mandatory: True
 code: |
   welcome
-  tyler_login
-  users[0].email  
+  tyler_login 
   trial_court
   can_check_efile
   if is_initial_filing:
@@ -24,7 +23,6 @@ code: |
     if case_subtype_options:
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
-    tyler_payment_id
     user_ask_role
     # TODO(brycew): add party type and other items in the complete attr block
     is_adding_new_parties = False
@@ -57,12 +55,17 @@ code: |
   # TODO: as_pdf() is slow and may not be right if no document uploaded
   al_court_bundle.as_pdf()
   
+  if is_initial_filing:
+    users[0].email
+  
   if full_court_info.data['allowreturndate']:
     return_date
     show_allowed_return_date
 
   if is_initial_filing and len(users) == 1:
     explain_user_paying
+
+  tyler_payment_id
 
   if can_check_efile:
     if is_initial_filing:
@@ -129,11 +132,11 @@ fields:
       Description
       % if not filing_description_datafield.get('isrequired'):
       (optional)
-      % endif      
+      % endif
     field: x.filing_description
     datatype: text
     required: |
-      filing_description_datafield.get('isrequired', False)    
+      filing_description_datafield.get('isrequired', False)   
   - Reference Number (optional): x.reference_number
     datatype: text
     required: False
@@ -245,15 +248,15 @@ fields:
   - no label: review_fees
     datatype: checkboxes
     choices:
-      - I agree to pay the listed fees of ${ currency(fee_total(fees_resp)) }: agrees_to_pay_fees
+      - ${ 'I agree to pay the listed fees of' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
     minlength: 1
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
-    show if:
-      code: |
-        has_fees
-continue button field: review_fees        
+    #show if:
+    #  code: |
+    #    has_fees
+#continue button field: review_fees        
 ---
 depends on:
   - fees_resp
@@ -349,6 +352,7 @@ code: |
   x.reference_number
   x.tyler_filing_type 
   x.document_type
+  x.motion_type
   x.filing_component
   if x.exhibits.has_exhibits:
     x.as_pdf()
@@ -407,7 +411,7 @@ code: |
 code: |
   # NOTE we could refactor case_search.yml to use a datatype: object selector
   # but I think this essentially works the same in the background
-  selected_existing_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases ),DAEmpty())
+  selected_existing_case = found_case
 ---
 code: |
   if selected_existing_case:
@@ -490,31 +494,6 @@ fields:
     datatype: dropdown
     code: |
       tyler_payment_account_options
-# ---
-# generic object: ALDocument
-# id: filing type
-# question: |
-#   Filing Type
-# fields:
-#   - Filing Type: x.filing_type
-#     datatype: dropdown
-#     code: |
-#       sorted(filing_type_options, key=lambda option: option[1])
-# ---
-# generic object: ALDocument
-# id: filing description
-# question: |
-#   Filing Description
-# fields: 
-#   - label: |
-#       Filing Description
-#       % if not filing_description_datafield.get('isrequired'):
-#       (optional)
-#       % endif      
-#     field: x.filing_description
-#     datatype: text
-#     required: |
-#       filing_description_datafield.get('isrequired', False)
 ---
 generic object: ALDocument
 code: |
@@ -695,6 +674,23 @@ if: |
   exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 code: |
   x.filing_component_code = next(iter(x.filing_component_options))[0]
+---
+generic object: ALDocument
+id: motion_type
+question: |
+  Motion Type
+fields:
+  - Motion Type: x.motion_type_code
+    datatype: dropdown
+    code: |
+      x.motion_type_options
+---
+generic object: ALDocument
+code: |
+  if x.motion_type_options:
+    x.motion_type = x.motion_type_map.get(x.motion_type_code)
+  else:
+    x.motion_type = None
 ---
 code: |
   def exactly_one_required_filing_component(fc_opts, fc_map):
@@ -1059,6 +1055,10 @@ code: |
   log('raw_components: ' + str(raw_components))
   x.filing_component_options, x.filing_component_map = choices_and_map(raw_components.data)
   log('map: ' + str(x.filing_component_map))
+---
+generic object: ALDocument
+code: |
+  x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
 ---
 generic object: ALDocument
 code: |

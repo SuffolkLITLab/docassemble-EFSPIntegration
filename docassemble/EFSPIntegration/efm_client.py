@@ -494,6 +494,8 @@ class ProxyConnection:
     return self._call_proxy(send)
   
   def get_cases(self, court_id:str, person:ALIndividual=None, docket_id:str=None):
+    if person is None:
+      return self._get_cases(court_id, docket_id=docket_id)
     if person.person_type == 'business':
       return self._get_cases(court_id, business_name=person.name.first, docket_id=docket_id)
     else:
@@ -550,6 +552,10 @@ class ProxyConnection:
   
   def get_document_types(self, court_id:str, filing_type:str):
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_codes/{filing_type}/document_types')
+    return self._call_proxy(send)
+  
+  def get_motion_types(self, court_id:str, filing_type:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_codes/{filing_type}/motion_types')
     return self._call_proxy(send)
   
   def get_filing_components(self, court_id:str, filing_type:str):
