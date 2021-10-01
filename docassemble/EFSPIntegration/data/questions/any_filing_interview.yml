@@ -845,7 +845,6 @@ validation code: |
   regex_str = cross_ref_type_map[cross_references.new_item_name]['validationregex']
   if not re.search(regex_str, cross_references.new_item_value):
     validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'], field="cross_references.new_item_value")
-  
 ---
 id: another cross reference
 question: |
@@ -863,22 +862,9 @@ fields:
     datatype: currency
 ---
 generic object: ALDocument
-id: user resp for payment
+id: Parties resp for payment
 question: |
-  User responsible for payment
-fields:
-  - User for payment: x.filing_parties_dict
-    datatype: checkboxes
-    code: |
-      list(map(lambda nau: (f'users[{nau[0]}]', nau[1]), enumerate(users)))
-    required: is_initial_filing
-    none of the above: False
-    minlength: 1
----
-generic object: ALDocument
-id: existing parties resp for payment
-question: |
-  Existing parties responsible for payment
+  Parties responsible for payment
 fields: 
   - Parties for payment: x.existing_parties_payment_dict
     datatype: checkboxes
@@ -890,9 +876,6 @@ code: |
   if is_initial_filing and len(users) == 1:
     x.filing_parties = ['users[0]']
     # explain_user_paying
-  elif is_initial_filing:
-    x.filing_parties_dict
-    x.filing_parties = list(x.filing_parties_dict.true_values())
   else:
     x.filing_parties = list(x.existing_parties_payment_dict.true_values())
 ---
@@ -1069,7 +1052,7 @@ code: |
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='name')
 ---
 code: |
-  service_contact_options = list(map(lambda vv: (vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}"), proxy_conn.get_service_contact_list().data))
+  service_contact_options = [(vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}") for vv in proxy_conn.get_service_contact_list().data]
 ---
 comment: |
   service_information
