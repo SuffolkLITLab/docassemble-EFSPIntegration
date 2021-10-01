@@ -234,7 +234,19 @@ content: |
     label='Remove service contact') }
 
   ${ action_button_html(url_ask(
-    [{'recompute': ['attach_service_contact', 'show_resp']}]),
+    [{'undefine': [
+      'do_what_choice',
+      'somebody.name.first',
+      'court_id',
+      'case_search_task_status',
+      'case_search_waiting_screen',
+      'warn_no_results',
+      'case_tracking_id',
+      'found_case',
+      'case_docket_id',
+      'get_case_response',
+    ]},
+    {'recompute': ['interview_order_find_case','attach_service_contact', 'show_resp']}]),
     label='Attach service contact') }
 
   ${ action_button_html(url_ask(
@@ -1293,12 +1305,19 @@ question: |
   Case party id?
 fields:
   - no label: case_party_id
+    code: |
+      all_case_parties  
+---  
+code: |
+  raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
+  all_case_parties = [get_person_name_and_id(party) for party in raw_party_list if is_person(party)]
 # TODO: add lookup based on case_tracking_id
 ---
 code: |
-  resp = proxy_conn.attach_service_contact(service_contact_id, firm_case_tracking_id, case_party_id)
+  resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
   del service_contact_id
-  del firm_case_tracking_id
+  del case_tracking_id
+  del all_case_parties
   attach_service_contact = True
 ---
 code: |
