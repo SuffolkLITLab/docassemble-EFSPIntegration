@@ -61,4 +61,15 @@ def validate_tyler_regex(dataField:Dict)->Callable:
         validation_message = "Enter only digits"
     validation_error(validation_message)
   return fn_validate
-  
+
+def is_person(possible_person:dict):
+  """Helper for getting party ID"""
+  return not possible_person.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification') is None
+
+def get_person_name_and_id(party:dict):
+  """Helper for getting party ID"""  
+  person_name = party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personName',{})
+  person_name_str = f"{person_name.get('personGivenName',{}).get('value','')} {person_name.get('personMiddleName',{}).get('value','')} {person_name.get('personSurName',{}).get('value','')}"
+  person = party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification')
+  first_rep = next(iter(person),{})
+  return {first_rep.get('identificationID',{}).get('value'): person_name_str}
