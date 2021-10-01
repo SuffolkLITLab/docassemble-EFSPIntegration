@@ -1083,3 +1083,12 @@ code: |
 comment: |
   service_information
   submitted_page
+---
+code: |  
+  if is_initial_filing or is_adding_new_parties:
+    all_case_parties_tmp = [user.instanceName for user in users]
+  else:
+    all_case_parties_tmp = []
+  if not is_initial_filing:
+    raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", selected_existing_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
+    all_case_parties_tmp.extend([party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification') for party in raw_party_list if party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification')])
