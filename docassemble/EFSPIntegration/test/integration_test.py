@@ -4,6 +4,8 @@ import sys
 import subprocess
 import json
 import os
+from pathlib import Path
+from datetime import datetime, timedelta
 
 def get_proxy_server_ip():
   # Figure out the ip addr of the service, assuming it's running through
@@ -255,9 +257,24 @@ class TestClass:
     assert(deleted_maybe.response_code == 200)
 
   def test_filings(self):
-    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('adams'))
+    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('adams', start_date=datetime.today() - timedelta(days=3), end_date=datetime.today()))
     policy = self.basic_assert(self.proxy_conn.get_policy('adams'))
 
+    cdir = Path(__file__).resolve().parent
+    all_vars_str = cdir.joinpath('initial_cook_filing_vars_shorter.json').open('r').read()
+    base_url = self.proxy_conn.base_url
+    court = 'cook:cvd1'
+    fees_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/courts/{court}/filing/fees', data=all_vars_str)
+    fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
+    check_send = lambda: self.proxy_conn.proxy_client.get(base_url + f'filingreview/courts/{court}/filing/check', data=all_vars_str)
+    checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
+    file_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/courts/{court}/filings', data=all_vars_str)
+    filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send)) 
+
+    for filing_id in filing_resp.data:
+      status_resp = self.basic_assert(self.proxy_conn.get_filing_status(court, filing_id))
+      detail_resp = self.basic_assert(self.proxy_conn.get_filing(court, filing_id))
+      cancel_resp = self.basic_assert(self.proxy_conn.cancel_filing_status(court, filing_id))
 
 def main(args):
   base_url = get_proxy_server_ip()
@@ -267,15 +284,15 @@ def main(args):
       tyler_password=os.getenv('bryce_user_password'))
   assert(resp.response_code == 200)
   tc = TestClass(proxy_conn, verbose=True)
-  tc.test_self_user()
-  tc.test_firm()
-  tc.test_service_contacts()
-  tc.test_get_courts()
-  tc.test_global_payment_accounts()
-  tc.test_payment_accounts()
-  tc.test_attorneys()
-  tc.test_court_record()
-  tc.test_users()
+  #tc.test_self_user()
+  #tc.test_firm()
+  #tc.test_service_contacts()
+  #tc.test_get_courts()
+  #tc.test_global_payment_accounts()
+  #tc.test_payment_accounts()
+  #tc.test_attorneys()
+  #tc.test_court_record()
+  #tc.test_users()
   tc.test_filings()
 
 if __name__ == '__main__':
