@@ -9,6 +9,7 @@ Main interviews of import:
 
 In progress!
 
-## Author
+## Authors
 
+Quinten Steenhuis (qsteenhuis@suffolk.edu)
 Bryce Willey (bwilley@suffolk.edu)
