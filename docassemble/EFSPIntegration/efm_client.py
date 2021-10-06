@@ -424,8 +424,12 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public')
     return self._call_proxy(send)
   
-  def get_courts(self, filable_only:bool=False):
-    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts?filable_only={filable_only}')
+  def get_courts(self, fileable_only:bool=False, with_names:bool=False):
+    params = {
+      'fileable_only': fileable_only,
+      'with_names': with_names
+    }
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts', params=params)
     return self._call_proxy(send)
   
   def get_court(self, court_id:str):
@@ -487,10 +491,15 @@ class ProxyConnection:
     return self._call_proxy(send)
 
   def reserve_court_date(self, court_id:str, doc_id:str, 
-      start_date:datetime, end_date:datetime):
-    estimated_duration = end_date - start_date
-    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/reserve_date', 
-        data={'doc_id': doc_id, 'estimated_duration': estimated_duration, 'start_date' : start_date, 'end_date': end_date})
+      range_after:datetime=None, range_before:datetime=None, estimated_duration=None):
+    if range_after is not None:
+      range_after = range_after.isoformat()
+    if range_before is not None:
+      range_before = range_before.isoformat()
+    if estimated_duration is not None:
+      estimated_duration = int(estimated_duration) * 60 * 60
+    send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/reserve_date',
+        data=json.dumps({'doc_id': doc_id, 'estimated_duration': estimated_duration, 'range_after' : range_after, 'range_before': range_before}))
     return self._call_proxy(send)
   
   def get_cases(self, court_id:str, person:ALIndividual=None, docket_id:str=None):
