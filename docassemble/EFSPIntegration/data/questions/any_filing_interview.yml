@@ -24,8 +24,7 @@ code: |
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
     tyler_filing_attorney
     user_ask_role
-    # TODO(brycew): add party type and other items in the complete attr block
-    is_adding_new_parties = False
+    user_started_case
   else:
     interview_order_find_case
     load_existing_case_defaults
@@ -91,7 +90,7 @@ objects:
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties, complete_attribute='complete')
-  - other_parties: ALPeopleList.using(complete_attribute='complete') # .using(there_are_any=is_initial_filing or is_adding_new_parties) # NOTE that there can be filing types with no opposing party, such as adoption
+  - other_parties: ALPeopleList.using(complete_attribute='complete') # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
@@ -597,6 +596,9 @@ id: any other opposing parties
 question: |
   Is there any other opposing party?
 yesno: other_parties.there_is_another  
+---
+code: |
+  other_parties.there_are_any = is_adding_new_parties if defined('is_adding_new_parties') else other_parties.there_are_any
 ---
 id: party type of x
 generic object: ALIndividual
