@@ -976,9 +976,9 @@ subquestion: |
   Your selections aren't working. :/  Please try again.
 ---
 code: |
-  trial_court_resp = proxy_conn.get_courts(filable_only=True)
-  log(trial_court_resp)
-  trial_court_options = trial_court_resp.data
+  trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
+  log(trial_court_resp.data)
+  trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
 ---
 code: |
   full_court_info = proxy_conn.get_court(court_id)

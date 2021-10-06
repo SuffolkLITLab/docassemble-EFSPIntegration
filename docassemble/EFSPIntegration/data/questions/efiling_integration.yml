@@ -298,13 +298,84 @@ code: |
     #prevent_going_back()
     efile_resp
     show_resp
+    if efile_resp.is_ok():
+      show_court_reserve_resp
     efile = True
   else:
     efile = False
 ---
+comment: |
+  There are two "operating modes" for the reserve court date API on Tyler's
+  side: request a specific hearing date, and request the next available 
+  hearing date. TBH, the former isn't super useful as a standalone thing, so
+  we're only going to handle, "here are some choices", followed by requesting 
+  a specific one.
+id: handle court date reserve
+code: |
+  envelope_id = efile_resp.data['envelopeId']
+  have_valid_date = False
+  while not have_valid_date:
+    reserve_choice_resp = proxy_conn.reserve_court_date(court_id, envelope_id)
+    if not reserve_choice_resp.is_ok() or not reserve_choice_resp.data:
+      court_reserve_resp = reserve_choice_resp
+      court_reserve_resp.response_code = 500
+      break
+    reserve_choices = reserve_choice_resp.data
+    reserve_choice
+    del reserve_choices
+    # after_datetime = reserve_after_date.replace_time(reserve_after_time)
+    # before_datetime = reserve_before_date.replace_time(reserve_before_time)
+    # court_reserve_resp = proxy_conn.reserve_court_date(court_id, envelope_id, after_datetime, before_datetime, reserve_est_duration)
+    log(f'{reserve_choice}, from {reserve_choice_resp}')
+    court_reserve_resp = proxy_conn.reserve_court_date(court_id, envelope_id, reserve_choice['after'], reserve_choice['before'], reserve_choice['duration'])
+    if court_reserve_resp.is_ok():
+      have_valid_date = True
+  submitted_court_reserve_resp = court_reserve_resp
+---
 id: separate efile
 code: |
   efile_resp = proxy_conn.file_for_review(court_id, al_court_bundle)
+---
+question: |
+  Which court date would you like?
+fields:
+  - Which date?: reserve_choice
+    code: |
+      reserve_choices
+---
+id: reserve start date
+question: |
+  Court Start Time
+fields:
+  - Do you have a prefered time range: use_range
+    datatype: yesno
+  - After this Date: reserve_after_date
+    datatype: date
+    show if: use_range
+  - After this Time: reserve_after_time
+    datatype: time
+    show if: use_range
+  - Before this Date: reserve_before_date
+    datatype: date
+    show if: use_range
+  - Before this Time: reserve_before_time
+    datatype: time
+    show if: use_range
+  - How long will it take (in hours)?: reserve_est_duration
+    datatype: int
+    show if: use_range
+---
+id: show court reserve
+question: |
+  % if submitted_court_reserve_resp.is_ok():
+  Your request to reserve a court date has been submitted
+  % else:
+  Sorry, we can't reserve a court hearing date right now
+  % endif
+subquestion: |
+
+  ${ pretty_display(submitted_court_reserve_resp.data) }
+continue button field: show_court_reserve_resp
 ---
 generic object: DAObject
 question: |
