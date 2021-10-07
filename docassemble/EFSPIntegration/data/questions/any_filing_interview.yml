@@ -1004,11 +1004,16 @@ code: |
       backing='attorneyID')
 ---
 code: |
+  allowable_card_types = full_court_info.data.get('allowablecardtypes', [])
   res = proxy_conn.get_payment_account_list().data
   if res:
-    tyler_payment_account_options = [(account.get('paymentAccountID'), account.get('accountName')) for account in res if account.get('active',{}).get('value')]
+    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
   else:
     tyler_payment_account_options = []
+
+  res = proxy_conn.get_global_payment_account_list().data
+  if res:
+    tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types)) 
 ---
 code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
