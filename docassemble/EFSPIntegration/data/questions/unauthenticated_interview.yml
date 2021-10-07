@@ -1,9 +1,11 @@
 ---
 modules:
   - .efm_client
+  - .conversions
 ---
 include:
   - login_qs.yml
+  - common_qs.yml
 ---
 objects:
   person_to_reg: Individual
@@ -31,56 +33,10 @@ subquestion: |
 
 continue button field: all_done
 ---
-generic object: Individual
-question: |
-  Name?
-fields:
-  - First Name: x.name.first
-  - Middle Name: x.name.middle
-  - Last Name: x.name.last
----
-generic object: Individual
-question: |
-  Address?
-fields:
-  - Street: x.address.address
-  - Unit: x.address.unit
-  - City: x.address.city
-  - State: x.address.state
-  - Zip: x.address.zip_code
-  - Country: x.address.country
----
-generic object: Individual
-question: |
-  Contact Info?
-fields:
-  - Phone Number: x.mobile_number
-  - email: x.email
-    datatype: email
----
-question: |
-  Password?
-fields:
-  - Password: new_password
-    datatype: password
----
-question: |
-  Registration Type
-fields:
-  - Registration type: reg_type
-    choices:
-      - INDIVIDUAL
-      - FIRM_ADMINISTRATOR
----
 question: |
   Email
 fields:
   - Email: my_email
----
-code: |
-  resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
-  del new_password, reg_type
-  register = True
 ---
 code: |
   resp = proxy_conn.reset_user_password(email=my_email)
@@ -96,27 +52,51 @@ code: |
 question: |
   show resp:
 subquestion: |
-  % if isinstance(resp.data, list):
-
-  % for idx, elem in enumerate(resp.data):
-  * idx: ${ idx }
-
-    % if isinstance(elem, dict):
-    % for k, inner_elem in elem.items():
-      * ${ k }: ${ inner_elem }
-
-    % endfor
-    % else:
-      * ${ elem }
-    % endif
-
-  % endfor
-
-  % else:
-  ${ resp }
-  % endif
+  ${ pretty_display(resp) }
 continue button field: show_resp
-
+---
+id: registration type
+question: |
+  Registration Type
+fields:
+  - Registration type: reg_type
+    datatype: radio
+    choices:
+      - Pro se user: INDIVIDUAL
+      - Administrator of a new firm: FIRM_ADMINISTRATOR
+  - note: |
+      ---
+  - Email address: person_to_reg.email
+    datatype: email
+  - Password: new_password
+    datatype: password
+    
+  - Phone number: person_to_reg.phone_number
+    validate: phone_number_is_valid
+    maxlength: 20
+    # TODO: should we use the real regex? Feels unnecessary
+  - Firm name: person_to_reg.firm_name
+    show if:
+      variable: reg_type
+      is: FIRM_ADMINISTRATOR  
+  - First name: person_to_reg.name.first
+  - Middle name: person_to_reg.name.middle
+    required: False
+  - Last name: person_to_reg.name.last
+  - note: |
+      ---
+  - Street address: person_to_reg.address.address
+    required: False
+  - Unit: person_to_reg.address.unit
+    required: False
+  - City: person_to_reg.address.city
+  - State: person_to_reg.address.state
+    code: states_list()
+    default: IL
+  - Zip: person_to_reg.address.zip
+  - Country: person_to_reg.address.country
+    code: countries_list()
+    default: US
 ---
 mandatory: True
 code: |
