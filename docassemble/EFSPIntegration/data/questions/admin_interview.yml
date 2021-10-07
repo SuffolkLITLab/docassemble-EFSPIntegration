@@ -5,6 +5,7 @@ modules:
 ---
 include:
   - login_qs.yml
+  - common_qs.yml
   - case_search.yml
   - docassemble.AssemblyLine:al_package.yml  
 ---
@@ -96,6 +97,10 @@ content: |
       label="Login") }
   
   As ${ my_username }
+  
+  ${ action_button_html(url_ask(
+      [{'recompute': ['get_user_self', 'show_resp']}]),
+      label="Get self") }
   
   ${ action_button_html(url_ask(
       [{'recompute': ['updated_user','self_update_user','show_resp']}]),
@@ -607,50 +612,6 @@ fields:
       [filing_id_and_label(y,style="CASE_TRACKING_ID") for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1)).data]
 
 ---
-id: registration type
-question: |
-  Registration Type
-fields:
-  - Registration type: reg_type
-    datatype: radio
-    choices:
-      - Pro se user: INDIVIDUAL
-      - Administrator of a new firm: FIRM_ADMINISTRATOR
-      - New member of the current firm: FIRM_ADMIN_NEW_MEMBER
-  - note: |
-      ---
-  - Email address: person_to_reg.email
-    datatype: email
-  - Password: new_password
-    datatype: password
-    
-  - Phone number: person_to_reg.phone_number
-    validate: phone_number_is_valid
-    maxlength: 20
-    # TODO: should we use the real regex? Feels unnecessary
-  - Firm name: person_to_reg.firm_name
-    show if:
-      variable: reg_type
-      is: FIRM_ADMINISTRATOR  
-  - First name: person_to_reg.name.first
-  - Middle name: person_to_reg.name.middle
-    required: False
-  - Last name: person_to_reg.name.last
-  - note: |
-      ---
-  - Street address: person_to_reg.address.address
-    required: False
-  - Unit: person_to_reg.address.unit
-    required: False
-  - City: person_to_reg.address.city
-  - State: person_to_reg.address.state
-    code: states_list()
-    default: IL
-  - Zip: person_to_reg.address.zip
-  - Country: person_to_reg.address.country
-    code: countries_list()
-    default: US
----
 id: update user information
 question: |
   Update user information
@@ -979,6 +940,10 @@ code: |
   resp = proxy_conn.get_user(id=user_id)
   del user_id
   get_user = True
+---
+code: |
+  resp = proxy_conn.get_user()
+  get_user_self = True
 ---
 code: |
   resp = proxy_conn.get_courts()
