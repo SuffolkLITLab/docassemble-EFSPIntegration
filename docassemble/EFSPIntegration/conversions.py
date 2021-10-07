@@ -110,3 +110,18 @@ def parties_xml_to_choices(parties_xml):
     per_id = chain_xml(entity, ['personOtherIdentification', 0, 'identificationID', 'value'])
     choices.append((per_id, name))
   return choices
+
+def filter_payment_accounts(account_list, allowable_card_types):
+  """ Gets a list of all payment accounts and filters them by if the card is 
+      accepted at a particular court"""
+  not_card_or_allowed_card = lambda acct: acct.get('paymentAccountTypeCode') != 'CC' or \
+      (acct.get('paymentAccountTypeCode') == 'CC' and acct.get('cardType',{}).get('value') in allowable_card_types)
+  def display(acct):
+    if acct.get('paymentAccountTypeCode') == 'CC':
+      return f"{acct.get('accountName')} ({acct.get('cardType',{}).get('value')})"
+    elif acct.get('paymentAccountTypeCode') == 'WV':
+      return f"{acct.get('accountName')} (Waiver account)"
+    else:
+      return f"{acct.get('accountName')} ({acct.get('paymentAccountTypeCode')})"
+  return [(account.get('paymentAccountID'), display(account)) 
+        for account in account_list if account.get('active',{}).get('value') and not_card_or_allowed_card(account)]
