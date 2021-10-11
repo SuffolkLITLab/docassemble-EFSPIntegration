@@ -73,11 +73,7 @@ class ProxyConnection:
   def _call_proxy(self, send_func):
     try:
       resp = send_func()
-      if resp.status_code == 401:
-        # auth_resp = self.authenticate_user()
-        # if auth_resp.response_code == 200:
-        #  resp = send_func()
-        #else:
+      if resp.status_code == 401 and self.credentials_code_block:
         reconsider(self.credentials_code_block)
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
@@ -436,50 +432,55 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/codes')
     return self._call_proxy(send)
 
-  def get_filing_list(self, court_id:str, start_date:DADateTime, end_date:DADateTime):
+  def get_court_list(self, jurisdiction:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts')
+    return self._call_proxy(send)
+
+  def get_filing_list(self, jurisdiction:str, court_id:str, start_date:DADateTime, end_date:DADateTime):
     params = {
       "user_id": None,
       "start_date": as_datetime(start_date).format("yyyy-MM-dd"),
       "end_date": as_datetime(end_date).format("yyyy-MM-dd")
     }
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings', params=params)
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings', params=params)
     return self._call_proxy(send) 
 
-  def get_filing(self, court_id:str, filing_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
+  def get_filing(self, jurisdiction:str, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings/{filing_id}')
     return self._call_proxy(send) 
 
-  def get_policy(self, court_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/policy')
+  def get_policy(self, jurisdiction:str, court_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdicitions/{jurisdiction}/courts/{court_id}/policy')
     return self._call_proxy(send)
 
-  def get_filing_status(self, court_id:str, filing_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}/status')
+  def get_filing_status(self, jurisdiction:str, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings/{filing_id}/status')
     return self._call_proxy(send)
 
-  def cancel_filing_status(self, court_id:str, filing_id:str):
-    send = lambda: self.proxy_client.delete(self.base_url + f'filingreview/courts/{court_id}/filings/{filing_id}')
+  def cancel_filing_status(self, jurisdiction:str, court_id:str, filing_id:str):
+    send = lambda: self.proxy_client.delete(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings/{filing_id}')
     return self._call_proxy(send) 
 
-  def check_filing(self, court_id:str, court_bundle:ALDocumentBundle):
+  def check_filing(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle):
     _recursive_give_data_url(court_bundle)
     all_vars = json.dumps(all_variables())
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/courts/{court_id}/filing/check', data=all_vars)
+    log(f'headers: {self.proxy_client.headers}')
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
-  def file_for_review(self, court_id:str, court_bundle:ALDocumentBundle):
+  def file_for_review(self, jurisdiction: str, court_id:str, court_bundle:ALDocumentBundle):
     _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filings',
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
   
-  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
+  def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle):
     _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/courts/{court_id}/filing/fees',
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/fees',
           data=all_vars)
     return self._call_proxy(send)    
 

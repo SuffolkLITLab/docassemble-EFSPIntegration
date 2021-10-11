@@ -53,7 +53,7 @@ code: |
     ('get_filing', 'See Filing Info'),
     ('cancel_filing', 'Cancel Filing'),
     # ('dummy_filing', 'Dummy File'),
-    ('check_filing', 'Check filing'),
+    # ('check_filing', 'Check filing'),
   ]
 
   firm_admin_attorneys_list = [
@@ -955,7 +955,7 @@ code: |
   get_court = True
 ---
 code: |
-  resp = proxy_conn.get_filing_list(court_id, start_date, end_date)
+  resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, start_date, end_date)
   del court_id
   get_filings = True
 ---
@@ -970,34 +970,28 @@ code: |
   resend_activation = True
 ---
 code: |
-  resp = proxy_conn.get_filing_status(court_id, filing_id)
+  resp = proxy_conn.get_filing_status(jurisdiction_id, court_id, filing_id)
   del court_id
   del filing_id
   get_filing_status = True
 ---
 code: |
-  resp = proxy_conn.get_filing(court_id, filing_id)
+  resp = proxy_conn.get_filing(jurisdiction_id, court_id, filing_id)
   del court_id
   del filing_id
   get_filing = True
 ---
 code: |
   # TODO(qs): requires a bundle
-  resp = proxy_conn.file_for_review(court_id)
+  resp = proxy_conn.file_for_review(jurisdiction_id, court_id)
   del court_id
   dummy_filing = True
 ---
 code: |
-  resp = proxy_conn.cancel_filing_status(court_id, filing_id)
+  resp = proxy_conn.cancel_filing_status(jurisdiction_id, court_id, filing_id)
   del court_id
   del filing_id
   cancel_filing = True
----
-code: |
-  # TODO(qs): requires a bundle
-  resp = proxy_conn.check_filing(court_id, al_court_bundle)
-  del court_id
-  check_filing = True
 ---
 code: |
   resp = proxy_conn.get_notification_preferences()
@@ -1362,7 +1356,9 @@ subquestion: |
   Removing roles: ${ del_resp }
 
 continue button field: show_role_resp
-
+---
+code: |
+  jurisdiction_id = 'illinois'
 ---
 mandatory: True
 code: |
