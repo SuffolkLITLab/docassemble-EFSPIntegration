@@ -4,10 +4,9 @@ from docassemble.base.util import DADateTime, as_datetime, validation_error
 from typing import List, Dict, Tuple, Any, Callable
 
 def convert_court_to_id(trial_court) -> str:
-  # TODO(brycew): actually implement
   if isinstance(trial_court, str):
-    return trial_court.lower()
-  return str(trial_court.name).lower()
+    return trial_court
+  return str(trial_court.name)
   
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:
   if display is None:

@@ -1,6 +1,6 @@
 ---
 code: |
-  proxy_conn = ProxyConnection()
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
 ---
 id: eFile Login
 question: |
