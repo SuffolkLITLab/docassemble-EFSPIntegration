@@ -79,7 +79,7 @@ code: |
   #submitted_page
 ---
 code: |
-  proxy_conn = ProxyConnection()
+  proxy_conn = ProxyConnection(credential_code_block='tyler_login')
 ---
 features:
   question back button: True
