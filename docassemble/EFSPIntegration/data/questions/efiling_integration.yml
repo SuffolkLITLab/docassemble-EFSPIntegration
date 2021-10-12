@@ -306,7 +306,8 @@ code: |
     #prevent_going_back()
     efile_resp
     show_resp
-    if efile_resp.is_ok():
+    # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
+    if efile_resp.is_ok() and jurisdiction_id != 'louisiana':
       show_court_reserve_resp
     efile = True
   else:
