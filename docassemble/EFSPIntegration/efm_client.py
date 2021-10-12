@@ -50,7 +50,7 @@ class ProxyConnection:
   def __init__(self, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login'):
     temp_efile_config = get_config('efile proxy', {})
     if url is None:
-      url = temp_efile_config.get('url')
+      url = temp_efile_config.get('url', '')
     if api_key is None:
       api_key = temp_efile_config.get('api key')
 
@@ -77,6 +77,8 @@ class ProxyConnection:
         reconsider(self.credentials_code_block)
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
+    except requests.exceptions.MissingSchema as ex:
+      return ProxyConnection.user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
     return ProxyConnection.user_visible_resp(resp)
 
   @staticmethod
