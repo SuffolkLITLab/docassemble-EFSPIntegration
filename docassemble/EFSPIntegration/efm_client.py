@@ -139,6 +139,8 @@ class ProxyConnection:
     except requests.ConnectionError as ex:
       return ProxyConnection.user_visible_resp(
         f'Could not connect to the Proxy server at {self.base_url}')
+    except requests.exceptions.MissingSchema as ex:
+      return ProxyConnection.user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
     return ProxyConnection.user_visible_resp(resp)
 
   def register_user(self, person, registration_type:str, password:str=None, firm_name_or_id:str=None):
