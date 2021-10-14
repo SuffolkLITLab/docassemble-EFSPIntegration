@@ -11,6 +11,16 @@ include:
 code: |
   user_wants_efile = True # This interview is always for e-filing
 ---
+code: |
+  jurisdiction_id = 'illinois'
+---
+code: |
+  user_registration_choices = [
+    ('INDIVIDUAL', 'Pro Se user'),
+    ('FIRM_ADMINISTRATOR', 'Administrator of a new firm'),
+    ('FIRM_ADMIN_NEW_MEMBER', 'New member of current firm')
+  ]
+---
 mandatory: True
 code: |
   welcome
