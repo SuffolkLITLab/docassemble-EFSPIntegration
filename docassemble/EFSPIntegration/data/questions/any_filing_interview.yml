@@ -28,10 +28,10 @@ code: |
   trial_court
   can_check_efile
   if is_initial_filing:
-    tyler_case_category = case_category_map.get(case_category,{}).get('name')
-    tyler_case_type = case_type_map.get(case_type,{}).get('name')
+    tyler_case_category = case_category_map.get(case_category,{}).get('code')
+    tyler_case_type = case_type_map.get(case_type,{}).get('code')
     if case_subtype_options:
-      tyler_case_subtype = case_subtype_map.get(case_subtype).get('name')
+      tyler_case_subtype = case_subtype_map.get(case_subtype).get('code')
     tyler_filing_attorney
     user_ask_role
     user_started_case
@@ -89,7 +89,7 @@ code: |
   #submitted_page
 ---
 code: |
-  proxy_conn = ProxyConnection(credential_code_block='tyler_login')
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
 ---
 features:
   question back button: True
@@ -273,7 +273,7 @@ code: |
   has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
 ---
 code: |
-  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
+  fees_resp = proxy_conn.calculate_filing_fees(jurisdiction_id, court_id, al_court_bundle)
 ---
 depends on:
   - fees_resp
@@ -294,7 +294,7 @@ code: |
 generic object: ALIndividual
 code: |
   str(x.name)
-  x.party_type = party_type_map.get(x.party_type_code).get('name')
+  x.party_type = party_type_map.get(x.party_type_code).get('code')
   x.complete = True
 ---
 code: |
@@ -371,15 +371,15 @@ code: |
 ---
 generic object: ALDocument
 code: |
-  x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('name')
+  x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('code')
 ---
 generic object: ALDocument
 code: |
-  x.document_type = x.document_type_map.get(x.document_type_code,{}).get('name')
+  x.document_type = x.document_type_map.get(x.document_type_code,{}).get('code')
 ---
 generic object: ALDocument
 code: |
-  x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('name')
+  x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('code')
 ---
 id: Additional parties
 question: |
@@ -1066,7 +1066,7 @@ code: |
 ---
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
-  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='name')
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
 ---
 code: |
   service_contact_options = [(vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}") for vv in proxy_conn.get_service_contact_list().data]
