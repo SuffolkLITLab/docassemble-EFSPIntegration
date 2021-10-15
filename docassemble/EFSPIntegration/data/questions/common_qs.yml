@@ -1,3 +1,14 @@
+---
+code: |
+  jurisdiction_id = 'illinois'
+---
+code: |
+  user_registration_choices = [
+    ('INDIVIDUAL', 'Pro Se user'),
+    ('FIRM_ADMINISTRATOR', 'Administrator of a new firm'),
+    ('FIRM_ADMIN_NEW_MEMBER', 'New member of current firm')
+  ]
+---
 id: registration type
 question: |
   Registration Type
