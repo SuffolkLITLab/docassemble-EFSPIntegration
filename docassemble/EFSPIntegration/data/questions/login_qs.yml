@@ -1,4 +1,10 @@
 ---
+modules:
+  - .conversions
+---
+include:
+  - common_qs.yml
+---
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
 ---
@@ -33,27 +39,33 @@ code: |
   # TODO(brycew): handle improper login info
 ---
 code: |
-  resp = proxy_conn.self_change_password(current_password, new_user_password)
+  change_resp = proxy_conn.self_change_password(current_password, new_user_password)
   del current_password, new_user_password, confirm_new_password
-  self_change_password = True
+---
+code: |
+  if change_resp.is_ok():
+    changed_password_screen
+    self_change_password = True
+  else:
+    failed_changed_password_screen
 ---
 id: changed password
 question: |
-  % if resp.is_ok():
+  % if change_resp.is_ok():
   Your password has been updated
   % else:
   Your password change failed
   % endif
 subquestion: |
-  ${ resp }
+  ${ debug_display(change_resp) }
 continue button field: changed_password_screen  
 ---
-id: current password
+id: failed changed password
+event: failed_changed_password_screen
 question: |
-  Current password?
-fields:
-  - Password: current_password
-    datatype: password
+  Your password change failed. Please try again.
+subquestion: |
+  ${ debug_display(change_resp) }
 ---
 id: password
 question: |
@@ -80,6 +92,9 @@ fields:
 validation code: |
   if not new_user_password == confirm_new_password:
     validation_error("Your passwords do not match.", field="confirm_new_password")
+  if not proxy_conn.is_valid_password(new_user_password):
+    password_rules
+    validation_error(password_rules.data.get("validationmessage"))
 ---
 depends on:
   - tyler_login

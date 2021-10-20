@@ -43,7 +43,7 @@ fields:
   - note: |
       ---
   - Street address: person_to_reg.address.address
-    required: False
+    required: True
   - Unit: person_to_reg.address.unit
     required: False
   - City: person_to_reg.address.city
