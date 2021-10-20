@@ -27,7 +27,7 @@ code: |
   tyler_login 
   trial_court
   can_check_efile
-  if is_initial_filing:
+  if is_initial_filing or not interview_order_find_case:
     tyler_case_category = case_category_map.get(case_category,{}).get('code')
     tyler_case_type = case_type_map.get(case_type,{}).get('code')
     if case_subtype_options:
@@ -36,11 +36,12 @@ code: |
     user_ask_role
     user_started_case
   else:
-    interview_order_find_case
-    load_existing_case_defaults
-    previous_case_id = case_tracking_id
-    user_started_case
-    is_adding_new_parties
+    if interview_order_find_case:
+      load_existing_case_defaults
+      previous_case_id = case_tracking_id
+      user_started_case
+      is_adding_new_parties
+      
 
   users.gather()
   other_parties.gather()
@@ -544,12 +545,11 @@ content: |
 id: your name
 sets:
     - users[0].name.first
-    - users[0].name.last
 question:  |
   What is your name?
 fields:
   - code: |
-      users[0].name_fields(show_suffix=False)
+      users[0].name_fields(person_or_business='unknown', show_suffix=False)
 ---
 sets:
   - users[i].name.first
@@ -989,7 +989,6 @@ subquestion: |
 ---
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
-  log(trial_court_resp.data)
   trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
 ---
 code: |
