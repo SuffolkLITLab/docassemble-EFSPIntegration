@@ -12,7 +12,6 @@ objects:
 objects:
   - somebody: ALIndividual
 ---
-#mandatory: True
 id: interview order
 code: |
   do_what_choice

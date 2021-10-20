@@ -1,5 +1,5 @@
 ---
-modules:
+imports:
   - .efm_client
   - .conversions
 ---
@@ -62,7 +62,7 @@ code: |
 question: |
   show resp:
 subquestion: |
-  ${ pretty_display(resp) }
+  ${ conversions.pretty_display(resp) }
 continue button field: show_resp
 ---
 question: |
@@ -79,8 +79,7 @@ subquestion: |
 
   % endif
   % if not resp.is_ok():
-  % if get_config('debug'):
-  ${ resp }
+  ${ conversions.debug_display(resp) }
   % endif
   % endif
 
