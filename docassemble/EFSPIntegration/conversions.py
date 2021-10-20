@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from docassemble.base.util import DADateTime, as_datetime, validation_error
+from docassemble.base.functions import get_config
 from typing import List, Dict, Tuple, Any, Callable
 
 def convert_court_to_id(trial_court) -> str:
@@ -33,6 +34,16 @@ def pretty_display(data, tab_depth=0):
   else:
     out = (' ' * tab_depth) + str(data) + '\n'
   return out
+
+def debug_display(resp):
+  if resp.is_ok() and resp.data is None:
+    return 'All ok!'
+  if not resp.is_ok():
+    to_return = resp.error_msg
+    if get_config('debug'):
+      to_return += f"\nResponse Code: {resp.response_code}"
+    return to_return
+  return pretty_display(resp.data)
 
 def tyler_timestamp_to_datetime(tyler_timestamp:int)->DADateTime:
   return as_datetime(datetime.utcfromtimestamp(tyler_timestamp/1000))

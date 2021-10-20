@@ -14,34 +14,41 @@ objects:
 ---
 id: interview order
 code: |
+  court_id
   do_what_choice
-  if do_what_choice == 'party_search':
-    somebody.name.first
-    if not case_search_task_status.ready():
-      case_search_waiting_screen
+---
+if: |
+  do_what_choice == 'party_search'
+code: |
+  somebody.name.first
+  if not case_search_task_status.ready():
+    case_search_waiting_screen
+  else:
+    if not found_case_options:
+      warn_no_results
+      interview_order_find_case = False
+    elif case_tracking_choice is None:
+      failed_case_search
+      interview_order_find_case = False
     else:
-      if case_tracking_choice is None:
-        warn_no_results
-        case_tracking_id
-      else:
-        case_tracking_id = case_tracking_choice
-        found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
-  elif do_what_choice == 'docket_lookup':
-    case_docket_id
-    while not docket_case_response.is_ok():
-      display_case
-      del case_docket_id, docket_case_response, display_case
-      case_docket_id
-    display_case
+      case_tracking_id = case_tracking_choice
+      found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
+      interview_order_find_case = True
+---
+if: |
+  do_what_choice == 'docket_lookup'
+code: |
+  case_docket_id
+  if not docket_case_response.is_ok() or len(docket_case_response.data) == 0:
+    failed_case_search
+    del case_docket_id, docket_case_response
+    interview_order_find_case = False 
+  else:
     case_tracking_id = docket_case_response.data[0].get('value',{}).get('caseTrackingID',{}).get('value')
     found_case = DAObject()
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id)
-  else:
-    case_tracking_id
-    while not confirm_case_tracking_id:
-      del case_tracking_id
-      case_tracking_id
-  interview_order_find_case = True
+    display_case
+    interview_order_find_case = True
 ---
 id: no cases found
 question: |
@@ -58,19 +65,6 @@ field: do_what_choice
 choices:
   - Find a case by party name: party_search
   - Find a case by Docket Number: docket_lookup
-  - I know the tracking ID of the case: tracking_id
----
-id: tracking id
-question: |
-  Enter the case tracking ID
-fields:
-  - Case Tracking ID: case_tracking_id
----
-question: |
-  Is this the case you were trying to find?
-subquestion: |
-  
-yesno: confirm_case_tracking_id
 ---
 sets:
   - somebody.name.first
@@ -130,7 +124,7 @@ subquestion: |
   ${ collapse_template(case_results_template) }
 fields:
   - Which case?: case_tracking_choice
-    datatype: dropdown
+    datatype: checkboxes 
     code: |
       found_case_options
 ---
@@ -151,9 +145,11 @@ continue button field: display_case
 question: |
   Results
 subquestion: |
-
-  ${ pretty_display(docket_case_response.data) } 
-
+  #### ${ found_case.title} (${ found_case.date })
+  * DocketID: ${ found_case.docket_id }
+  * CourtID: ${ found_case.court_id }
+  * TrackingID: ${ found_case.tracking_id }
+  * CaseCategory: ${ found_case.category }  
 ---
 need:
   - court_id

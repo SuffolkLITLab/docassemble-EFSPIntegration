@@ -66,7 +66,7 @@ code: |
 ---
 id: Admin tasks
 question: | 
-  Admin Tasks
+  ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
 subquestion: |
   % if logged_in_user_is_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
@@ -107,7 +107,8 @@ content: |
       label="Update self") }
   
   ${ action_button_html(url_ask(
-      [{'recompute': ['self_change_password', 'show_resp', 'tyler_login']}]),
+      # self_change_password is mostly in login_qs
+      [{'recompute': ['self_change_password', 'tyler_login']}]),
       label="Change your password") }
 
   ${ action_button_html(url_ask(
@@ -371,9 +372,15 @@ content: |
 ---
 id: display case
 question: |
+  % if interview_order_find_case:
   Your case
+  % else:
+  No case found
+  % endif
 subquestion: |
+  % if interview_order_find_case:
   ${ found_case.as_serializable() }
+  % endif
 continue button field: display_found_case  
 ---
 template: subsequent_filing_template
@@ -492,7 +499,7 @@ fields:
   - Filing id: filing_id
     datatype: combobox
     code: |
-      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1) ).data]
+      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1) ).data]
 ---
 code: |
   from datetime import datetime 
@@ -609,7 +616,7 @@ fields:
   - Case Tracking ID: firm_case_tracking_id
     datatype: combobox
     code: |
-      [filing_id_and_label(y,style="CASE_TRACKING_ID") for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1)).data]
+      [filing_id_and_label(y,style="CASE_TRACKING_ID") for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1)).data]
 
 ---
 id: update user information
@@ -1273,11 +1280,15 @@ code: |
 # TODO: add lookup based on case_tracking_id
 ---
 code: |
-  resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
-  del service_contact_id
-  del case_tracking_id
-  del all_case_parties
-  attach_service_contact = True
+  if interview_order_find_case:
+    resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
+    del service_contact_id
+    del case_tracking_id
+    del all_case_parties
+    attach_service_contact = True
+  else:
+    resp = ApiResponse(-1, '', None)
+    attach_service_contact = False
 ---
 code: |
   resp = proxy_conn.detach_service_contact(service_contact_id, firm_case_tracking_id)
@@ -1286,10 +1297,14 @@ code: |
   detach_service_contact = True
 ---
 code: |
-  resp = proxy_conn.get_case_service_history(court_id, case_tracking_id)
-  del court_id
-  del case_tracking_id
-  get_case_service_history = True
+  if interview_order_find_case:
+    resp = proxy_conn.get_case_service_history(court_id, case_tracking_id)
+    del court_id
+    del case_tracking_id
+    get_case_service_history = True
+  else:
+    resp = ApiResponse(-1, '', None)
+    get_case_service_history = False
 ---
 code: |
   resp = proxy_conn.get_global_payment_account_list()
@@ -1317,13 +1332,6 @@ code: |
   del new_user_password
   change_password = True
 ---
-need:
-  - new_user_password
-code: |
-  resp = proxy_conn.self_change_password(current_password, new_user_password)
-  del current_password, new_user_password
-  self_change_password = True
----
 id: field
 question: |
   Data field
@@ -1344,7 +1352,7 @@ id: results
 question: |
   Results of your request
 subquestion: |
-  ${ pretty_display(resp.data) }
+  ${ debug_display(resp) }
 continue button field: show_resp
 ---
 id: results role update
