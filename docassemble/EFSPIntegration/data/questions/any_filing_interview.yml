@@ -222,7 +222,7 @@ validation code: |
 generic object: ALExhibitDocument
 code: |
   x.exhibits[i].title = x.filing_description if x.filing_description else filing_type_map.get(x.filing_type,{}).get('name')
----  
+---
 generic object: ALExhibitDocument
 code: |
   x.filename = space_to_underscore(x.exhibits[0].title)
@@ -343,10 +343,11 @@ code: |
 code: |
   no_missing_required_party_types_temp = True
   for p_type in party_type_map.values():
-    no_missing_required_party_types_temp &= (
-      any(filter(lambda p: p.party_type_code == p_type.get('code'), users)) or
-      any(filter(lambda p: p.party_type_code == p_type.get('code'), other_parties))
-      )
+    if p_type.get('isrequired'):
+      no_missing_required_party_types_temp &= (
+        any(filter(lambda p: p.party_type_code == p_type.get('code'), users)) or
+        any(filter(lambda p: p.party_type_code == p_type.get('code'), other_parties))
+        )
   missing_required_party_types = not no_missing_required_party_types_temp
   del no_missing_required_party_types_temp
 ---
@@ -666,7 +667,7 @@ fields:
   - Party Type: x.party_type_code
     input type: radio
     code: |
-      party_type_options
+      party_type_options if is_nonindexed_filing else party_type_new_options
 ---
 code: |
   if showifdef('user_ask_role') == 'plaintiff' and matching_tuple_option('plaintiff', party_type_options):
@@ -685,7 +686,7 @@ fields:
   - Party Type: users[i].party_type_code
     input type: radio
     code: |
-      party_type_options
+      party_type_options if is_nonindexed_filing else party_type_new_options
     default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
 ---
 id: party type of other parties
@@ -695,9 +696,8 @@ fields:
   - Party Type: other_parties[i].party_type_code
     input type: radio
     code: |
-      party_type_options
+      party_type_options if is_nonindexed_filing else party_type_new_options
     default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
-
 ---
 code: |
   def matching_tuple_option(option:str, options:List[Tuple]):
@@ -1043,12 +1043,14 @@ code: |
   full_court_info = proxy_conn.get_court(court_id)
 ---
 code: |
-  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, filable_only=True).data)
+  timing = 'Initial' if is_initial_filing else 'Subsequent'
+  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=True, timing=timing).data) 
   if not case_category_options:
     go_back_screen
 ---
 code: |
-  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, case_category, timing='Initial' if is_initial_filing else 'Subsequent').data)
+  timing = 'Initial' if is_initial_filing else 'Subsequent'
+  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, case_category, timing=timing).data)
   if not case_type_options:
     go_back_screen
 ---
@@ -1090,6 +1092,7 @@ code: |
 code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
+  party_type_new_options = [p_type for p_type in party_type_options if party_type_map[p_type[0]].get('isAvailableForNewParties')]
 ---
 generic object: ALDocument
 code: |
