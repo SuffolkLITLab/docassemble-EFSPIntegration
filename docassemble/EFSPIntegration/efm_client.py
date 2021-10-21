@@ -4,7 +4,7 @@ import json
 import logging
 import isodate
 from datetime import datetime, timedelta
-from typing import Union,List, Dict
+from typing import Union, List, Dict, Optional
 import http.client as http_client
 
 from urllib.parse import urlencode
@@ -540,12 +540,20 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
     return self._call_proxy(send)
   
-  def get_case_categories(self, court_id:str, filable_only:bool=False):
-    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/categories?filable_only={filable_only}')
+  def get_case_categories(self, court_id:str, fileable_only:bool=False, timing:str=None):
+    params = {
+      "fileable_only": fileable_only,
+      "timing": timing 
+    }
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/categories', params=params) 
     return self._call_proxy(send)
   
   def get_case_types(self, court_id:str, case_category:str, timing:str=None):
-    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/case_types?category_id={case_category}&timing={timing}')
+    params = {
+      'category_id': case_category,
+      'timing': timing
+    }
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/case_types', params=params) 
     return self._call_proxy(send)
   
   def get_case_subtypes(self, court_id:str, case_type:str):
@@ -553,7 +561,12 @@ class ProxyConnection:
     return self._call_proxy(send)
   
   def get_filing_types(self, court_id:str, case_category:str, case_type:str, initial:bool):
-    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_types?category_id={case_category}&type_id={case_type}&initial={initial}')
+    params = {
+      'category_id': case_category,
+      'type_id': case_type,
+      'initial': initial
+    }
+    send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_types', params=params)
     return self._call_proxy(send)
   
   def get_service_types(self, court_id:str): 
