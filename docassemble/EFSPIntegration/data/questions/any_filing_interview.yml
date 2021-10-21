@@ -27,7 +27,12 @@ code: |
   tyler_login 
   trial_court
   can_check_efile
-  if is_initial_filing or not interview_order_find_case:
+  if not is_initial_filing and not interview_order_find_case and not can_file_non_indexed_case:
+    failed_case_search
+
+  if is_nonindexed_filing:
+      docket_number = non_indexed_docket_number
+  if needs_all_info:
     tyler_case_category = case_category_map.get(case_category,{}).get('code')
     tyler_case_type = case_type_map.get(case_type,{}).get('code')
     if case_subtype_options:
@@ -41,12 +46,12 @@ code: |
       previous_case_id = case_tracking_id
       user_started_case
       is_adding_new_parties
-      
+
 
   users.gather()
   other_parties.gather()
   all_case_parties
-  if is_initial_filing:
+  if needs_all_info:
     lead_contact = users[0]
     reconsider('missing_required_party_types')
     if missing_required_party_types:
@@ -65,8 +70,8 @@ code: |
   # TODO: as_pdf() is slow and may not be right if no document uploaded
   al_court_bundle.as_pdf()
   
-  if is_initial_filing:
-    users[0].email
+  if needs_all_info:
+    lead_contact.email
   
   if full_court_info.data['allowreturndate']:
     return_date
@@ -78,8 +83,8 @@ code: |
   tyler_payment_id
 
   if can_check_efile:
-    if is_initial_filing:
-      users[0].email
+    if needs_all_info:
+      lead_contact.email
     #TODO(qs): if not a waiver account...
     ready_to_efile
     review_fees
@@ -100,7 +105,7 @@ objects:
   - lead_contact: ALIndividual
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=is_initial_filing or is_adding_new_parties, complete_attribute='complete')
+  - users: ALPeopleList.using(there_are_any=needs_all_info or is_adding_new_parties, complete_attribute='complete')
   - other_parties: ALPeopleList.using(complete_attribute='complete') # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
@@ -417,6 +422,12 @@ choices:
 ---
 code: |
   is_initial_filing = filing_interview_initial_or_existing == 'initial_document'
+---
+code: |
+  is_nonindexed_filing = not is_initial_filing and (not interview_order_find_case and can_file_non_indexed_case)
+---
+code: |
+  needs_all_info = is_initial_filing or is_nonindexed_filing
 ---
 code: |
   # NOTE we could refactor case_search.yml to use a datatype: object selector
@@ -885,7 +896,7 @@ fields:
 ---
 generic object: ALDocument
 code: |
-  if is_initial_filing and len(users) == 1:
+  if needs_all_info and len(users) == 1:
     x.filing_parties = ['users[0]']
     # explain_user_paying
   else:
@@ -1075,12 +1086,12 @@ comment: |
   submitted_page
 ---
 code: |    
-  if is_initial_filing or is_adding_new_parties:
+  if needs_all_info or is_adding_new_parties:
     all_case_parties_tmp = [{user.instanceName: str(user)} for user in users]
   else:
     all_case_parties_tmp = []
         
-  if not is_initial_filing:
+  if not needs_all_info: 
     raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
     all_case_parties_tmp.extend([get_person_name_and_id(party) for party in raw_party_list if is_person(party)])
 
