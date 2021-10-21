@@ -16,6 +16,7 @@ id: interview order
 code: |
   court_id
   do_what_choice
+  interview_order_find_case = found_case is not None
 ---
 if: |
   do_what_choice == 'party_search'
@@ -24,40 +25,36 @@ code: |
   if not case_search_task_status.ready():
     case_search_waiting_screen
   else:
-    if not found_case_options:
+    if not found_case_options or case_tracking_choice is None:
       warn_no_results
-      interview_order_find_case = False
-    elif case_tracking_choice is None:
-      failed_case_search
-      interview_order_find_case = False
+      found_case = None
     else:
       case_tracking_id = case_tracking_choice
       found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
-      interview_order_find_case = True
 ---
 if: |
   do_what_choice == 'docket_lookup'
 code: |
   case_docket_id
   if not docket_case_response.is_ok() or len(docket_case_response.data) == 0:
-    failed_case_search
+    warn_no_results
     del case_docket_id, docket_case_response
-    interview_order_find_case = False 
+    found_case = None
   else:
     case_tracking_id = docket_case_response.data[0].get('value',{}).get('caseTrackingID',{}).get('value')
     found_case = DAObject()
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id)
     display_case
-    interview_order_find_case = True
 ---
 if: |
-  do_what_choice == 'non-indexed-case':
+  do_what_choice == 'non-indexed-case'
 code: |
   if can_file_non_indexed_case:
     non_indexed_docket_number
-    found_case = DAObject(case_tracking_id=case_tracking_id)
+    found_case = None 
   else:
     no_non_indexed_cases
+    found_case = None
 ---  
 code: |
   court_code_results = proxy_conn.get_court(court_id).data
@@ -65,33 +62,6 @@ code: |
     can_file_non_indexed_case = court_code_results.get('allowfilingintononindexedcase') or False
   else:
     can_file_non_indexed_case = False    
----
-id: ask non-indexed docket number
-question: |
-  Case number
-subquestion: |
-  Enter the case number for the non-indexed case
-
-  ${ collapse_template(case_number_format_template) }
-  
-  ${ collapse_template(case_number_format_cook_county_template) }
-  
-fields:
-  - Case number: non_indexed_docket_number
-# TODO: input validation is not possible--no required format for
-# case number in Illinois
----
-template: case_number_format_template
-subject: |
-  How to enter your case number (Except Cook County)
-content: |
-  [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
----
-template: case_number_format_cook_county_template
-subject: |
-  How to enter your case number (Chicago/Cook County only)
-content: |
-  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
 ---
 id: no non-indexed cases
 question: |
@@ -102,8 +72,12 @@ id: no cases found
 question: |
   No cases found
 subquestion: |
-  You can either enter a case tracking ID or hit "back" to 
+  % if can_file_non_indexed_case:
+  You can either continue to file into a non-indexed case or hit "${ word('back') }" to 
   try a new search.
+  % else:
+  Unfortunately, ${ court_id } does not allow filing into non-indexed cases.
+  % endif
 continue button field: warn_no_results
 ---
 id: case lookup
