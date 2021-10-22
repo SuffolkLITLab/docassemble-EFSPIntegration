@@ -27,6 +27,12 @@ def pretty_display(data, tab_depth=0):
       out += pretty_display(elem, tab_depth + tab_inc)
 
   elif isinstance(data, dict):
+    if 'declaredType' in data:
+      if data['declaredType'] == 'gov.niem.niem.niem_core._2.TextType':
+        out += (' ' * tab_depth) + f"* {data['name']}: {data['value']['value']}"
+        return out
+      if data['declaredType'] == 'gov.niem.niem.proxy.xsd._2.Boolean':
+        out += (' ' * tab_depth) + f"* {data['name']}: {data['value']['value']}"
     for key, val in data.items():
       if val is not None and val != []:
         out += (' ' * tab_depth) + f'* {key}: \n'
@@ -135,3 +141,27 @@ def filter_payment_accounts(account_list, allowable_card_types):
       return f"{acct.get('accountName')} ({acct.get('paymentAccountTypeCode')})"
   return [(account.get('paymentAccountID'), display(account)) 
         for account in account_list if account.get('active',{}).get('value') and not_card_or_allowed_card(account)]
+
+def filing_id_and_label(case, style="FILING_ID"):
+  tracking_id = case.get('caseTrackingID',{}).get('value')
+  try:
+    filing_id = case.get('documentIdentification',[{},{}])[1].get('identificationID',{}).get('value')
+  except IndexError:
+    filing_id = 'id-not-found'
+  filer_name = case.get('documentSubmitter',{}).get('entityRepresentation',{}).get('value',{}).get('personName',{}).get('personFullName',{}).get('value')
+  document_description = case.get('documentDescriptionText',{}).get('value')
+  # Filing code is plain English
+  filing_code = next(
+    filter(
+      lambda category: category.get('name') == "{urn:tyler:ecf:extensions:Common}FilingCode", 
+      case.get("documentCategoryText", [])
+      ),{}).get('value',{}).get('value')
+  try:
+    filing_date = as_datetime(datetime.utcfromtimestamp(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
+  except:
+    ''
+  filing_label = f"{filer_name} - {document_description} ({filing_code}) {filing_date}"
+  if style == "FILING_ID":
+    return { filing_id: filing_label }
+  else:
+    return { tracking_id: filing_label }
