@@ -25,12 +25,12 @@ code: |
   if not case_search_task_status.ready():
     case_search_waiting_screen
   else:
-    if not found_case_options or case_tracking_choice is None:
+    if not found_case_options: 
       warn_no_results
       found_case = None
     else:
-      case_tracking_id = case_tracking_choice
-      found_case = next(filter(lambda case: case.tracking_id == case_tracking_id, found_cases))
+      found_case = case_choice
+      case_tracking_id = found_case.tracking_id
 ---
 if: |
   do_what_choice == 'docket_lookup'
@@ -152,6 +152,35 @@ subquestion: |
 fields:
   - Case number: case_docket_id
 ---
+id: ask non-indexed docket number
+question: |
+  Case number
+subquestion: |
+  Enter the case number for the non-indexed case
+
+  % if 'cook' in court_id:
+  ${ collapse_template(case_number_format_cook_county_template) }
+  % else:
+  ${ collapse_template(case_number_format_template) }
+  % endif
+  
+fields:
+  - Case number: non_indexed_docket_number
+# TODO: input validation is not possible--no required format for
+# case number in Illinois
+---
+template: case_number_format_template
+subject: |
+  How to enter your case number (Except Cook County)
+content: |
+  [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
+---
+template: case_number_format_cook_county_template
+subject: |
+  How to enter your case number (Chicago/Cook County only)
+content: |
+  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
+---
 need:
   - proxy_conn.authed_user_id
 depends on:
@@ -159,16 +188,18 @@ depends on:
 code: |
   docket_case_response = proxy_conn.get_cases(court_id, docket_id=case_docket_id)
 ---
-id: results
+id: results for case tracking_choice
 question: |
   Results
 subquestion: |
   ${ collapse_template(case_results_template) }
 fields:
-  - Which case?: case_tracking_choice
-    datatype: checkboxes 
-    code: |
-      found_case_options
+  - Which case?: case_choice
+    datatype: object 
+    object labeler: |
+      lambda case: f"{case.docket_id} {case.title} ({case.date})"
+    choices:
+      - found_case_options
 ---
 template: case_results_template
 subject: |
@@ -211,4 +242,4 @@ code: |
     #  message("Something went wrong")
     
     found_cases.gathered = True
-    found_case_options = [{case.tracking_id: f"{case.docket_id} {case.title} ({case.date})"} for case in found_cases]
+    found_case_options = found_cases 

@@ -139,35 +139,6 @@ subquestion: |
 buttons:
   - restart
 ---
-id: ask non-indexed docket number
-question: |
-  Case number
-subquestion: |
-  Enter the case number for the non-indexed case
-
-  % if 'cook' in court_id:
-  ${ collapse_template(case_number_format_cook_county_template) }
-  % else:
-  ${ collapse_template(case_number_format_template) }
-  % endif
-  
-fields:
-  - Case number: non_indexed_docket_number
-# TODO: input validation is not possible--no required format for
-# case number in Illinois
----
-template: case_number_format_template
-subject: |
-  How to enter your case number (Except Cook County)
-content: |
-  [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
----
-template: case_number_format_cook_county_template
-subject: |
-  How to enter your case number (Chicago/Cook County only)
-content: |
-  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
----
 generic object: ALDocument
 id: any exhibits
 question: |
@@ -300,7 +271,7 @@ fields:
   - no label: review_fees
     datatype: checkboxes
     choices:
-      - ${ 'I agree to pay the listed fees of' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
+      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
     minlength: 1
     validation messages:
       minlength: |
