@@ -50,6 +50,7 @@ code: |
 
   users.gather()
   other_parties.gather()
+  all_attorney_adding
   all_case_parties
   if needs_all_info:
     lead_contact = users[0]
@@ -312,6 +313,12 @@ code: |
   x.complete = True
 ---
 code: |
+  str(users[i].name)
+  users[i].party_type = party_type_map.get(users[i].party_type_code).get('code')
+  users[i].attorney_ids
+  users[i].complete = True
+---
+code: |
   no_missing_required_party_types_temp = True
   for p_type in party_type_map.values():
     if p_type.get('isrequired'):
@@ -453,6 +460,43 @@ code: |
     # TODO(brycew): get party info from existing case to select filing parties 
     exising_case_parties = None
   load_existing_case_defaults = True
+---
+generic object: ALIndividual
+question: |
+  Adding Attorneys
+subquestion: |
+  What attorneys are you adding? (only for the first party)
+fields:
+  - Attorneys: x.attorney_adding_ids
+    datatype: multiselect
+    code: |
+      tyler_filing_attorney_options
+---
+question: |
+  Are there any more attorneys you'd like to attach to existing contacts?
+fields:
+  - no label: existing_parties_new_atts.there_is_another
+    datatype: yesno
+---
+question: |
+  Adding attorneys to existing users
+fields: 
+  - To party: existing_parties_new_atts[i].existing_party
+  - Attorneys: existing_parties_new_atts[i].attorney_adding_ids
+    datatype: multiselect
+    code: |
+      tyler_filing_attorney_options
+---
+generic object: ALIndividual
+code: |
+  x.attorney_ids = [att[0] for att in x.attorney_adding_ids.items() if att[1]]
+---
+code: |
+  attorney_ids = functools.reduce(lambda exst, new_list: exst.attorney_ids + new_list, users + other_parties, [])
+  for exst_user in existing_parties_new_atts:
+    attorney_ids.extend(exst_user.attorney_adding_ids)
+  party_to_attorney_ids = {y.instanceName: y.attorney_ids for y in users + other_parties}
+  party_to_attorney_ids.extend({y.existing_party: y.attorney_adding_ids for y in existing_parties_new_atts})
 ---
 id: location
 question: | 
