@@ -2,6 +2,9 @@
 modules:
   - .efm_client
 ---
+imports:
+  - functools
+---
 include:
   - login_qs.yml
   - efiling_integration.yml
@@ -50,7 +53,9 @@ code: |
 
   users.gather()
   other_parties.gather()
-  all_attorney_adding
+  existing_parties_new_atts.gather()
+  attorney_ids
+  party_to_attorneys
   all_case_parties
   if needs_all_info:
     lead_contact = users[0]
@@ -108,6 +113,9 @@ objects:
 objects:
   - users: ALPeopleList.using(there_are_any=needs_all_info or is_adding_new_parties, complete_attribute='complete')
   - other_parties: ALPeopleList.using(complete_attribute='complete') # NOTE that there can be filing types with no opposing party, such as adoption
+---
+objects:
+  - existing_parties_new_atts: DAList.using(there_are_any=not is_initial_filing)
 ---
 objects:
   - lead_doc: ALExhibitDocument.using(title="Lead Filing Doc", filename="lead_filing_doc", include_table_of_contents=False, include_exhibit_cover_pages=False)
@@ -463,12 +471,13 @@ code: |
 ---
 generic object: ALIndividual
 question: |
-  Adding Attorneys
+  Adding Attorneys for ${ x }
 subquestion: |
-  What attorneys are you adding? (only for the first party)
+  What attorneys are you adding?
 fields:
   - Attorneys: x.attorney_adding_ids
     datatype: multiselect
+    required: False
     code: |
       tyler_filing_attorney_options
 ---
@@ -492,11 +501,12 @@ code: |
   x.attorney_ids = [att[0] for att in x.attorney_adding_ids.items() if att[1]]
 ---
 code: |
-  attorney_ids = functools.reduce(lambda exst, new_list: exst.attorney_ids + new_list, users + other_parties, [])
+  attorney_ids = functools.reduce(lambda new_list, exst: exst.attorney_ids + new_list, users + other_parties, [])
   for exst_user in existing_parties_new_atts:
     attorney_ids.extend(exst_user.attorney_adding_ids)
-  party_to_attorney_ids = {y.instanceName: y.attorney_ids for y in users + other_parties}
-  party_to_attorney_ids.extend({y.existing_party: y.attorney_adding_ids for y in existing_parties_new_atts})
+  party_to_attorneys = {y.instanceName: y.attorney_ids for y in users + other_parties}
+  for y in existing_parties_new_atts:
+    party_to_attorneys[y.existing_party] = y.attorney_adding_ids 
 ---
 id: location
 question: | 

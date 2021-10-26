@@ -145,9 +145,12 @@ id: docket id
 question: |
   Case number
 subquestion: |
-  ${ collapse_template(case_number_format_template) }
-  
+
+  % if 'cook' in court_id:
   ${ collapse_template(case_number_format_cook_county_template) }
+  % else:
+  ${ collapse_template(case_number_format_template) }
+  % endif
 
 fields:
   - Case number: case_docket_id
