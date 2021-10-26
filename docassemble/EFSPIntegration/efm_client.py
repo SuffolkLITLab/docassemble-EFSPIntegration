@@ -440,11 +440,11 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts')
     return self._call_proxy(send)
 
-  def get_filing_list(self, jurisdiction:str, court_id:str, start_date:DADateTime, end_date:DADateTime):
+  def get_filing_list(self, jurisdiction:str, court_id:str, start_date:DADateTime=None, end_date:DADateTime=None):
     params = {
       "user_id": None,
-      "start_date": as_datetime(start_date).format("yyyy-MM-dd"),
-      "end_date": as_datetime(end_date).format("yyyy-MM-dd")
+      "start_date": as_datetime(start_date).format("yyyy-MM-dd") if start_date else None,
+      "end_date": as_datetime(end_date).format("yyyy-MM-dd") if end_date else None
     }
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings', params=params)
     return self._call_proxy(send) 
