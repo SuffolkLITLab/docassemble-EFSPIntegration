@@ -30,10 +30,10 @@ def pretty_display(data, tab_depth=0):
   elif isinstance(data, dict):
     if 'declaredType' in data:
       if data['declaredType'] == 'gov.niem.niem.niem_core._2.TextType':
-        out += tab_str + f"* {data['name']}: {data['value']['value']}"
+        out += tab_str + f"* {data['name']}: {data['value']['value']}\n"
         return out
       if data['declaredType'] == 'gov.niem.niem.proxy.xsd._2.Boolean':
-        out += tab_str + f"* {data['name']}: {data['value']['value']}"
+        out += tab_str + f"* {data['name']}: {data['value']['value']}\n"
         return out
     for key, val in data.items():
       if val is not None and (isinstance(val, dict) or isinstance(val, list)) \
