@@ -21,24 +21,33 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
 def pretty_display(data, tab_depth=0):
   tab_inc = 4
   out = ''
+  tab_str = ' ' * tab_depth
   if isinstance(data, list):
     for idx, elem in enumerate(data):
-      out += (' ' * tab_depth) + f'* idx: {idx}\n'
+      out += tab_str + f'* Item: {idx}\n'
       out += pretty_display(elem, tab_depth + tab_inc)
 
   elif isinstance(data, dict):
     if 'declaredType' in data:
       if data['declaredType'] == 'gov.niem.niem.niem_core._2.TextType':
-        out += (' ' * tab_depth) + f"* {data['name']}: {data['value']['value']}"
+        out += tab_str + f"* {data['name']}: {data['value']['value']}"
         return out
       if data['declaredType'] == 'gov.niem.niem.proxy.xsd._2.Boolean':
-        out += (' ' * tab_depth) + f"* {data['name']}: {data['value']['value']}"
+        out += tab_str + f"* {data['name']}: {data['value']['value']}"
+        return out
     for key, val in data.items():
-      if val is not None and val != []:
-        out += (' ' * tab_depth) + f'* {key}: \n'
+      if val is not None and (isinstance(val, dict) or isinstance(val, list)) \
+          and 'value' in val and isinstance(val['value'], str):
+        out += tab_str + f"* {key}: {val['value']}\n"
+      elif key == 'nil' and val == False:
+        continue
+      elif key == 'globalScope' and val == True:
+        continue
+      elif val is not None and val != []:
+        out += tab_str + f'* {key}: \n'
         out += pretty_display(val, tab_depth + tab_inc)
   else:
-    out = (' ' * tab_depth) + str(data) + '\n'
+    out = tab_str + str(data) + '\n'
   return out
 
 def debug_display(resp):
@@ -127,20 +136,29 @@ def parties_xml_to_choices(parties_xml):
     choices.append((per_id, name))
   return choices
 
+def _payment_labels(acc):
+  if acct.get('paymentAccountTypeCode') == 'CC':
+    return f"{acc.get('accountName')} ({acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')})"
+  elif acct.get('paymentAccountTypeCode') == 'WV':
+    return f"{acct.get('accountName')} (Waiver account)"
+  else:
+    return f"{acct.get('accountName')} ({acct.get('paymentAccountTypeCode')})"
+
 def filter_payment_accounts(account_list, allowable_card_types):
   """ Gets a list of all payment accounts and filters them by if the card is 
       accepted at a particular court"""
-  not_card_or_allowed_card = lambda acct: acct.get('paymentAccountTypeCode') != 'CC' or \
-      (acct.get('paymentAccountTypeCode') == 'CC' and acct.get('cardType',{}).get('value') in allowable_card_types)
-  def display(acct):
-    if acct.get('paymentAccountTypeCode') == 'CC':
-      return f"{acct.get('accountName')} ({acct.get('cardType',{}).get('value')})"
-    elif acct.get('paymentAccountTypeCode') == 'WV':
-      return f"{acct.get('accountName')} (Waiver account)"
-    else:
-      return f"{acct.get('accountName')} ({acct.get('paymentAccountTypeCode')})"
-  return [(account.get('paymentAccountID'), display(account)) 
-        for account in account_list if account.get('active',{}).get('value') and not_card_or_allowed_card(account)]
+  allowed_card = lambda acc: acc.get('paymentAccountTypeCode') != 'CC' or \
+      (acc.get('paymentAccountTypeCode') == 'CC' and acc.get('cardType',{}).get('value') in allowable_card_types)
+  return [(acct.get('paymentAccountID'), _payment_labels(acct)) 
+        for acct in account_list if acct.get('active',{}).get('value') and allowed_card(acct)]
+
+def payment_account_labels(resp):
+  retval = []
+  if resp.data:
+    for account in resp.data:
+      retval.append({
+        account.get("paymentAccountID"): _payment_labels(account)})
+  return retval
 
 def filing_id_and_label(case, style="FILING_ID"):
   tracking_id = case.get('caseTrackingID',{}).get('value')
@@ -165,3 +183,16 @@ def filing_id_and_label(case, style="FILING_ID"):
     return { filing_id: filing_label }
   else:
     return { tracking_id: filing_label }
+  
+def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
+  if not login_data:
+    return False, False
+  
+  user_details = proxy_conn.get_user(login_data.get('TYLER-ID'))
+  if not user_details.data:
+    return False, False
+  
+  logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
+  logged_in_user_is_global_admin = logged_in_user_is_admin and \
+      user_details.data.get('email') in get_config('efile proxy').get('global server admins',[])
+  return logged_in_user_is_admin, logged_in_user_is_global_admin
