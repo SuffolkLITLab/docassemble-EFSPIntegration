@@ -100,16 +100,7 @@ depends on:
   - tyler_login
   - tyler_login_resp
 code: |
-  if tyler_login_resp.data:
-    user_details = proxy_conn.get_user(tyler_login_resp.data.get('TYLER-ID'))
-    if user_details.data:
-      # this is a bit redundant because only a firm admin has the ability
-      # to use the get_user endpoint
-      logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
-    else:
-      logged_in_user_is_admin = False
-  else:
-    logged_in_user_is_admin = False
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
 ---
 event: reset_password_screen
 question: |

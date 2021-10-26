@@ -63,13 +63,42 @@ code: |
     ('update_attorney', 'Update Attorney'),
     ('remove_attorney', 'Remove Attorney'),
   ]
+  
+  firm_admin_payment_list = [ 
+    ('get_payment_account_type_list', 'Get Payment Account Type List'),
+    ('get_payment_account', 'Get Payment Account'),
+    ('update_payment_account', 'Update Payment Account'),
+    ('remove_payment_account', 'Remove Payment Account'),
+    ('get_global_payment_account_list', 'Get Global Payment Account List'),
+    ('get_global_payment_account', 'Get Global Payment Account'),
+  ]
+  
+  global_admin_payment_list = [
+    *firm_admin_payment_list,
+    ('update_global_payment_account', 'Update Global Payment Account'),
+    ('remove_global_payment_account', 'RemoveGlobal Payment Account'),
+  ]
 ---
 id: Admin tasks
 question: | 
   ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
 subquestion: |
-  % if logged_in_user_is_admin:
+  % if logged_in_user_is_global_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
+      code_cache_template,
+      firm_admin_template,
+      firm_admin_users_template,
+      firm_admin_attorneys_template,
+      firm_admin_service_contacts,
+      global_admin_payment_template,
+      initial_filing_template,
+      efsp_template,
+      subsequent_filing_template,
+      eservice_template,
+      ecf_template,
+      filings_template) }
+  % elif logged_in_user_is_admin:
+    ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
       firm_admin_template,
       firm_admin_users_template,
@@ -279,41 +308,29 @@ content: |
     ]),
     label='New payment Account') }
 
+  % for elem in firm_admin_payment_list:
   ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account_type_list', 'show_resp']}]),
-    label='Get payment account type list') }
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
+---
+template: global_admin_payment_template
+subject: |
+  Payment accounts
+content: |
+  ${ action_button_html(url_ask([
+      {'undefine': ['new_payment_account']},
+      {'recompute': ['new_payment_account']}
+    ]),
+    label='New payment Account') }
 
+  % for elem in firm_admin_payment_list:
   ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account_list', 'show_resp']}]),
-    label='Get payment account list') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_payment_account', 'show_resp']}]),
-    label='Get payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['update_payment_account', 'show_resp']}]),
-    label='Update payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['remove_payment_account', 'show_resp']}]),
-    label='Remove payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_global_payment_account_list', 'show_resp']}]),
-    label='Get global payment account list') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['get_global_payment_account', 'show_resp']}]),
-    label='Get global payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['update_global_payment_account', 'show_resp']}]),
-    label='Update global payment account') }
-
-  ${ action_button_html(url_ask(
-    [{'recompute': ['remove_global_payment_account', 'show_resp']}]),
-    label='Remove global payment account') }
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
 ---
 template: initial_filing_template
 subject: |
@@ -432,26 +449,6 @@ question: |
 fields:
   - email: email
 ---
-#generic object: Individual
-#question: |
-#  Name?
-#fields:
-#  - First Name: x.name.first
-#  - Middle Name: x.name.middle
-#  - Last Name: x.name.last
-#---
-#generic object: Individual
-#question: |
-#  Address?
-#fields:
-#  - Street: x.address.address
-#    address autocomplete: True
-#  - Unit: x.address.unit
-#  - City: x.address.city
-#  - State: x.address.state
-#  - Zip: x.address.zip
-#  - Country: x.address.country
----
 id: contact info
 generic object: Individual
 question: |
@@ -479,14 +476,21 @@ fields:
     code: |
       [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data ]
 ---
-id: court id
+id: admin trial court
 question: |
-  Court Id?
+  Which court?
 fields:
-  - Court ID: court_id
-    datatype: combobox
+  - Court Location: trial_court
+    datatype: dropdown
     code: |
-      proxy_conn.get_courts().data
+      trial_court_options
+---
+code: |
+  court_id = convert_court_to_id(trial_court)
+---
+code: |
+  trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
+  trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
 ---
 event: query_variables
 code: |
@@ -547,21 +551,6 @@ fields:
   - Active?: payment_account_active
     datatype: yesno
     default: ${ payment_account_id_resp.data.get('active',{}).get('value') if payment_account_id_resp.data else False}
----
-code: |
-  def payment_account_labels(resp):
-    retval = []
-    if resp.data:
-      for account in resp.data:
-        if account.get("paymentAccountTypeCode") == "CC":
-          retval.append({
-            account.get("paymentAccountID"): f"{account.get('accountName')} ({account.get('cardLast4')})"
-          })
-        else: # elif account.get("paymentAccountTypeCode") == "WV":
-          retval.append({
-            account.get("paymentAccountID"): f"{account.get('accountName')}"
-          })
-    return retval
 ---
 id: global payment account id
 question: |
@@ -758,6 +747,8 @@ question: |
 fields:
   - Global: new_account_is_global
     datatype: yesno
+    default: False
+    show if: logged_in_user_is_global_admin
   - Name of account: new_account_name
   - Type: new_account_type_code
     datatype: radio
@@ -893,8 +884,6 @@ code: |
     removed_user_roles.append({'location': "","roleName": "FILER"})
   if not enable_role_admin: 
     removed_user_roles.append({'location': "","roleName": "FIRM_ADMIN"})
-  
-  
 ---
 code: |
   if len(new_user_roles): 
@@ -1291,7 +1280,6 @@ code: |
   get_global_payment_account = True
 ---
 code: |
-  # TODO(qs): this interacts with TOGA--not implemented
   resp = proxy_conn.update_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   update_global_payment_account = True
