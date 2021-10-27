@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from docassemble.base.util import DADateTime, as_datetime, validation_error
+from docassemble.base.core import DAObject
 from docassemble.base.functions import get_config
 from typing import List, Dict, Tuple, Any, Callable
 
@@ -91,14 +92,23 @@ def is_person(possible_person:dict):
   """Helper for getting party ID"""
   return not possible_person.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification') is None
 
-def get_person_name_and_id(party:dict):
-  """Helper for getting party ID"""  
-  person_name = party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personName',{})
-  person_name_str = f"{person_name.get('personGivenName',{}).get('value','')} {person_name.get('personMiddleName',{}).get('value','')} {person_name.get('personSurName',{}).get('value','')}"
-  person = party.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification')
-  first_rep = next(iter(person),{})
-  return {first_rep.get('identificationID',{}).get('value'): person_name_str}
-
+def get_party_name_and_id(party:dict):
+  """Helper for getting party ID"""
+  if is_person(party):
+    person_name = chain_xml(party, ['value', 'entityRepresentation', 'value', 'personName'])
+    person_name_str = f"{person_name.get('personGivenName',{}).get('value','')} {person_name.get('personMiddleName',{}).get('value','')} {person_name.get('personSurName',{}).get('value','')}"
+    person = chain_xml(party, ['value', 'entityRepresentation', 'value', 'personOtherIdentification'])
+    first_rep = next(iter(person),{})
+    return {first_rep.get('identificationID',{}).get('value'): person_name_str}
+  else:
+    org_name = chain_xml(party, ['value','entityRepresentation','value','organizationName','value'])
+    if not org_name:
+      org_name = ''
+    org_id = chain_xml(party, ['value', 'entityRepresentation', 'value', 'organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
+    if not org_id:
+      org_id = ''
+    return {org_id: org_name}
+    
 def chain_xml(xml_val, elem_list):
   val = xml_val
   for elem in elem_list:
@@ -108,7 +118,15 @@ def chain_xml(xml_val, elem_list):
       val = val[elem]
   return val
 
-def parse_case_info(proxy_conn, new_case, entry, court_id):
+
+def parse_participant(participant_val, role_map):
+  part_obj = DAObject()
+  part_obj.role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
+  part_obj.role_name = role_map.get(part_obj.role_code, {}).get('name')
+  part_obj.full_name = next(iter(get_party_name_and_id(participant_val).values()))
+  return part_obj
+
+def parse_case_info(proxy_conn, new_case, entry, court_id, role_map):
   new_case.details = entry
   new_case.court_id = court_id
   new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
@@ -118,9 +136,15 @@ def parse_case_info(proxy_conn, new_case, entry, court_id):
   new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
   # TODO: is the order of this array predictable? might it break if Tyler changes something?        
   new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
-  new_case.title = new_case.case_details.get('value',{}).get('caseTitleText',{}).get('value')        
-  new_case.date = as_datetime(datetime.utcfromtimestamp(new_case.case_details.get('value',{}).get('activityDateRepresentation',{}).get('value',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
-  
+  new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])        
+  new_case.date = as_datetime(datetime.utcfromtimestamp(chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value', 'dateRepresentation', 'value']).get('value',1000)/1000))
+  new_case.participants = []
+  for aug in new_case.case_details.get('value', {}).get('rest', []):
+    if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
+      participant_xml = aug.get('value', {}).get('caseParticipant', [])
+      for participant in participant_xml:
+        new_case.participants.append(parse_participant(participant, role_map))
+
 def case_xml_to_parties(case_xml):
   rest_list = chain_xml(case_xml, ['value', 'rest'])
   tyler_aug = [aug for aug in rest_list if 'tyler.ecf' in aug.get('declaredType')][0]
@@ -137,12 +161,12 @@ def parties_xml_to_choices(parties_xml):
   return choices
 
 def _payment_labels(acc):
-  if acct.get('paymentAccountTypeCode') == 'CC':
+  if acc.get('paymentAccountTypeCode') == 'CC':
     return f"{acc.get('accountName')} ({acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')})"
-  elif acct.get('paymentAccountTypeCode') == 'WV':
-    return f"{acct.get('accountName')} (Waiver account)"
+  elif acc.get('paymentAccountTypeCode') == 'WV':
+    return f"{acc.get('accountName')} (Waiver account)"
   else:
-    return f"{acct.get('accountName')} ({acct.get('paymentAccountTypeCode')})"
+    return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
 
 def filter_payment_accounts(account_list, allowable_card_types):
   """ Gets a list of all payment accounts and filters them by if the card is 
