@@ -43,7 +43,7 @@ code: |
   else:
     case_tracking_id = docket_case_response.data[0].get('value',{}).get('caseTrackingID',{}).get('value')
     found_case = DAObject()
-    parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id)
+    parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id, {})
     display_case
 ---
 if: |
@@ -72,6 +72,10 @@ id: no cases found
 question: |
   No cases found
 subquestion: |
+  % if cms_connection_issue:
+  The court's case management system isn't online, and the case you are searching for might exist.
+  % endif
+
   % if can_file_non_indexed_case:
   You can either continue to file into a non-indexed case or hit "${ word('back') }" to 
   try a new search.
@@ -190,11 +194,16 @@ depends on:
   - case_docket_id
 code: |
   docket_case_response = proxy_conn.get_cases(court_id, docket_id=case_docket_id)
+  cms_connection_issue = docket_case_response.response_code == 203
 ---
 id: results for case tracking_choice
 question: |
   Results
 subquestion: |
+  % if cms_connection_issue:
+  The court's case management system isn't online. The case information might be out of date.
+  % endif
+
   ${ collapse_template(case_results_template) }
 fields:
   - Which case?: case_choice
@@ -240,9 +249,10 @@ code: |
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
-        parse_case_info(proxy_conn, new_case, entry, court_id)
+        parse_case_info(proxy_conn, new_case, entry, court_id, {})
     # except:
     #  message("Something went wrong")
     
     found_cases.gathered = True
-    found_case_options = found_cases 
+    found_case_options = found_cases
+    cms_connection_issue = get_cases_response.response_code == 203
