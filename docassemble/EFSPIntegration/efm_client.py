@@ -36,6 +36,8 @@ class ApiResponse(DAObject):
 
 def _recursive_give_data_url(bundle):
   """Prepares the document types by setting a semi-permanent enabled and a data url"""
+  if bundle is None:
+    return
   for doc in bundle:
     if isinstance(doc, ALDocumentBundle):
       _recursive_give_data_url(doc)
@@ -465,14 +467,14 @@ class ProxyConnection:
     send = lambda: self.proxy_client.delete(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings/{filing_id}')
     return self._call_proxy(send) 
 
-  def check_filing(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle):
+  def check_filing(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
     _recursive_give_data_url(court_bundle)
     all_vars = json.dumps(all_variables())
     log(f'headers: {self.proxy_client.headers}')
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
-  def file_for_review(self, jurisdiction: str, court_id:str, court_bundle:ALDocumentBundle):
+  def file_for_review(self, jurisdiction: str, court_id:str, court_bundle:ALDocumentBundle=None):
     _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
@@ -480,7 +482,7 @@ class ProxyConnection:
           data=all_vars)
     return self._call_proxy(send)
   
-  def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle):
+  def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
     _recursive_give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
