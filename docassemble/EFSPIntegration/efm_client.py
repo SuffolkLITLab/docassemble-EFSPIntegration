@@ -456,7 +456,7 @@ class ProxyConnection:
     return self._call_proxy(send) 
 
   def get_policy(self, jurisdiction:str, court_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdicitions/{jurisdiction}/courts/{court_id}/policy')
+    send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/policy')
     return self._call_proxy(send)
 
   def get_filing_status(self, jurisdiction:str, court_id:str, filing_id:str):
@@ -480,6 +480,14 @@ class ProxyConnection:
     all_vars = json.dumps(all_vars_obj)
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings',
           data=all_vars)
+    return self._call_proxy(send)
+  
+  def serve(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
+    _recursive_give_data_url(court_bundle)
+    all_vars_obj = all_variables()
+    all_vars = json.dumps(all_vars_obj)
+    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/serve',
+                                          data=all_vars)
     return self._call_proxy(send)
   
   def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):

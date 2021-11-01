@@ -421,6 +421,19 @@ subquestion: |
   Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
+id: eserve
+question: |
+  Would you like to e-file this document, or serve to the desginated party?
+fields:
+  - Efile or serve?: efile_or_serve
+    choices:
+      - Efile: efile
+      - Serve: serve
+---
+code: |
+  if not service_contacts:
+    efile_or_serve = 'efile'
+---
 id: return date
 question: |
   The next available return date is below
@@ -1175,3 +1188,9 @@ code: |
 
   all_case_parties = all_case_parties_tmp
   del all_case_parties_tmp
+---
+id: separate e-serve
+code: |
+  if efile_or_serve == 'serve':
+    efile_resp = proxy_conn.serve(jurisdiction_id, court_id, al_court_bundle)
+---

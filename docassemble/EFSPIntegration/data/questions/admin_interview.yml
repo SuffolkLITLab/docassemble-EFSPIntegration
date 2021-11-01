@@ -48,6 +48,7 @@ code: |
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
     ('get_court','Get detailed court information'),
+    ('get_policy', 'Get Court ECF Policies'),
     ('get_filings', 'See Filings'),
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
@@ -927,6 +928,11 @@ code: |
   get_court = True
 ---
 code: |
+  resp = proxy_conn.get_policy(jurisdiction_id, court_id)
+  del court_id
+  get_policy = True
+---
+code: |
   resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
       start_date if defined('start_date') else None, 
       end_date if defined('end_date') else None)
@@ -1243,7 +1249,7 @@ fields:
 ---  
 code: |
   raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
-  all_case_parties = [get_person_name_and_id(party) for party in raw_party_list if is_person(party)]
+  all_case_parties = [get_party_name_and_id(party) for party in raw_party_list if is_person(party)]
 # TODO: add lookup based on case_tracking_id
 ---
 code: |
