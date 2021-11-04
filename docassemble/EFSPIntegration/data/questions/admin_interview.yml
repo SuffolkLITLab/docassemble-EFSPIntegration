@@ -53,8 +53,6 @@ code: |
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
     ('cancel_filing', 'Cancel Filing'),
-    # ('dummy_filing', 'Dummy File'),
-    # ('check_filing', 'Check filing'),
   ]
 
   firm_admin_attorneys_list = [
@@ -1232,8 +1230,7 @@ code: |
     updated_service_contact.default_city = ""
     updated_service_contact.default_state = ""
     updated_service_contact.default_zip = ""
-    updated_service_contact.default_country =     ""
-
+    updated_service_contact.default_country = ""
 ---
 need:
   - updated_service_contact.name.first  

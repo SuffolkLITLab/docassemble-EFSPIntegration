@@ -13,7 +13,7 @@ id: eFile Login
 question: |
   eFile IL Login Info
 subquestion: |
-  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](${ interview_url(i=user_info().package + ":new_pro_se_user.yml", reset=1) }).
+  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](${ interview_url(i=user_info().package + ":unauthenticated_interview.yml", reset=1) }).
 fields:
   - email/username: my_username
   - password: my_password
