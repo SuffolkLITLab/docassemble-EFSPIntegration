@@ -275,7 +275,7 @@ depends on:
 code: |
   if can_check_efile and user_wants_efile and ready_to_efile:
     efile_user_reviewed
-    #prevent_going_back()
+    prevent_going_back()
     efile_resp
     show_resp
     # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
