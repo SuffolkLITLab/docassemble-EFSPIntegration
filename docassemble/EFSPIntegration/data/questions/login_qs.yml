@@ -1,6 +1,7 @@
 ---
 modules:
   - .conversions
+  - .efm_client
 ---
 include:
   - common_qs.yml

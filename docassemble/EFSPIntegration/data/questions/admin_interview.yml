@@ -105,7 +105,7 @@ subquestion: |
       firm_admin_users_template,
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
-      firm_admin_payment_template,
+      payment_template,
       initial_filing_template,
       efsp_template,
       subsequent_filing_template,
@@ -113,7 +113,10 @@ subquestion: |
       ecf_template,
       filings_template) }
   % else:
-  ${ tabbed_templates_html("Tests", login_status_template) }
+  ${ tabbed_templates_html("Tests", login_status_template, 
+      payment_template,
+      efsp_template, 
+      filings_template) }
   % endif
 event: all_done
 ---
@@ -295,7 +298,7 @@ content: |
 
     
 ---
-template: firm_admin_payment_template
+template: payment_template
 subject: |
   Payment accounts
 content: |
@@ -326,7 +329,7 @@ content: |
     ]),
     label='New payment Account') }
 
-  % for elem in firm_admin_payment_list:
+  % for elem in global_admin_payment_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
       label=elem[1]) }
@@ -365,10 +368,11 @@ content: |
       'warn_no_results',
       'case_tracking_id',
       'found_case',
+      'docket_case_response',
       'case_docket_id',
       'get_case_response',
     ]},
-    {'recompute': ['interview_order_find_case', 'display_found_case']}]),
+    {'recompute': ['interview_order_find_case', 'display_case', 'display_found_case']}]),
     label="Find a case") }
     
   ${ action_button_html(url_ask(
@@ -388,7 +392,7 @@ content: |
     label="Get case service history") }
     
 ---
-id: display case
+id: display case admin interview
 question: |
   % if interview_order_find_case:
   Your case
@@ -396,8 +400,12 @@ question: |
   No case found
   % endif
 subquestion: |
-  % if interview_order_find_case:
-  ${ found_case }
+  % if cms_connection_issue:
+  The court’s case management system isn’t online. The case information might be out of date.
+  % endif
+  
+  % if interview_order_find_case and found_case:
+  ${ found_case.title } (${ found_case.tracking_id })
   % endif
 continue button field: display_found_case  
 ---
@@ -758,6 +766,10 @@ fields:
       - Waiver account: WV
       - eCheck: BankAccount
       - Credit Card: CC
+---
+code: |
+  if not logged_in_user_is_global_admin:
+    new_account_is_global = False
 ---
 question: |
   Search dates
