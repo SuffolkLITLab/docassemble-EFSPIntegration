@@ -546,6 +546,10 @@ depends on: payment_account_id
 code: |
   payment_account_id_resp = proxy_conn.get_payment_account(payment_account_id)
 ---
+depends on: global_payment_account_id
+code: |
+  global_account_id_resp = proxy_conn.get_global_payment_account(global_payment_account_id)
+---
 reconsider:
   - payment_account_id_resp
 depends on:
@@ -559,6 +563,20 @@ fields:
   - Active?: payment_account_active
     datatype: yesno
     default: ${ payment_account_id_resp.data.get('active',{}).get('value') if payment_account_id_resp.data else False}
+---
+reconsider:
+  - global_account_id_resp
+depends on:
+  - global_payment_account_id
+id: update payment account
+question: |
+  Update global payment account
+fields:
+  - Account name: global_account_name
+    default: ${ global_account_id_resp.data.get('accountName') if global_account_id_resp.data else '' }
+  - Active?: global_account_active
+    datatype: yesno
+    default: ${ global_account_id_resp.data.get('active',{}).get('value') if global_account_id_resp.data else False}
 ---
 id: global payment account id
 question: |
@@ -1299,7 +1317,7 @@ code: |
   get_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.update_global_payment_account(global_payment_account_id)
+  resp = proxy_conn.update_global_payment_account(global_payment_account_id, global_account_name, global_account_active)
   del global_payment_account_id
   update_global_payment_account = True
 ---
