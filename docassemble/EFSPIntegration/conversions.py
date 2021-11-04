@@ -15,6 +15,10 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
     display = '{name}'
   if backing is None:
     backing = 'code'
+  
+  if codes_list is None:
+    return [], {}
+  
   choices_list = [(code_obj[backing], display.format(**code_obj)) for code_obj in codes_list]
   codes_map = { vv[backing] : vv for vv in codes_list }
   return choices_list, codes_map

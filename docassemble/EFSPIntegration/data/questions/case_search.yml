@@ -230,11 +230,17 @@ continue button field: display_case
 question: |
   Results
 subquestion: |
+  % if cms_connection_issue:
+  The court's case management system isn't online. The case information might be out of date.
+  % endif
+  
+  % if found_case:
   #### ${ found_case.title} (${ found_case.date })
   * DocketID: ${ found_case.docket_id }
   * CourtID: ${ found_case.court_id }
   * TrackingID: ${ found_case.tracking_id }
-  * CaseCategory: ${ found_case.category }  
+  * CaseCategory: ${ found_case.category }
+  % endif
 ---
 need:
   - court_id

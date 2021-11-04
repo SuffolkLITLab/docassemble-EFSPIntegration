@@ -70,6 +70,7 @@ code: |
   al_court_bundle.gather()
   
   service_contacts.gather()
+  efile_or_serve
   cross_references.gather()
   al_court_bundle.as_pdf()
   
@@ -421,6 +422,19 @@ subquestion: |
   Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
+id: eserve
+question: |
+  Would you like to e-file this document, or serve to the desginated party?
+fields:
+  - Efile or serve?: efile_or_serve
+    choices:
+      - Efile: efile
+      - Serve: serve
+---
+code: |
+  if not service_contacts:
+    efile_or_serve = 'efile'
+---
 id: return date
 question: |
   The next available return date is below
@@ -430,7 +444,7 @@ subquestion: |
   % else:
   Something went wrong retrieving a return date
   
-  ${ return_date }
+  ${ debug_display(return_date) }
   % endif
 continue button field: show_allowed_return_date
 ---
@@ -485,11 +499,16 @@ fields:
   - no label: existing_parties_new_atts.there_is_another
     datatype: yesnoradio
 ---
+id: any attorneys to existing parties
 question: |
   Are there any attorneys you'd like to attach to existing contacts?
 fields:
   - no label: existing_parties_new_atts.there_are_any
     datatype: yesnoradio
+---
+code: |
+  if is_initial_filing:
+    existing_parties_new_atts.there_are_any = False
 ---
 question: |
   Adding attorneys to existing users
@@ -993,7 +1012,7 @@ continue button field: explain_user_paying
 code: |
   service_contacts[i].contact_id
   service_contacts[i].service_type
-  service_contacts[i].party_association
+  # service_contacts[i].party_association
   service_contacts[i].complete = True
 ---
 # TODO: hack, but should work? Not sure if works for pro se filers
@@ -1016,10 +1035,18 @@ fields:
     datatype: dropdown
     code: | 
       service_type_options
+  - Do you want to associate this service contact with a party?: service_contacts[i].attach_service_contact_to_party
+    datatype: yesnoradio
+    default: False
+    show if:
+      code: |
+        len(users) + len(other_parties) > 0
   - Which party is this contact for?: service_contacts[i].party_association
     datatype: radio
+    required: False
+    show if: service_contacts[i].attach_service_contact_to_party
     code: |
-      all_case_parties
+      [{user.instanceName: str(user)} for user in users] + [{pty.instanceName: str(pty)} for pty in other_parties]
 ---
 id: existing service contacts
 question: |
@@ -1130,7 +1157,9 @@ code: |
 code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
-  party_type_new_options = [p_type for p_type in party_type_options if party_type_map[p_type[0]].get('isAvailableForNewParties')]
+  party_type_new_options = [p_type for p_type in party_type_options] 
+  # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries 
+  # if party_type_map[p_type[0]].get('isAvailableForNewParties')]
 ---
 generic object: ALDocument
 code: |
@@ -1175,3 +1204,9 @@ code: |
 
   all_case_parties = all_case_parties_tmp
   del all_case_parties_tmp
+---
+id: separate e-serve
+code: |
+  if efile_or_serve == 'serve':
+    efile_resp = proxy_conn.serve(jurisdiction_id, court_id, al_court_bundle)
+---
