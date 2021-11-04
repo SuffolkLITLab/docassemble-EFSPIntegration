@@ -81,7 +81,6 @@ subquestion: |
   % if not resp.is_ok():
   ${ conversions.debug_display(resp) }
   % endif
-  % endif
 
 continue button field: register_status
 ---

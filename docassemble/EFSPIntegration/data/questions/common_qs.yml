@@ -22,12 +22,12 @@ fields:
   - Email address: person_to_reg.email
     datatype: email
     required: True
-  - Password: new_password
-    datatype: password
-    validate: proxy_conn.is_valid_password
   - note: |
       ${ password_rules.data.get("validationmessage") }
 
+  - Password: new_password
+    datatype: password
+    validate: proxy_conn.is_valid_password
   - Phone number: person_to_reg.phone_number
     validate: phone_number_is_valid
     maxlength: 20

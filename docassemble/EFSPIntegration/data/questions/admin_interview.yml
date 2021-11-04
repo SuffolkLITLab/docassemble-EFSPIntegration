@@ -48,12 +48,11 @@ code: |
   filing_admin_list = [
     ('get_courts', 'See all Courts'),
     ('get_court','Get detailed court information'),
+    ('get_policy', 'Get Court ECF Policies'),
     ('get_filings', 'See Filings'),
     ('get_filing_status', 'Get filing Status'),
     ('get_filing', 'See Filing Info'),
     ('cancel_filing', 'Cancel Filing'),
-    # ('dummy_filing', 'Dummy File'),
-    # ('check_filing', 'Check filing'),
   ]
 
   firm_admin_attorneys_list = [
@@ -104,7 +103,7 @@ subquestion: |
       firm_admin_users_template,
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
-      firm_admin_payment_template,
+      payment_template,
       initial_filing_template,
       efsp_template,
       subsequent_filing_template,
@@ -112,7 +111,10 @@ subquestion: |
       ecf_template,
       filings_template) }
   % else:
-  ${ tabbed_templates_html("Tests", login_status_template) }
+  ${ tabbed_templates_html("Tests", login_status_template, 
+      payment_template,
+      efsp_template, 
+      filings_template) }
   % endif
 event: all_done
 ---
@@ -294,7 +296,7 @@ content: |
 
     
 ---
-template: firm_admin_payment_template
+template: payment_template
 subject: |
   Payment accounts
 content: |
@@ -325,7 +327,7 @@ content: |
     ]),
     label='New payment Account') }
 
-  % for elem in firm_admin_payment_list:
+  % for elem in global_admin_payment_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
       label=elem[1]) }
@@ -364,10 +366,11 @@ content: |
       'warn_no_results',
       'case_tracking_id',
       'found_case',
+      'docket_case_response',
       'case_docket_id',
       'get_case_response',
     ]},
-    {'recompute': ['interview_order_find_case', 'display_found_case']}]),
+    {'recompute': ['interview_order_find_case', 'display_case', 'display_found_case']}]),
     label="Find a case") }
     
   ${ action_button_html(url_ask(
@@ -387,7 +390,7 @@ content: |
     label="Get case service history") }
     
 ---
-id: display case
+id: display case admin interview
 question: |
   % if interview_order_find_case:
   Your case
@@ -395,8 +398,12 @@ question: |
   No case found
   % endif
 subquestion: |
-  % if interview_order_find_case:
-  ${ found_case }
+  % if cms_connection_issue:
+  The court’s case management system isn’t online. The case information might be out of date.
+  % endif
+  
+  % if interview_order_find_case and found_case:
+  ${ found_case.title } (${ found_case.tracking_id })
   % endif
 continue button field: display_found_case  
 ---
@@ -758,6 +765,10 @@ fields:
       - eCheck: BankAccount
       - Credit Card: CC
 ---
+code: |
+  if not logged_in_user_is_global_admin:
+    new_account_is_global = False
+---
 question: |
   Search dates
 fields:
@@ -925,6 +936,11 @@ code: |
   resp = proxy_conn.get_court(court_id)
   del court_id
   get_court = True
+---
+code: |
+  resp = proxy_conn.get_policy(jurisdiction_id, court_id)
+  del court_id
+  get_policy = True
 ---
 code: |
   resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
@@ -1214,8 +1230,7 @@ code: |
     updated_service_contact.default_city = ""
     updated_service_contact.default_state = ""
     updated_service_contact.default_zip = ""
-    updated_service_contact.default_country =     ""
-
+    updated_service_contact.default_country = ""
 ---
 need:
   - updated_service_contact.name.first  
@@ -1243,7 +1258,7 @@ fields:
 ---  
 code: |
   raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
-  all_case_parties = [get_person_name_and_id(party) for party in raw_party_list if is_person(party)]
+  all_case_parties = [get_party_name_and_id(party) for party in raw_party_list if is_person(party)]
 # TODO: add lookup based on case_tracking_id
 ---
 code: |
