@@ -1,4 +1,5 @@
 from docassemble.base.util import Address, Person, Individual
+from docassemble.AssemblyLine.al_general import ALIndividual
 from ..efm_client import ProxyConnection, ApiResponse
 import sys
 import subprocess
@@ -99,7 +100,9 @@ class TestClass:
     new_contact.phone_number = '9727133770'
     new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, False, True, admin_copy='ella.doe@example.com'))
     contact_id = new_c.data
-    self.basic_assert(self.proxy_conn.update_service_contact(contact_id, middleName='"Lorde"', email='different@example.com'))
+    new_contact.name.middle = '"Lorde"'
+    new_contact.email = 'different@example.com'
+    self.basic_assert(self.proxy_conn.update_service_contact(contact_id, new_contact, False, True))
 
     my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
     assert(len(my_list.data) >= 1)
@@ -114,11 +117,6 @@ class TestClass:
 
 
   def test_firm(self): 
-    firm = self.basic_assert(self.proxy_conn.get_firm())
-    assert(firm.data['firmName'] == 'Suffolk LIT Lab')
-    assert(firm.data['isIndividual'] == False)
-    assert(firm.data['address']['addressLine1'] == '120 Tremont Street')
-
     update_firm = Person()
     update_firm.name.text = 'Suffolk FIT Lab'
     update_firm.address.address = '121 Tremont Street'
@@ -132,6 +130,12 @@ class TestClass:
     update_firm.name.text = 'Suffolk LIT Lab'
     update_firm.address.address = '120 Tremont Street'
     self.basic_assert(self.proxy_conn.update_firm(update_firm))
+
+    firm = self.basic_assert(self.proxy_conn.get_firm())
+    assert(firm.data['firmName'] == 'Suffolk LIT Lab')
+    assert(firm.data['isIndividual'] == False)
+    assert(firm.data['address']['addressLine1'] == '120 Tremont Street')
+
 
 
   def test_users(self):
@@ -222,7 +226,11 @@ class TestClass:
 
 
   def test_court_record(self):
-    cases = self.basic_assert(self.proxy_conn.get_cases('adams', person_name={'first': 'John', 'last': 'Brown'}))
+    contact = ALIndividual()
+    contact.name.first = 'John'
+    contact.name.last = 'Brown'
+    contact.person_type = 'ALIndividual'
+    cases = self.basic_assert(self.proxy_conn.get_cases('adams', person=contact))
     assert(len(cases.data) > 0)
     case_id = cases.data[0]['value']['caseTrackingID']['value']
     case = self.basic_assert(self.proxy_conn.get_case('adams', case_id))
@@ -257,18 +265,19 @@ class TestClass:
     assert(deleted_maybe.response_code == 200)
 
   def test_filings(self):
-    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('adams', start_date=datetime.today() - timedelta(days=3), end_date=datetime.today()))
-    policy = self.basic_assert(self.proxy_conn.get_policy('adams'))
+    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('illinois', 'adams', start_date=datetime.today() - timedelta(days=3), end_date=datetime.today()))
+    policy = self.basic_assert(self.proxy_conn.get_policy('illinois', 'adams'))
 
     cdir = Path(__file__).resolve().parent
+    # TODO(brycew): needs a more up to date JSON from any filing interiview
     all_vars_str = cdir.joinpath('initial_cook_filing_vars_shorter.json').open('r').read()
     base_url = self.proxy_conn.base_url
     court = 'cook:cvd1'
-    fees_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/courts/{court}/filing/fees', data=all_vars_str)
+    fees_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/fees', data=all_vars_str)
     fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
-    check_send = lambda: self.proxy_conn.proxy_client.get(base_url + f'filingreview/courts/{court}/filing/check', data=all_vars_str)
+    check_send = lambda: self.proxy_conn.proxy_client.get(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/check', data=all_vars_str)
     checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
-    file_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/courts/{court}/filings', data=all_vars_str)
+    file_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filings', data=all_vars_str)
     filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send)) 
 
     for filing_id in filing_resp.data:
@@ -277,7 +286,7 @@ class TestClass:
       cancel_resp = self.basic_assert(self.proxy_conn.cancel_filing_status(court, filing_id))
 
 def main(args):
-  base_url = get_proxy_server_ip()
+  base_url = 'https://efile.suffolklitlab.org:9000/' #get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 
@@ -293,7 +302,7 @@ def main(args):
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
-  tc.test_filings()
+  #tc.test_filings()
 
 if __name__ == '__main__':
   main(sys.argv)
