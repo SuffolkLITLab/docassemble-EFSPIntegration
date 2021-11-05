@@ -375,8 +375,11 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}')
     return self._call_proxy(send)
 
-  def update_service_contact(self, service_contact_id, service_contact:Individual, is_public:bool, is_in_master_list:bool, admin_copy:str=None):
+  def update_service_contact(self, service_contact_id, service_contact:Individual, is_public:bool=None, is_in_master_list:bool=None, admin_copy:str=None):
     service_contact_dict = serialize_person(service_contact)
+    service_contact_dict['isPublic'] = is_public
+    service_contact_dict['isInFirmMasterList'] = is_in_master_list
+    service_contact_dict['administrativeCopy'] = admin_copy
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/service-contacts/{service_contact_id}', 
         data=json.dumps(service_contact_dict))
     return self._call_proxy(send)
@@ -530,7 +533,7 @@ class ProxyConnection:
         params={
           'first_name': person_name.get('first') if person_name is not None else None,
           'middle_name': person_name.get('middle') if person_name is not None else None,
-          'last_name': person_name.get('last_name') if person_name is not None else None,
+          'last_name': person_name.get('last') if person_name is not None else None,
           'business_name': business_name, 
           'docket_id': docket_id})
     return self._call_proxy(send)
