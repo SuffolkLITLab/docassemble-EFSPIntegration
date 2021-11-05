@@ -286,7 +286,7 @@ class TestClass:
       cancel_resp = self.basic_assert(self.proxy_conn.cancel_filing_status(court, filing_id))
 
 def main(args):
-  base_url = 'https://efile.suffolklitlab.org:9000/' #get_proxy_server_ip()
+  base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 
