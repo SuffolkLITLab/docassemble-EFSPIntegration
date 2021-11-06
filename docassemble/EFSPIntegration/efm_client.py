@@ -484,14 +484,28 @@ class ProxyConnection:
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
-  
-  def serve(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _recursive_give_data_url(court_bundle)
-    all_vars_obj = all_variables()
-    all_vars = json.dumps(all_vars_obj)
-    send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/serve',
-                                          data=all_vars)
-    return self._call_proxy(send)
+
+  def get_service_types(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
+    """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
+    court_info = self.get_court(court_id)
+    if court_info['hasconditionalservicetypes']:
+      _recursive_give_data_url(court_bundle)
+      all_vars_obj = all_variables()
+      all_vars = json.dumps(all_vars_obj)
+      send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/servicetypes',
+        data=all_vars)
+      return self._call_proxy(send)
+    else:
+      return self.get_service_type_codes(court_id)
+      
+  # TODO(brycew): rethink service API
+  #def serve(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
+  #  _recursive_give_data_url(court_bundle)
+  #  all_vars_obj = all_variables()
+  #  all_vars = json.dumps(all_vars_obj)
+  #  send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/serve',
+  #                                        data=all_vars)
+  #  return self._call_proxy(send)
   
   def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
     _recursive_give_data_url(court_bundle)
@@ -587,7 +601,7 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/filing_types', params=params)
     return self._call_proxy(send)
   
-  def get_service_types(self, court_id:str): 
+  def get_service_type_codes(self, court_id:str): 
     send = lambda: self.proxy_client.get(self.base_url + f'codes/courts/{court_id}/service_types')
     return self._call_proxy(send)
   
