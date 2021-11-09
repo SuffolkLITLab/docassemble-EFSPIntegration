@@ -45,6 +45,7 @@ def _recursive_give_data_url(bundle):
       doc.proxy_enabled = doc.always_enabled or doc.enabled
       if doc.proxy_enabled:
         doc.data_url = doc.as_pdf().url_for(temporary=True)
+        doc.page_count = doc.as_pdf().num_pages()
       if hasattr(doc, 'enabled'):
         del doc.enabled
 
@@ -488,7 +489,7 @@ class ProxyConnection:
   def get_service_types(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
-    if court_info['hasconditionalservicetypes']:
+    if court_info.data.get('hasconditionalservicetypes'):
       _recursive_give_data_url(court_bundle)
       all_vars_obj = all_variables()
       all_vars = json.dumps(all_vars_obj)

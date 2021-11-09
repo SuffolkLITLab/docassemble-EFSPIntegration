@@ -76,7 +76,7 @@ code: |
   if needs_all_info:
     lead_contact.email
   
-  if full_court_info.data['allowreturndate']:
+  if full_court_info.data.get('allowreturndate'):
     return_date
     show_allowed_return_date
 
@@ -649,7 +649,32 @@ question:  |
   What is your name?
 fields:
   - code: |
-      users[0].name_fields(person_or_business='unknown', show_suffix=False)
+      users[0].name_fields(person_or_business='unknown' if not users[0].is_form_filler else 'ALIndividual', show_suffix=False)
+---
+question: |
+  Are you this party?
+subquestion: |
+  Your information in the E-file system will be used
+fields:
+  - You are this party: users[0].is_form_filler
+    datatype: yesnoradio
+---
+code: |
+  if i > 0:
+    users[i].is_form_filler = False
+---
+code: |
+  # Can only get the attorney list for firm users, which can't be form fillers
+  if proxy_conn.get_attorney_list().is_ok():
+    users[0].is_form_filler = False
+---
+code: |
+  if users[0].is_form_filler:
+    tyler_info = proxy_conn.get_user()
+    users[0].name.first = tyler_info.data.get('firstName')
+    users[0].name.middle = tyler_info.data.get('middleName', '')
+    users[0].name.last = tyler_info.data.get('lastName', '')
+    users[0].email = tyler_info.data.get('email')
 ---
 sets:
   - users[i].name.first
@@ -1185,7 +1210,7 @@ code: |
   x.document_type_options, x.document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, x.filing_type).data)
 ---
 code: |
-  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(jurisdiction_id, court_id).data)
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
 ---
 code: |

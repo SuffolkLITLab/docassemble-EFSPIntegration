@@ -156,7 +156,7 @@ subquestion: |
 
   To efile using the proxy server, you need to fix some problems in your interview.
 
-  % if check_resp.error_msg:
+  % if not check_resp.is_ok():
   Something went wrong when processing your interview:  
 
   ${ check_resp }
