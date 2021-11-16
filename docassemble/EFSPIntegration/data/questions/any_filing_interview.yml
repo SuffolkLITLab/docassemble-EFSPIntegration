@@ -380,7 +380,13 @@ subquestion: |
   ${ other_parties.add_action() }
 ---
 code: |
-  return_date = proxy_conn.get_return_date(court_id, user_return_date, al_court_bundle)
+  return_date_resp = proxy_conn.get_return_date(court_id, user_return_date.date(), al_court_bundle)
+  if return_date_resp.is_ok() and isinstance(return_date_resp.data, dict) and 'value' in return_date_resp.data:
+    return_date_obj = tyler_timestamp_to_datetime(return_date_resp.data.get('value'))
+    return_date = return_date_obj.date().isoformat()
+  else:
+    return_date_obj = None
+    return_date = ''
 ---
 generic object: ALDocument
 code: |
@@ -440,14 +446,19 @@ code: |
 ---
 id: return date
 question: |
-  The next available return date is below
+  Closest available return date
 subquestion: |
-  % if return_date.is_ok() and return_date.data.get('systemEventDateTime'):
-  ${ tyler_timestamp_to_datetime( return_date.data.get('systemEventDateTime').get('value') ) }
+  % if return_date_resp.is_ok() and 'value' in return_date_resp.data:
+  The closest available return date is:
+  
+  ${ return_date_obj }
+  
+  You will have to contact the court to get a different return date.
+  
   % else:
   Something went wrong retrieving a return date
   
-  ${ debug_display(return_date) }
+  ${ debug_display(return_date_resp) }
   % endif
 continue button field: show_allowed_return_date
 ---
@@ -905,11 +916,12 @@ fields:
 ---
 id: return date
 question: |
-  Return Date?
+  What would you like your Return Date to be?
 fields:
   - Return Date: user_return_date
     datatype: date
     min: ${ today() }
+    default: ${ today() }
 ---
 id: any optional services
 generic object: ALDocument
