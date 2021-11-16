@@ -135,7 +135,7 @@ class ProxyConnection:
       resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate', 
         data=json.dumps(auth_obj))
       if resp.status_code == requests.codes.ok:
-        all_tokens = resp.json()
+        all_tokens = resp.json().get('tokens', {})
         for k, v in all_tokens.items():
           self.proxy_client.headers[k] = v
         # self.authed_user_id = data['userID']

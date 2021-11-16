@@ -48,7 +48,7 @@ def pretty_display(data, tab_depth=0):
         continue
       elif key == 'globalScope' and val == True:
         continue
-      elif val is not None and val != []:
+      elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
         out += pretty_display(val, tab_depth + tab_inc)
   else:
@@ -59,7 +59,7 @@ def debug_display(resp):
   if resp.is_ok() and resp.data is None:
     return 'All ok!'
   if not resp.is_ok():
-    to_return = resp.error_msg
+    to_return = resp.error_msg if resp.error_msg is not None else ''
     if get_config('debug'):
       to_return += f"\nResponse Code: {resp.response_code}"
     return to_return
