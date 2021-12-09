@@ -525,10 +525,12 @@ class ProxyConnection:
 
   def reserve_court_date(self, court_id:str, doc_id:str, 
       range_after:datetime=None, range_before:datetime=None, estimated_duration=None):
-    if range_after is not None:
+    if range_after is not None and not isinstance(range_after, str):
       range_after = range_after.isoformat()
-    if range_before is not None:
+    log(f'after: {range_after}')
+    if range_before is not None and not isinstance(range_before, str):
       range_before = range_before.isoformat()
+    log(f'before: {range_before}')
     if estimated_duration is not None:
       estimated_duration = int(estimated_duration) * 60 * 60
     send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/reserve_date',
