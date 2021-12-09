@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from docassemble.base.util import DADateTime, as_datetime, validation_error
 from docassemble.base.core import DAObject
 from docassemble.base.functions import get_config
@@ -65,8 +65,12 @@ def debug_display(resp):
     return to_return
   return pretty_display(resp.data)
 
+def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
+  timestamp = tyler_daterep.get('dateRepresentation', {}).get('value', {}).get('value', 0)
+  return tyler_timestamp_to_datetime(timestamp)
+
 def tyler_timestamp_to_datetime(tyler_timestamp:int)->DADateTime:
-  return as_datetime(datetime.utcfromtimestamp(tyler_timestamp/1000))
+  return as_datetime(datetime.fromtimestamp(tyler_timestamp/1000, tz=timezone.utc))
 
 def validate_tyler_regex(dataField:Dict)->Callable:
   """

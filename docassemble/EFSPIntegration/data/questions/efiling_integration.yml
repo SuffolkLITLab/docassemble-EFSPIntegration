@@ -295,22 +295,32 @@ id: handle court date reserve
 code: |
   envelope_id = efile_resp.data['envelopeId']
   have_valid_date = False
-  while not have_valid_date:
-    reserve_choice_resp = proxy_conn.reserve_court_date(court_id, envelope_id)
-    if not reserve_choice_resp.is_ok() or not reserve_choice_resp.data:
-      court_reserve_resp = reserve_choice_resp
-      court_reserve_resp.response_code = 500
-      break
-    reserve_choices = reserve_choice_resp.data
+  reserve_choice_resp = proxy_conn.reserve_court_date(court_id, envelope_id)
+  if not reserve_choice_resp.is_ok() or not reserve_choice_resp.data:
+    court_reserve_resp = reserve_choice_resp
+    court_reserve_resp.response_code = 500
+  else:
+    reserve_choices = DAList('reserve_choices')
+    for choice in reserve_choice_resp.data:
+      reserve_choices.appendObject()
+      obj_choice = reserve_choices[-1]
+      obj_choice.start = tyler_daterep_to_datetime(choice['scheduleDayStartTime'])
+      obj_choice.end = tyler_daterep_to_datetime(choice['scheduleDayEndTime'])
+    reserve_choices.gathered = True
+    reserve_choices.auto_gather = False
     reserve_choice
-    del reserve_choices
-    # after_datetime = reserve_after_date.replace_time(reserve_after_time)
-    # before_datetime = reserve_before_date.replace_time(reserve_before_time)
-    # court_reserve_resp = proxy_conn.reserve_court_date(court_id, envelope_id, after_datetime, before_datetime, reserve_est_duration)
-    log(f'{reserve_choice}, from {reserve_choice_resp}')
-    court_reserve_resp = proxy_conn.reserve_court_date(court_id, envelope_id, reserve_choice['after'], reserve_choice['before'], reserve_choice['duration'])
+    #reserve_choice.start = reserve_choice.start.minus(minutes=1)
+    #reserve_choice.end = reserve_choice.end.plus(minutes=3)
+    #log(f'Reserve choice.start dt: {reserve_choice.start.format_datetime()}')
+    #log(f'Reserve choice.end dt: {reserve_choice.end.format_datetime()}')
+    #for choice in reserve_choices:
+    court_reserve_resp = proxy_conn.reserve_court_date(court_id, envelope_id, reserve_choice.start, reserve_choice.end, 1) # hardcoded as 1 hr
+    log(f'Response from sending court date {choice}: {court_reserve_resp}')
     if court_reserve_resp.is_ok():
       have_valid_date = True
+      #break
+    else:
+      have_valid_date = False
   submitted_court_reserve_resp = court_reserve_resp
 ---
 id: separate efile
@@ -318,10 +328,13 @@ code: |
   efile_resp = proxy_conn.file_for_review(jurisdiction_id, court_id, al_court_bundle)
 ---
 question: |
-  Which court date would you like?
+  Which court date would you like ?
 fields:
   - Which date?: reserve_choice
-    code: |
+    datatype: object
+    object labeler: |
+      lambda y: f'From {y.start.format_datetime()} to {y.end.format_datetime()}'
+    choices: |
       reserve_choices
 ---
 id: reserve start date
