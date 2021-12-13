@@ -1,29 +1,32 @@
 import re
 from datetime import datetime, timezone
+from typing import List, Dict, Tuple, Any, Callable
+from .efm_client import ApiResponse
 from docassemble.base.util import DADateTime, as_datetime, validation_error
 from docassemble.base.core import DAObject
 from docassemble.base.functions import get_config
-from typing import List, Dict, Tuple, Any, Callable
 
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
     return trial_court
   return str(trial_court.name)
-  
+
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:
   if display is None:
     display = '{name}'
   if backing is None:
     backing = 'code'
-  
+
   if codes_list is None:
     return [], {}
-  
+
   choices_list = [(code_obj[backing], display.format(**code_obj)) for code_obj in codes_list]
   codes_map = { vv[backing] : vv for vv in codes_list }
   return choices_list, codes_map
 
-def pretty_display(data, tab_depth=0):
+def pretty_display(data, tab_depth=0) -> str:
+  """Given an arbitrarily nested JSON structure, print it nicely.
+  Recursive, for subsequent calls `tab_depth` increases."""
   tab_inc = 4
   out = ''
   tab_str = ' ' * tab_depth
@@ -55,7 +58,7 @@ def pretty_display(data, tab_depth=0):
     out = tab_str + str(data) + '\n'
   return out
 
-def debug_display(resp):
+def debug_display(resp: ApiResponse):
   if resp.is_ok() and resp.data is None:
     return 'All ok!'
   if not resp.is_ok():
@@ -69,18 +72,19 @@ def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
   timestamp = tyler_daterep.get('dateRepresentation', {}).get('value', {}).get('value', 0)
   return tyler_timestamp_to_datetime(timestamp)
 
-def tyler_timestamp_to_datetime(tyler_timestamp:int)->DADateTime:
-  return as_datetime(datetime.fromtimestamp(tyler_timestamp/1000, tz=timezone.utc))
+def tyler_timestamp_to_datetime(timestamp_ms:int)->DADateTime:
+  """Given a timestamp in milliseconds from epoch (in UTC), make a datetime from it"""
+  return as_datetime(datetime.fromtimestamp(timestamp_ms/1000, tz=timezone.utc))
 
 def validate_tyler_regex(dataField:Dict)->Callable:
   """
   Return a function that validates a given input with the provided regex,
   suitable for use with Docassemble's `validate:` question modifier
   """
-  def fn_validate(input):
+  def fn_validate(input_str):
     if not dataField:
       return True # Don't want to stop on-screen validation if we can't retrieve the code
-    if re.match(dataField.get('regularexpression'), str(input)):
+    if re.match(dataField.get('regularexpression'), str(input_str)):
       return True
     validation_message = dataField.get('validationmessage')
     if not validation_message:
@@ -117,9 +121,9 @@ def get_party_name_and_id(party:dict):
       org_id = ''
     return {org_id: org_name}
     
-def chain_xml(xml_val, elem_list):
+def chain_xml(xml_val, elems: List[str]):
   val = xml_val
-  for elem in elem_list:
+  for elem in elems:
     if isinstance(val, dict):
       val = val.get(elem, {})
     else:
@@ -127,31 +131,32 @@ def chain_xml(xml_val, elem_list):
   return val
 
 
-def parse_participant(participant_val, role_map):
+def parse_participant(participant_val, roles:dict):
   part_obj = DAObject()
   part_obj.role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
-  part_obj.role_name = role_map.get(part_obj.role_code, {}).get('name')
+  part_obj.role_name = roles.get(part_obj.role_code, {}).get('name')
   part_obj.full_name = next(iter(get_party_name_and_id(participant_val).values()))
   return part_obj
 
-def parse_case_info(proxy_conn, new_case, entry, court_id, role_map):
+def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.details = entry
   new_case.court_id = court_id
   new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
   new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
-       
+
   new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
-  # TODO: is the order of this array predictable? might it break if Tyler changes something?        
+  # TODO: is the order of this array predictable? might it break if Tyler changes something?
   new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
-  new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])        
-  new_case.date = as_datetime(datetime.utcfromtimestamp(chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value', 'dateRepresentation', 'value']).get('value',1000)/1000))
+  new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
+  new_case.date = tyler_daterep_to_datetime(
+      chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))
   new_case.participants = []
   for aug in new_case.case_details.get('value', {}).get('rest', []):
     if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
       for participant in participant_xml:
-        new_case.participants.append(parse_participant(participant, role_map))
+        new_case.participants.append(parse_participant(participant, roles))
 
 def case_xml_to_parties(case_xml):
   rest_list = chain_xml(case_xml, ['value', 'rest'])
@@ -163,7 +168,7 @@ def parties_xml_to_choices(parties_xml):
   for party in parties_xml:
     entity = chain_xml(party, ['value', 'entityRepresentation', 'value'])
     name = entity.get('personName', {})
-    full_name = f"{name.get('personGivenName', {}).get('value','')} {name.get('personMiddleName', {}).get('value','')} {name.get('personSurName',{}).get('value','')}"
+    #full_name = f"{name.get('personGivenName', {}).get('value','')} {name.get('personMiddleName', {}).get('value','')} {name.get('personSurName',{}).get('value','')}"
     per_id = chain_xml(entity, ['personOtherIdentification', 0, 'identificationID', 'value'])
     choices.append((per_id, name))
   return choices
@@ -185,12 +190,10 @@ def filter_payment_accounts(account_list, allowable_card_types):
         for acct in account_list if acct.get('active',{}).get('value') and allowed_card(acct)]
 
 def payment_account_labels(resp):
-  retval = []
   if resp.data:
-    for account in resp.data:
-      retval.append({
-        account.get("paymentAccountID"): _payment_labels(account)})
-  return retval
+    return [{account.get('paymentAccountID'): _payment_labels(account)} for account in resp.data]
+  else:
+    return None 
 
 def filing_id_and_label(case, style="FILING_ID"):
   tracking_id = case.get('caseTrackingID',{}).get('value')
@@ -209,21 +212,21 @@ def filing_id_and_label(case, style="FILING_ID"):
   try:
     filing_date = as_datetime(datetime.utcfromtimestamp(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
   except:
-    ''
+    filing_date = ''
   filing_label = f"{filer_name} - {document_description} ({filing_code}) {filing_date}"
   if style == "FILING_ID":
     return { filing_id: filing_label }
   else:
     return { tracking_id: filing_label }
-  
+
 def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
   if not login_data:
     return False, False
-  
+
   user_details = proxy_conn.get_user(login_data.get('TYLER-ID'))
   if not user_details.data:
     return False, False
-  
+
   logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
   logged_in_user_is_global_admin = logged_in_user_is_admin and \
       user_details.data.get('email') in get_config('efile proxy').get('global server admins',[])

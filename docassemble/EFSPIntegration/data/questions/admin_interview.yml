@@ -273,17 +273,14 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
-      'somebody.name.first',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',
       'warn_no_results',
-      'case_tracking_id',
       'found_case',
-      'case_docket_id',
       'get_case_response',
     ]},
-    {'recompute': ['interview_order_find_case','attach_service_contact', 'show_resp']}]),
+    {'recompute': ['case_was_found','attach_service_contact', 'show_resp']}]),
     label='Attach service contact') }
 
   ${ action_button_html(url_ask(
@@ -359,40 +356,33 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
-      'somebody.name.first',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',
       'warn_no_results',
-      'case_tracking_id',
       'found_case',
-      'docket_case_response',
-      'case_docket_id',
       'get_case_response',
     ]},
-    {'recompute': ['interview_order_find_case', 'display_case', 'display_found_case']}]),
+    {'recompute': ['case_was_found', 'display_case', 'display_found_case']}]),
     label="Find a case") }
     
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
-      'somebody.name.first',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',
       'warn_no_results',
-      'case_tracking_id',
       'found_case',
-      'case_docket_id',
       'get_case_response',
     ]},
-    {'recompute': ['interview_order_find_case', 'get_case_service_history', 'show_resp']}]),
+    {'recompute': ['case_was_found', 'get_case_service_history', 'show_resp']}]),
     label="Get case service history") }
     
 ---
 id: display case admin interview
 question: |
-  % if interview_order_find_case:
+  % if case_was_found:
   Your case
   % else:
   No case found
@@ -402,7 +392,7 @@ subquestion: |
   The court’s case management system isn’t online. The case information might be out of date.
   % endif
   
-  % if interview_order_find_case and found_case:
+  % if case_was_found and found_case:
   ${ found_case.title } (${ found_case.tracking_id })
   % endif
 continue button field: display_found_case  
@@ -1275,15 +1265,17 @@ fields:
       all_case_parties  
 ---  
 code: |
-  raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
+  raw_party_list = next(
+      filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", 
+          found_case.case_details.get('value',{}).get('rest',[{}])
+      ), {}).get('value',{}).get('caseParticipant',[])
   all_case_parties = [get_party_name_and_id(party) for party in raw_party_list if is_person(party)]
-# TODO: add lookup based on case_tracking_id
+# TODO: add lookup based on found_case.tracking_id 
 ---
 code: |
-  if interview_order_find_case:
-    resp = proxy_conn.attach_service_contact(service_contact_id, case_tracking_id, case_party_id)
+  if case_was_found:
+    resp = proxy_conn.attach_service_contact(service_contact_id, found_case.tracking_id, case_party_id)
     del service_contact_id
-    del case_tracking_id
     del all_case_parties
     attach_service_contact = True
   else:
@@ -1298,10 +1290,9 @@ code: |
   detach_service_contact = True
 ---
 code: |
-  if interview_order_find_case:
-    resp = proxy_conn.get_case_service_history(court_id, case_tracking_id)
+  if case_was_found:
+    resp = proxy_conn.get_case_service_history(court_id, found_case.tracking_id)
     del court_id
-    del case_tracking_id
     get_case_service_history = True
   else:
     resp = ApiResponse(-1, '', None)

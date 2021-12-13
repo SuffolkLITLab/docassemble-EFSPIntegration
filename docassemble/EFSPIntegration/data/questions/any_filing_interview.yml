@@ -30,7 +30,7 @@ code: |
   tyler_login 
   trial_court
   can_check_efile
-  if not is_initial_filing and not interview_order_find_case and not can_file_non_indexed_case:
+  if not is_initial_filing and not case_was_found and not can_file_non_indexed_case:
     failed_case_search
 
   if is_nonindexed_filing:
@@ -44,9 +44,9 @@ code: |
     user_ask_role
     user_started_case
   else:
-    if interview_order_find_case:
+    if case_was_found:
       load_existing_case_defaults
-      previous_case_id = case_tracking_id
+      previous_case_id = found_case.tracking_id 
       user_started_case
       is_adding_new_parties
 
@@ -310,7 +310,7 @@ columns:
 code: |
   def fee_total(my_resp):
     if my_resp.data:
-      return my_resp.data.get('feesCalculationAmount',{}).get('value')      
+      return my_resp.data.get('feesCalculationAmount',{}).get('value')
 ---
 generic object: ALIndividual
 code: |
@@ -474,14 +474,12 @@ code: |
   is_initial_filing = filing_interview_initial_or_existing == 'initial_document'
 ---
 code: |
-  is_nonindexed_filing = not is_initial_filing and (not interview_order_find_case and can_file_non_indexed_case)
+  is_nonindexed_filing = not is_initial_filing and (not case_was_found and can_file_non_indexed_case)
 ---
 code: |
   needs_all_info = is_initial_filing or is_nonindexed_filing
 ---
 code: |
-  # NOTE we could refactor case_search.yml to use a datatype: object selector
-  # but I think this essentially works the same in the background
   selected_existing_case = found_case
 ---
 code: |
@@ -490,7 +488,6 @@ code: |
       case_category = selected_existing_case.category
     if selected_existing_case.case_type:
       case_type = selected_existing_case.case_type
-    full_case_query = proxy_conn.get_case(court_id, selected_existing_case.tracking_id)
     # TODO(brycew): get party info from existing case to select filing parties 
     existing_case_parties = None
   load_existing_case_defaults = True
