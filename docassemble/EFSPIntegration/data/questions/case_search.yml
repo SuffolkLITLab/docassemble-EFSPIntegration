@@ -13,10 +13,17 @@ objects:
   - somebody: ALIndividual
 ---
 id: interview order
+comment: |
+  Main API of this YAML file. You should only depend on variables declared in this block. 
+  input:
+  - court_id
 code: |
-  court_id
+  can_file_non_indexed_case
   do_what_choice
-  interview_order_find_case = found_case is not None
+  found_case
+  case_was_found = found_case is not None
+  if not case_was_found and can_file_non_indexed_case:
+    non_indexed_docket_number
 ---
 if: |
   do_what_choice == 'party_search'
@@ -25,26 +32,27 @@ code: |
   if not case_search_task_status.ready():
     case_search_waiting_screen
   else:
-    if not found_case_options: 
+    if found_cases.gathered and not found_cases: 
       warn_no_results
       found_case = None
     else:
       found_case = case_choice
-      case_tracking_id = found_case.tracking_id
+  del somebody
 ---
 if: |
   do_what_choice == 'docket_lookup'
 code: |
-  case_docket_id
+  docket_id_from_user
+  docket_case_response
   if not docket_case_response.is_ok() or len(docket_case_response.data) == 0:
     warn_no_results
-    del case_docket_id, docket_case_response
     found_case = None
   else:
-    case_tracking_id = docket_case_response.data[0].get('value',{}).get('caseTrackingID',{}).get('value')
     found_case = DAObject()
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id, {})
     display_case
+  del docket_id_from_user
+  del docket_case_response
 ---
 if: |
   do_what_choice == 'non-indexed-case'
@@ -55,18 +63,18 @@ code: |
   else:
     no_non_indexed_cases
     found_case = None
----  
+---
 code: |
   court_code_results = proxy_conn.get_court(court_id).data
   if court_code_results:
-    can_file_non_indexed_case = court_code_results.get('allowfilingintononindexedcase') or False
+    can_file_non_indexed_case = court_code_results.get('allowfilingintononindexedcase', False)
   else:
-    can_file_non_indexed_case = False    
+    can_file_non_indexed_case = False
 ---
 id: no non-indexed cases
 question: |
   ${ court_id} does not allow filing into non-indexed cases
-continue button field: no_non_indexed_cases  
+continue button field: no_non_indexed_cases
 ---
 id: no cases found
 question: |
@@ -103,9 +111,6 @@ content: |
   docket. If that applies to the court you want to file into,
   you can still file but you must use the case number so that
   a clerk can match your filing to the case.
----
-objects:
-  - somebody: ALIndividual
 ---
 sets:
   - somebody.name.first
@@ -157,7 +162,7 @@ subquestion: |
   % endif
 
 fields:
-  - Case number: case_docket_id
+  - Case number: docket_id_from_user
 ---
 id: ask non-indexed docket number
 question: |
@@ -188,12 +193,14 @@ subject: |
 content: |
   [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
 ---
+comment: |
+  Long acting action
 need:
   - proxy_conn.authed_user_id
 depends on:
-  - case_docket_id
+  - docket_id_from_user
 code: |
-  docket_case_response = proxy_conn.get_cases(court_id, docket_id=case_docket_id)
+  docket_case_response = proxy_conn.get_cases(court_id, docket_id=docket_id_from_user)
   cms_connection_issue = docket_case_response.response_code == 203
 ---
 id: results for case tracking_choice
@@ -211,7 +218,7 @@ fields:
     object labeler: |
       lambda case: f"{case.docket_id} {case.title} ({case.date})"
     choices:
-      - found_case_options
+      - found_cases
 ---
 template: case_results_template
 subject: |
@@ -249,16 +256,10 @@ need:
 id: get cleaned up results
 code: |
     found_cases.clear()
-
-    #try: # trap name errors, etc. so Docassemble will only run this code once
     first_pass = get_cases_response = proxy_conn.get_cases(court_id, person=somebody)
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
         parse_case_info(proxy_conn, new_case, entry, court_id, {})
-    # except:
-    #  message("Something went wrong")
-    
     found_cases.gathered = True
-    found_case_options = found_cases
     cms_connection_issue = get_cases_response.response_code == 203

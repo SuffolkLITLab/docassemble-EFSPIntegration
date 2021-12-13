@@ -10,7 +10,7 @@ import http.client as http_client
 from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
-from docassemble.base.util import IndividualName, DAObject, log, Person, Individual, DADateTime, as_datetime, reconsider
+from docassemble.base.util import DAObject, log, Person, Individual, DADateTime, as_datetime, reconsider
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
 from datetime import datetime
@@ -72,8 +72,8 @@ class ProxyConnection:
     self.authed_user_id = None
     self.set_verbose_logging(True)
     self.credentials_code_block = credentials_code_block
-    
-  def _call_proxy(self, send_func):
+
+  def _call_proxy(self, send_func) -> ApiResponse:
     try:
       resp = send_func()
       if resp.status_code == 401 and self.credentials_code_block:
@@ -101,7 +101,7 @@ class ProxyConnection:
     self.verbose = turn_on
 
   @staticmethod
-  def user_visible_resp(resp):
+  def user_visible_resp(resp) -> ApiResponse:
     """By default, the responses from `requests` aren't pickable, which causes
         some issues in Docassemble if you are using this in interviews. This function
         takes the essentials of a response and puts in into a simple object.
@@ -132,7 +132,7 @@ class ProxyConnection:
     if tyler_email and tyler_password:
       auth_obj['tyler'] = {'username': tyler_email, 'password': tyler_password}
     try:
-      resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate', 
+      resp = self.proxy_client.post(self.base_url + 'adminusers/authenticate',
         data=json.dumps(auth_obj))
       if resp.status_code == requests.codes.ok:
         all_tokens = resp.json().get('tokens', {})
@@ -148,8 +148,8 @@ class ProxyConnection:
 
   def register_user(self, person, registration_type:str, password:str=None, firm_name_or_id:str=None):
     """
-    registration_type needs to be INDIVIDUAL, FIRM_ADMINISTRATOR, or FIRM_ADMIN_NEW_MEMBER. 
-    If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password. 
+    registration_type needs to be INDIVIDUAL, FIRM_ADMINISTRATOR, or FIRM_ADMIN_NEW_MEMBER.
+    If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password.
     If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
     """
     if hasattr(person, 'phone_number'):
@@ -194,7 +194,7 @@ class ProxyConnection:
     try:
       return bool(re.match(results.data.get('regularexpression'), password))
     except:
-      return None      
+      return None
 
   # Managing Firm Users
 
@@ -214,27 +214,27 @@ class ProxyConnection:
 
   def get_user_roles(self, id:str):
     send = lambda: self.proxy_client.get(self.base_url + f'adminusers/users/{id}/roles')
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def add_user_roles(self, id:str, roles:List[dict]):
-    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles', 
+    send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/roles',
       data=json.dumps(roles))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def remove_user_roles(self, id:str, roles:List[dict]):
     send = lambda: self.proxy_client.delete(self.base_url + f'adminusers/users/{id}/roles',
         data=json.dumps(roles))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def change_password(self, id:str, email:str, new_password:str): 
     send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/password',
         data=json.dumps({'email': email, 'newPassword': new_password}))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def self_change_password(self, current_password:str, new_password:str):
     send = lambda: self.proxy_client.post(self.base_url + f'adminusers/user/password',
         data=json.dumps({'currentPassword': current_password, 'newPassword': new_password}))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def self_resend_activation_email(self, email: str):
     send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/resend-activation-email',
@@ -243,10 +243,10 @@ class ProxyConnection:
 
   def resend_activation_email(self, id:str):
     send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/resend-activation-email')
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def update_notification_preferences(self, notif_preferences:List[dict]):
-    send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/user/notification-preferences', 
+    send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/user/notification-preferences',
         data=json.dumps(notif_preferences))
     return self._call_proxy(send)
 
@@ -294,12 +294,12 @@ class ProxyConnection:
     update = serialize_person(firm)
     
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(update))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   # Managing Attorneys
   def get_attorney_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/attorneys')
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def get_attorney(self, attorney_id):
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}')
@@ -314,16 +314,16 @@ class ProxyConnection:
   def create_attorney(self, bar_number:str, first_name:str, middle_name:str=None, last_name:str=None):
     send = lambda: self.proxy_client.post(self.base_url + f'firmattorneyservice/attorneys', 
         data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def remove_attorney(self, attorney_id):
     send = lambda: self.proxy_client.delete(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}')
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   # Managing Payment Accounts
   def get_payment_account_type_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'payments/types')
-    return self._call_proxy(send) 
+    return self._call_proxy(send)
 
   def get_payment_account_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts')
