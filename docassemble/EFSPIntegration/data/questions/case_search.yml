@@ -2,6 +2,7 @@
 modules:
   - .efm_client
   - .conversions
+  - docassemble.ALToolbox.misc
 ---
 include:
   - login_qs.yml
