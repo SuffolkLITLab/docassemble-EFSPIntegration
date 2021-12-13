@@ -108,38 +108,28 @@ question: |
   % if tyler_reset_password_resp.is_ok():
   Your password reset was requested
   
-  [Resend activation email](${ url_ask(
-      [{'recompute': ['self_resend_activation','show_resp']}]) })
   % else:
   Something went wrong when we tried to reset your password
   % endif
+subquestion: |
+  You can also [resend your activation email](${ url_ask(
+      [{'recompute': ['self_resend_activation','show_activation_resp']}]) }).
 buttons:
   - restart
 ---
+code: |
+  resent_activation_resp = proxy_conn.self_resend_activation_email(my_username)
+  del my_username
+  self_resend_activation = True
+---
 id: results
 question: |
-  Results of your request
-subquestion: |
-  % if isinstance(resp.data, list):
-
-  % for idx, elem in enumerate(resp.data):
-  * idx: ${ idx }
-
-    % if isinstance(elem, dict):
-    % for k, inner_elem in elem.items():
-      * ${ k }: ${ inner_elem }
-
-    % endfor
-    % else:
-      * ${ elem }
-    % endif
-
-  % endfor
-
+  % if resent_activation_resp.is_ok():
+  Your activation email has been resent.
   % else:
-  ${ resp }
+  Something went wrong when we tried to resend your activation email.
   % endif
-continue button field: show_resp
+continue button field: show_activation_resp
 ---
 id: Login failed
 event: login_failed_screen
