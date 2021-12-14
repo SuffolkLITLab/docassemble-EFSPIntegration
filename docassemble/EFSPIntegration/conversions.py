@@ -1,10 +1,13 @@
+"""Functions that help convert the JSON-ized XML from the proxy server into usable information."""
+
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable
-from .efm_client import ApiResponse
 from docassemble.base.util import DADateTime, as_datetime, validation_error
-from docassemble.base.core import DAObject
+from docassemble.AssemblyLine.al_general import ALIndividual
 from docassemble.base.functions import get_config
+from .efm_client import ApiResponse
+
 
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
@@ -12,6 +15,8 @@ def convert_court_to_id(trial_court) -> str:
   return str(trial_court.name)
 
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:
+  """Takes the responses from the 'codes' service and make a DA ready list of choices and a map back
+  to the full code object"""
   if display is None:
     display = '{name}'
   if backing is None:
@@ -47,9 +52,9 @@ def pretty_display(data, tab_depth=0) -> str:
       if val is not None and (isinstance(val, dict) or isinstance(val, list)) \
           and 'value' in val and isinstance(val['value'], str):
         out += tab_str + f"* {key}: {val['value']}\n"
-      elif key == 'nil' and val == False:
+      elif key == 'nil' and not val:
         continue
-      elif key == 'globalScope' and val == True:
+      elif key == 'globalScope' and val:
         continue
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
@@ -76,33 +81,35 @@ def tyler_timestamp_to_datetime(timestamp_ms:int)->DADateTime:
   """Given a timestamp in milliseconds from epoch (in UTC), make a datetime from it"""
   return as_datetime(datetime.fromtimestamp(timestamp_ms/1000, tz=timezone.utc))
 
-def validate_tyler_regex(dataField:Dict)->Callable:
+def validate_tyler_regex(data_field:Dict)->Callable:
   """
   Return a function that validates a given input with the provided regex,
   suitable for use with Docassemble's `validate:` question modifier
   """
   def fn_validate(input_str):
-    if not dataField:
+    if not data_field:
       return True # Don't want to stop on-screen validation if we can't retrieve the code
-    if re.match(dataField.get('regularexpression'), str(input_str)):
+    if re.match(data_field.get('regularexpression'), str(input_str)):
       return True
-    validation_message = dataField.get('validationmessage')
+    validation_message = data_field.get('validationmessage')
     if not validation_message:
       validation_message =  'Enter a valid value'
       # Hardcode the fallback validation message for 1-999. Inexplicably, no validation message
       # supplied for 1-999 in Illinois but I think this will stay the same for a long time
-      if dataField.get('regularexpression') == r'^([1-9][0-9]{0,2})$':
+      if data_field.get('regularexpression') == r'^([1-9][0-9]{0,2})$':
         validation_message = "Enter a number betweeen 1-999"
-      elif dataField.get('regularexpression') == r'^([0-9]{0,9}(\.([0-9]{0,2}))?)$':
+      elif data_field.get('regularexpression') == r'^([0-9]{0,9}(\.([0-9]{0,2}))?)$':
         validation_message = "Enter a number between 0-999,999,999"
-      elif dataField.get('regularexpression') == r'^[0-9]*$':
+      elif data_field.get('regularexpression') == r'^[0-9]*$':
         validation_message = "Enter only digits"
     validation_error(validation_message)
   return fn_validate
 
 def is_person(possible_person:dict):
   """Helper for getting party ID"""
-  return not possible_person.get('value',{}).get('entityRepresentation',{}).get('value',{}).get('personOtherIdentification') is None
+  # TODO(brycew): could also check the declaredType?
+  return not chain_xml(possible_person, ['value', 'entityRepresentation', 'value']
+      ).get('personOtherIdentification') is None
 
 def get_party_name_and_id(party:dict):
   """Helper for getting party ID"""
@@ -120,7 +127,7 @@ def get_party_name_and_id(party:dict):
     if not org_id:
       org_id = ''
     return {org_id: org_name}
-    
+
 def chain_xml(xml_val, elems: List[str]):
   val = xml_val
   for elem in elems:
@@ -132,10 +139,20 @@ def chain_xml(xml_val, elems: List[str]):
 
 
 def parse_participant(participant_val, roles:dict):
-  part_obj = DAObject()
+  """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
+  part_obj = ALIndividual()
   part_obj.role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
   part_obj.role_name = roles.get(part_obj.role_code, {}).get('name')
-  part_obj.full_name = next(iter(get_party_name_and_id(participant_val).values()))
+  entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
+  if is_person(participant_val):
+    part_obj.person_type = 'ALIndividual'
+    name = entity.get('personName', {})
+    part_obj.name.first = name.get('personGivenName', {}).get('value')
+    part_obj.name.middle = name.get('personMiddleName', {}).get('value')
+    part_obj.name.last = name.get('personSurName', {}).get('value')
+  else:
+    part_obj.person_type = 'business'
+    part_obj.name.first = entity.get('organizationName', {}).get('value', {})
   return part_obj
 
 def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
@@ -168,7 +185,6 @@ def parties_xml_to_choices(parties_xml):
   for party in parties_xml:
     entity = chain_xml(party, ['value', 'entityRepresentation', 'value'])
     name = entity.get('personName', {})
-    #full_name = f"{name.get('personGivenName', {}).get('value','')} {name.get('personMiddleName', {}).get('value','')} {name.get('personSurName',{}).get('value','')}"
     per_id = chain_xml(entity, ['personOtherIdentification', 0, 'identificationID', 'value'])
     choices.append((per_id, name))
   return choices
@@ -182,18 +198,18 @@ def _payment_labels(acc):
     return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
 
 def filter_payment_accounts(account_list, allowable_card_types):
-  """ Gets a list of all payment accounts and filters them by if the card is 
+  """ Gets a list of all payment accounts and filters them by if the card is
       accepted at a particular court"""
   allowed_card = lambda acc: acc.get('paymentAccountTypeCode') != 'CC' or \
       (acc.get('paymentAccountTypeCode') == 'CC' and acc.get('cardType',{}).get('value') in allowable_card_types)
-  return [(acct.get('paymentAccountID'), _payment_labels(acct)) 
+  return [(acct.get('paymentAccountID'), _payment_labels(acct))
         for acct in account_list if acct.get('active',{}).get('value') and allowed_card(acct)]
 
 def payment_account_labels(resp):
   if resp.data:
     return [{account.get('paymentAccountID'): _payment_labels(account)} for account in resp.data]
   else:
-    return None 
+    return None
 
 def filing_id_and_label(case, style="FILING_ID"):
   tracking_id = case.get('caseTrackingID',{}).get('value')
@@ -206,11 +222,11 @@ def filing_id_and_label(case, style="FILING_ID"):
   # Filing code is plain English
   filing_code = next(
     filter(
-      lambda category: category.get('name') == "{urn:tyler:ecf:extensions:Common}FilingCode", 
+      lambda category: category.get('name') == "{urn:tyler:ecf:extensions:Common}FilingCode",
       case.get("documentCategoryText", [])
       ),{}).get('value',{}).get('value')
   try:
-    filing_date = as_datetime(datetime.utcfromtimestamp(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000)/1000))
+    filing_date = tyler_timestamp_to_datetime(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000))
   except:
     filing_date = ''
   filing_label = f"{filer_name} - {document_description} ({filing_code}) {filing_date}"
@@ -220,6 +236,11 @@ def filing_id_and_label(case, style="FILING_ID"):
     return { tracking_id: filing_label }
 
 def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
+  """Gets whether or not the user of this interview is a Tyler Admin, and a 'global' admin.
+  The global admin means that they are allowed to change specific Global payment methods,
+  and can be listed under the 'global server admins' section of the 'efile proxy' settings in the
+  DAConfig"""
+
   if not login_data:
     return False, False
 
@@ -227,7 +248,8 @@ def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
   if not user_details.data:
     return False, False
 
-  logged_in_user_is_admin = any(filter(lambda role: role.get('roleName') == 'FIRM_ADMIN', user_details.data.get('role')))
+  is_admin = lambda role: role.get('roleName') == 'FIRM_ADMIN'
+  logged_in_user_is_admin = any(filter(is_admin, user_details.data.get('role')))
   logged_in_user_is_global_admin = logged_in_user_is_admin and \
       user_details.data.get('email') in get_config('efile proxy').get('global server admins',[])
   return logged_in_user_is_admin, logged_in_user_is_global_admin
