@@ -78,10 +78,15 @@ code: |
     ('remove_global_payment_account', 'RemoveGlobal Payment Account'),
   ]
 ---
+code: |
+  my_var = proxy_conn.get_case('adams', '')
+---
 id: Admin tasks
 question: | 
   ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
 subquestion: |
+  ${ debug_display(my_var) }
+
   % if logged_in_user_is_global_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
