@@ -67,7 +67,7 @@ class ProxyConnection:
       'Content-type': 'application/json',
       'Accept': 'application/json',
     }
-    self.proxy_client.headers['X-API-KEY'] = api_key 
+    self.proxy_client.headers['X-API-KEY'] = api_key
     self.verbose = False
     self.authed_user_id = None
     self.set_verbose_logging(True)
@@ -226,7 +226,7 @@ class ProxyConnection:
         data=json.dumps(roles))
     return self._call_proxy(send)
 
-  def change_password(self, id:str, email:str, new_password:str): 
+  def change_password(self, id:str, email:str, new_password:str):
     send = lambda: self.proxy_client.post(self.base_url + f'adminusers/users/{id}/password',
         data=json.dumps({'email': email, 'newPassword': new_password}))
     return self._call_proxy(send)
@@ -258,12 +258,12 @@ class ProxyConnection:
     """AKA NotificationPreferencesList"""
     send = lambda: self.proxy_client.get(self.base_url + 'adminusers/notification-options')
     return self._call_proxy(send)
-  
+
   def self_update_user(self, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/user', data=json.dumps(updated_user))
     return self._call_proxy(send)
-  
+
   def update_user(self, id:str, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.base_url + f'adminusers/users/{id}', data=json.dumps(updated_user))
@@ -292,7 +292,7 @@ class ProxyConnection:
   def update_firm(self, firm:Person):
     # firm is stateful
     update = serialize_person(firm)
-    
+
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/firm', data=json.dumps(update))
     return self._call_proxy(send)
 
@@ -305,7 +305,7 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}')
     return self._call_proxy(send)
 
-  def update_attorney(self, attorney_id, bar_number:str=None, 
+  def update_attorney(self, attorney_id, bar_number:str=None,
       first_name:str=None, middle_name:str=None, last_name:str=None):
     send = lambda: self.proxy_client.patch(self.base_url + f'firmattorneyservice/attorneys/{attorney_id}', 
         data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))

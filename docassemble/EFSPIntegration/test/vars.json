@@ -1,0 +1,989 @@
+{
+  "encrypted": false, 
+  "i": "docassemble.playground116EFSPIntegration:admin_interview.yml", 
+  "steps": 2, 
+  "success": true, 
+  "uid": "SAxgOUzsGef0AON7vOrlp9LPv1u0nDIN", 
+  "variables": {
+    "al_logo": {
+      "_class": "docassemble.base.core.DAStaticFile", 
+      "extension": "png", 
+      "filename": "ma_logo.png", 
+      "instanceName": "al_logo", 
+      "mimetype": "image/png", 
+      "package": "docassemble.AssemblyLine"
+    }, 
+    "al_menu_items": [
+      {
+        "label": "Start over", 
+        "url": "/interview?action=eyJhY3Rpb24iOiAiX2RhX2ZvcmNlX2FzayIsICJhcmd1bWVudHMiOiB7InZhcmlhYmxlcyI6IFsiYWxfc3RhcnRfb3Zlcl9jb25maXJtYXRpb24iLCAiYWxfc3RhcnRfb3ZlciJdfX0&i=docassemble.playground116EFSPIntegration%3Aadmin_interview.yml"
+      }
+    ], 
+    "al_sessions_url_ask_fast_forward": [
+      {
+        "undefine": [
+          "al_sessions_new_session_id"
+        ]
+      }, 
+      "al_sessions_source_session", 
+      "al_sessions_fast_forward_session", 
+      "al_sessions_launch_new_session"
+    ], 
+    "al_sessions_url_ask_snapshot": [
+      {
+        "undefine": [
+          "al_sessions_save_session_snapshot", 
+          "al_sessions_new_session_id"
+        ]
+      }, 
+      "al_sessions_snapshot_label", 
+      "al_sessions_save_session_snapshot", 
+      "al_sessions_snapshot_results"
+    ], 
+    "al_version": "AL-2.7.1", 
+    "allow_cron": true, 
+    "code_cache_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "code_cache_template"
+    }, 
+    "ecf_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "ecf_template"
+    }, 
+    "efsp_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "efsp_template"
+    }, 
+    "eservice_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "eservice_template"
+    }, 
+    "feedback_form": "docassemble.AssemblyLine:feedback.yml", 
+    "filing_admin_list": [
+      [
+        "get_courts", 
+        "See all Courts"
+      ], 
+      [
+        "get_court", 
+        "Get detailed court information"
+      ], 
+      [
+        "get_policy", 
+        "Get Court ECF Policies"
+      ], 
+      [
+        "get_filings", 
+        "See Filings"
+      ], 
+      [
+        "get_filing_status", 
+        "Get filing Status"
+      ], 
+      [
+        "get_filing", 
+        "See Filing Info"
+      ], 
+      [
+        "cancel_filing", 
+        "Cancel Filing"
+      ]
+    ], 
+    "filings_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "filings_template"
+    }, 
+    "firm_admin_attorneys_list": [
+      [
+        "create_attorney", 
+        "Create attorney"
+      ], 
+      [
+        "get_attorney_list", 
+        "Get All Attorneys"
+      ], 
+      [
+        "get_attorney", 
+        "Get Attorney"
+      ], 
+      [
+        "update_attorney", 
+        "Update Attorney"
+      ], 
+      [
+        "remove_attorney", 
+        "Remove Attorney"
+      ]
+    ], 
+    "firm_admin_attorneys_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "firm_admin_attorneys_template"
+    }, 
+    "firm_admin_list": [
+      [
+        "get_firm", 
+        "Get Firm"
+      ], 
+      [
+        "update_firm", 
+        "Update Firm"
+      ]
+    ], 
+    "firm_admin_payment_list": [
+      [
+        "get_payment_account_type_list", 
+        "Get Payment Account Type List"
+      ], 
+      [
+        "get_payment_account", 
+        "Get Payment Account"
+      ], 
+      [
+        "update_payment_account", 
+        "Update Payment Account"
+      ], 
+      [
+        "remove_payment_account", 
+        "Remove Payment Account"
+      ], 
+      [
+        "get_global_payment_account_list", 
+        "Get Global Payment Account List"
+      ], 
+      [
+        "get_global_payment_account", 
+        "Get Global Payment Account"
+      ]
+    ], 
+    "firm_admin_service_contacts": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "firm_admin_service_contacts"
+    }, 
+    "firm_admin_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "firm_admin_template"
+    }, 
+    "firm_admin_users_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "firm_admin_users_template"
+    }, 
+    "github_repo_name": "docassemble-AssemblyLine", 
+    "github_user": "suffolklitlab", 
+    "global_admin_payment_list": [
+      [
+        "get_payment_account_type_list", 
+        "Get Payment Account Type List"
+      ], 
+      [
+        "get_payment_account", 
+        "Get Payment Account"
+      ], 
+      [
+        "update_payment_account", 
+        "Update Payment Account"
+      ], 
+      [
+        "remove_payment_account", 
+        "Remove Payment Account"
+      ], 
+      [
+        "get_global_payment_account_list", 
+        "Get Global Payment Account List"
+      ], 
+      [
+        "get_global_payment_account", 
+        "Get Global Payment Account"
+      ], 
+      [
+        "update_global_payment_account", 
+        "Update Global Payment Account"
+      ], 
+      [
+        "remove_global_payment_account", 
+        "RemoveGlobal Payment Account"
+      ]
+    ], 
+    "global_admin_payment_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "global_admin_payment_template"
+    }, 
+    "initial_filing_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "initial_filing_template"
+    }, 
+    "logged_in_user_is_admin": true, 
+    "logged_in_user_is_global_admin": true, 
+    "login_status_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "login_status_template"
+    }, 
+    "menu_items": [
+      {
+        "label": "Start over", 
+        "url": "/interview?action=eyJhY3Rpb24iOiAiX2RhX2ZvcmNlX2FzayIsICJhcmd1bWVudHMiOiB7InZhcmlhYmxlcyI6IFsiYWxfc3RhcnRfb3Zlcl9jb25maXJtYXRpb24iLCAiYWxfc3RhcnRfb3ZlciJdfX0&i=docassemble.playground116EFSPIntegration%3Aadmin_interview.yml"
+      }
+    ], 
+    "multi_user": true, 
+    "my_username": "bwilley@suffolk.edu", 
+    "my_var": {
+      "_class": "docassemble.playground116EFSPIntegration.efm_client.ApiResponse", 
+      "data": {
+        "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.civilcase_4.CivilCaseType", 
+        "globalScope": true, 
+        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}CivilCase", 
+        "nil": false, 
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+        "typeSubstituted": false, 
+        "value": {
+          "activityDateRepresentation": {
+            "declaredType": "gov.niem.niem.niem_core._2.DateType", 
+            "globalScope": true, 
+            "name": "{http://niem.gov/niem/niem-core/2.0}ActivityDate", 
+            "nil": false, 
+            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+            "typeSubstituted": false, 
+            "value": {
+              "dateRepresentation": {
+                "declaredType": "gov.niem.niem.proxy.xsd._2.DateTime", 
+                "globalScope": true, 
+                "name": "{http://niem.gov/niem/niem-core/2.0}DateTime", 
+                "nil": false, 
+                "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                "typeSubstituted": false, 
+                "value": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": 1578376800000
+                }
+              }, 
+              "id": null, 
+              "linkMetadata": [], 
+              "metadata": []
+            }
+          }, 
+          "activityDescriptionText": null, 
+          "activityDisposition": [], 
+          "activityIdentification": [], 
+          "activityStatus": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "statusDate": null, 
+            "statusDescriptionText": [
+              {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": "CASE_STATUS"
+              }
+            ], 
+            "statusText": {
+              "id": null, 
+              "linkMetadata": [], 
+              "metadata": [], 
+              "value": "Open"
+            }
+          }, 
+          "caseCategoryText": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "value": "6198"
+          }, 
+          "caseDocketID": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "value": "2020SC12"
+          }, 
+          "caseTitleText": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "value": "JOHN NEAL D/B/A LINTON NEAL FUN HM VS. BROWN, JOHN"
+          }, 
+          "caseTrackingID": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "value": "IL016025J2020SC12"
+          }, 
+          "id": null, 
+          "linkMetadata": [], 
+          "metadata": [], 
+          "rest": [
+            {
+              "declaredType": "gov.niem.niem.domains.jxdm._4.CaseAugmentationType", 
+              "globalScope": true, 
+              "name": "{http://niem.gov/niem/domains/jxdm/4.0}CaseAugmentation", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "caseCharge": [], 
+                "caseCourt": {
+                  "courtName": null, 
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "organizationIdentification": {
+                    "declaredType": "gov.niem.niem.niem_core._2.IdentificationType", 
+                    "globalScope": true, 
+                    "name": "{http://niem.gov/niem/niem-core/2.0}OrganizationIdentification", 
+                    "nil": false, 
+                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                    "typeSubstituted": false, 
+                    "value": {
+                      "id": null, 
+                      "identificationCategory": null, 
+                      "identificationID": {
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": [], 
+                        "value": "adams"
+                      }, 
+                      "identificationJurisdiction": null, 
+                      "identificationSourceText": null, 
+                      "linkMetadata": [], 
+                      "metadata": []
+                    }
+                  }, 
+                  "organizationLocation": null, 
+                  "organizationName": null, 
+                  "organizationPrimaryContactInformation": null, 
+                  "organizationSubUnitName": null, 
+                  "organizationTaxIdentification": null, 
+                  "organizationUnitName": null
+                }, 
+                "caseCourtEvent": [], 
+                "caseDefendantParty": [], 
+                "caseDefenseAttorney": [], 
+                "caseInitiatingAttorney": [], 
+                "caseInitiatingParty": [], 
+                "caseJudge": [
+                  {
+                    "caseOfficialCaseIdentification": null, 
+                    "caseOfficialRoleText": null, 
+                    "id": null, 
+                    "judicialOfficialBarMembership": {
+                      "id": null, 
+                      "judicialOfficialBarIdentification": {
+                        "id": null, 
+                        "identificationCategory": null, 
+                        "identificationID": {
+                          "id": null, 
+                          "linkMetadata": [], 
+                          "metadata": [], 
+                          "value": ""
+                        }, 
+                        "identificationJurisdiction": null, 
+                        "identificationSourceText": null, 
+                        "linkMetadata": [], 
+                        "metadata": []
+                      }, 
+                      "linkMetadata": [], 
+                      "metadata": []
+                    }, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "roleOfPersonReference": null
+                  }
+                ], 
+                "caseLineageCase": [
+                  {
+                    "activityDateRepresentation": null, 
+                    "activityDescriptionText": null, 
+                    "activityDisposition": [], 
+                    "activityIdentification": [], 
+                    "activityStatus": null, 
+                    "caseCategoryText": null, 
+                    "caseDocketID": null, 
+                    "caseTitleText": null, 
+                    "caseTrackingID": {
+                      "id": null, 
+                      "linkMetadata": [], 
+                      "metadata": [], 
+                      "value": "ef61556e-f7b6-4680-a3c2-73917843c018"
+                    }, 
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": []
+                  }
+                ], 
+                "caseOfficial": [], 
+                "caseOtherEntity": [], 
+                "caseProsecutionAttorney": [], 
+                "caseRespondentAttorney": [], 
+                "caseRespondentParty": [], 
+                "id": null, 
+                "metadata": []
+              }
+            }, 
+            {
+              "declaredType": "tyler.ecf.extensions.common.CaseAugmentationType", 
+              "globalScope": true, 
+              "name": "{urn:tyler:ecf:extensions:Common}CaseAugmentation", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "agency": [], 
+                "alias": [], 
+                "attachServiceContactIndicator": null, 
+                "caseAddress": null, 
+                "caseOfficial": [], 
+                "caseOtherEntityAttorney": [], 
+                "caseParticipant": [
+                  {
+                    "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.CaseParticipantType", 
+                    "globalScope": true, 
+                    "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}CaseParticipant", 
+                    "nil": false, 
+                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                    "typeSubstituted": false, 
+                    "value": {
+                      "caseParticipantRoleCode": {
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": [], 
+                        "value": "20641"
+                      }, 
+                      "contactInformation": [], 
+                      "entityRepresentation": {
+                        "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.PersonType", 
+                        "globalScope": true, 
+                        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}EntityPerson", 
+                        "nil": false, 
+                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                        "typeSubstituted": false, 
+                        "value": {
+                          "id": "Party1", 
+                          "linkMetadata": [], 
+                          "metadata": [], 
+                          "personAugmentation": {
+                            "contactInformation": [
+                              {
+                                "contactEntity": null, 
+                                "contactEntityDescriptionText": null, 
+                                "contactInformationDescriptionText": null, 
+                                "contactMeans": [
+                                  {
+                                    "declaredType": "gov.niem.niem.niem_core._2.TelephoneNumberType", 
+                                    "globalScope": true, 
+                                    "name": "{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber", 
+                                    "nil": false, 
+                                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                    "typeSubstituted": false, 
+                                    "value": {
+                                      "id": null, 
+                                      "linkMetadata": [], 
+                                      "metadata": [], 
+                                      "telephoneNumberRepresentation": {
+                                        "declaredType": "gov.niem.niem.niem_core._2.FullTelephoneNumberType", 
+                                        "globalScope": true, 
+                                        "name": "{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber", 
+                                        "nil": false, 
+                                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                        "typeSubstituted": false, 
+                                        "value": {
+                                          "id": null, 
+                                          "linkMetadata": [], 
+                                          "metadata": [], 
+                                          "telephoneNumberFullID": {
+                                            "id": null, 
+                                            "linkMetadata": [], 
+                                            "metadata": [], 
+                                            "value": ""
+                                          }, 
+                                          "telephoneSuffixID": null
+                                        }
+                                      }
+                                    }
+                                  }, 
+                                  {
+                                    "declaredType": "gov.niem.niem.proxy.xsd._2.String", 
+                                    "globalScope": true, 
+                                    "name": "{http://niem.gov/niem/niem-core/2.0}ContactEmailID", 
+                                    "nil": false, 
+                                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                    "typeSubstituted": false, 
+                                    "value": {
+                                      "id": null, 
+                                      "linkMetadata": [], 
+                                      "metadata": [], 
+                                      "value": ""
+                                    }
+                                  }, 
+                                  {
+                                    "declaredType": "gov.niem.niem.niem_core._2.AddressType", 
+                                    "globalScope": true, 
+                                    "name": "{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress", 
+                                    "nil": false, 
+                                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                    "typeSubstituted": false, 
+                                    "value": {
+                                      "addressRepresentation": {
+                                        "declaredType": "gov.niem.niem.niem_core._2.StructuredAddressType", 
+                                        "globalScope": true, 
+                                        "name": "{http://niem.gov/niem/niem-core/2.0}StructuredAddress", 
+                                        "nil": false, 
+                                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                        "typeSubstituted": false, 
+                                        "value": {
+                                          "addressDeliveryPoint": [
+                                            {
+                                              "None": null
+                                            }, 
+                                            {
+                                              "None": null
+                                            }
+                                          ], 
+                                          "addressRecipientName": null, 
+                                          "id": null, 
+                                          "linkMetadata": [], 
+                                          "locationCityName": {
+                                            "id": null, 
+                                            "linkMetadata": [], 
+                                            "metadata": [], 
+                                            "value": "RADOM"
+                                          }, 
+                                          "locationCountry": {
+                                            "declaredType": "gov.niem.niem.fips_10_4._2.CountryCodeType", 
+                                            "globalScope": true, 
+                                            "name": "{http://niem.gov/niem/niem-core/2.0}LocationCountryFIPS10-4Code", 
+                                            "nil": false, 
+                                            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                            "typeSubstituted": false, 
+                                            "value": {
+                                              "None": null
+                                            }
+                                          }, 
+                                          "locationCounty": null, 
+                                          "locationPostalCode": {
+                                            "id": null, 
+                                            "linkMetadata": [], 
+                                            "metadata": [], 
+                                            "value": "62876"
+                                          }, 
+                                          "locationPostalExtensionCode": null, 
+                                          "locationState": {
+                                            "declaredType": "gov.niem.niem.niem_core._2.ProperNameTextType", 
+                                            "globalScope": true, 
+                                            "name": "{http://niem.gov/niem/niem-core/2.0}LocationStateName", 
+                                            "nil": false, 
+                                            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                            "typeSubstituted": false, 
+                                            "value": {
+                                              "None": null
+                                            }
+                                          }, 
+                                          "metadata": []
+                                        }
+                                      }, 
+                                      "id": null, 
+                                      "linkMetadata": [], 
+                                      "metadata": []
+                                    }
+                                  }
+                                ], 
+                                "contactResponder": null, 
+                                "id": null, 
+                                "linkMetadata": [], 
+                                "metadata": []
+                              }
+                            ], 
+                            "electronicServiceInformation": null, 
+                            "id": null, 
+                            "metadata": [], 
+                            "personContactInformationAssociation": [], 
+                            "personDriverLicense": null, 
+                            "personInsurance": []
+                          }, 
+                          "personBirthDate": null, 
+                          "personCapability": null, 
+                          "personCitizenship": [], 
+                          "personDNA": null, 
+                          "personEthnicity": null, 
+                          "personEyeColor": null, 
+                          "personFingerprintSet": [], 
+                          "personHairColor": null, 
+                          "personHeightMeasure": null, 
+                          "personLanguageEnglishIndicator": null, 
+                          "personName": {
+                            "id": null, 
+                            "linkMetadata": [], 
+                            "metadata": [], 
+                            "personFullName": null, 
+                            "personGivenName": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": "JOHN"
+                            }, 
+                            "personMaidenName": null, 
+                            "personMiddleName": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": ""
+                            }, 
+                            "personNameCommentText": null, 
+                            "personNamePrefixText": null, 
+                            "personNameSuffixText": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": ""
+                            }, 
+                            "personSurName": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": "BROWN"
+                            }
+                          }, 
+                          "personOtherIdentification": [
+                            {
+                              "id": null, 
+                              "identificationCategory": {
+                                "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                                "globalScope": true, 
+                                "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                                "nil": false, 
+                                "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                "typeSubstituted": false, 
+                                "value": {
+                                  "id": null, 
+                                  "linkMetadata": [], 
+                                  "metadata": [], 
+                                  "value": "CASEPARTYID"
+                                }
+                              }, 
+                              "identificationID": {
+                                "id": null, 
+                                "linkMetadata": [], 
+                                "metadata": [], 
+                                "value": "97a80a66-b169-483a-a282-d0e7db7695d4"
+                              }, 
+                              "identificationJurisdiction": null, 
+                              "identificationSourceText": null, 
+                              "linkMetadata": [], 
+                              "metadata": []
+                            }
+                          ], 
+                          "personPhysicalFeature": [], 
+                          "personPrimaryLanguage": null, 
+                          "personRace": null, 
+                          "personSex": null, 
+                          "personStateIdentification": null, 
+                          "personTaxIdentification": null, 
+                          "personWeightMeasure": null
+                        }
+                      }, 
+                      "id": null, 
+                      "linkMetadata": [], 
+                      "metadata": []
+                    }
+                  }, 
+                  {
+                    "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.CaseParticipantType", 
+                    "globalScope": true, 
+                    "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}CaseParticipant", 
+                    "nil": false, 
+                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                    "typeSubstituted": false, 
+                    "value": {
+                      "caseParticipantRoleCode": {
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": [], 
+                        "value": "20646"
+                      }, 
+                      "contactInformation": [], 
+                      "entityRepresentation": {
+                        "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.OrganizationType", 
+                        "globalScope": true, 
+                        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}EntityOrganization", 
+                        "nil": false, 
+                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                        "typeSubstituted": false, 
+                        "value": {
+                          "id": "Party2", 
+                          "linkMetadata": [], 
+                          "metadata": [], 
+                          "organizationIdentification": {
+                            "declaredType": "tyler.ecf.extensions.common.OrganizationIdentificationType", 
+                            "globalScope": true, 
+                            "name": "{urn:tyler:ecf:extensions:Common}OrganizationOtherIdentification", 
+                            "nil": false, 
+                            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                            "typeSubstituted": false, 
+                            "value": {
+                              "id": null, 
+                              "identification": [
+                                {
+                                  "id": null, 
+                                  "identificationCategory": {
+                                    "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                                    "globalScope": true, 
+                                    "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                                    "nil": false, 
+                                    "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                    "typeSubstituted": false, 
+                                    "value": {
+                                      "id": null, 
+                                      "linkMetadata": [], 
+                                      "metadata": [], 
+                                      "value": "CASEPARTYID"
+                                    }
+                                  }, 
+                                  "identificationID": {
+                                    "id": null, 
+                                    "linkMetadata": [], 
+                                    "metadata": [], 
+                                    "value": "53eada35-da29-40dc-b16d-dfbef695d1a4"
+                                  }, 
+                                  "identificationJurisdiction": null, 
+                                  "identificationSourceText": null, 
+                                  "linkMetadata": [], 
+                                  "metadata": []
+                                }
+                              ], 
+                              "identificationCategory": null, 
+                              "identificationID": null, 
+                              "identificationJurisdiction": null, 
+                              "identificationSourceText": null, 
+                              "linkMetadata": [], 
+                              "metadata": []
+                            }
+                          }, 
+                          "organizationLocation": null, 
+                          "organizationName": {
+                            "id": null, 
+                            "linkMetadata": [], 
+                            "metadata": [], 
+                            "value": "JOHN NEAL D/B/A LINTON NEAL FUN HM"
+                          }, 
+                          "organizationPrimaryContactInformation": null, 
+                          "organizationSubUnitName": null, 
+                          "organizationTaxIdentification": null, 
+                          "organizationUnitName": null, 
+                          "rest": [
+                            {
+                              "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.OrganizationAugmentationType", 
+                              "globalScope": true, 
+                              "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}OrganizationAugmentation", 
+                              "nil": false, 
+                              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                              "typeSubstituted": false, 
+                              "value": {
+                                "contactInformation": [
+                                  {
+                                    "contactEntity": null, 
+                                    "contactEntityDescriptionText": null, 
+                                    "contactInformationDescriptionText": null, 
+                                    "contactMeans": [
+                                      {
+                                        "declaredType": "gov.niem.niem.niem_core._2.TelephoneNumberType", 
+                                        "globalScope": true, 
+                                        "name": "{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber", 
+                                        "nil": false, 
+                                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                        "typeSubstituted": false, 
+                                        "value": {
+                                          "id": null, 
+                                          "linkMetadata": [], 
+                                          "metadata": [], 
+                                          "telephoneNumberRepresentation": {
+                                            "declaredType": "gov.niem.niem.niem_core._2.FullTelephoneNumberType", 
+                                            "globalScope": true, 
+                                            "name": "{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber", 
+                                            "nil": false, 
+                                            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                            "typeSubstituted": false, 
+                                            "value": {
+                                              "None": null
+                                            }
+                                          }
+                                        }
+                                      }, 
+                                      {
+                                        "declaredType": "gov.niem.niem.proxy.xsd._2.String", 
+                                        "globalScope": true, 
+                                        "name": "{http://niem.gov/niem/niem-core/2.0}ContactEmailID", 
+                                        "nil": false, 
+                                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                        "typeSubstituted": false, 
+                                        "value": {
+                                          "id": null, 
+                                          "linkMetadata": [], 
+                                          "metadata": [], 
+                                          "value": ""
+                                        }
+                                      }, 
+                                      {
+                                        "declaredType": "gov.niem.niem.niem_core._2.AddressType", 
+                                        "globalScope": true, 
+                                        "name": "{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress", 
+                                        "nil": false, 
+                                        "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                        "typeSubstituted": false, 
+                                        "value": {
+                                          "addressRepresentation": {
+                                            "declaredType": "gov.niem.niem.niem_core._2.StructuredAddressType", 
+                                            "globalScope": true, 
+                                            "name": "{http://niem.gov/niem/niem-core/2.0}StructuredAddress", 
+                                            "nil": false, 
+                                            "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                            "typeSubstituted": false, 
+                                            "value": {
+                                              "None": null
+                                            }
+                                          }, 
+                                          "id": null, 
+                                          "linkMetadata": [], 
+                                          "metadata": []
+                                        }
+                                      }
+                                    ], 
+                                    "contactResponder": null, 
+                                    "id": null, 
+                                    "linkMetadata": [], 
+                                    "metadata": []
+                                  }
+                                ], 
+                                "electronicServiceInformation": null, 
+                                "id": null, 
+                                "metadata": [], 
+                                "organizationContactInformationAssociation": []
+                              }
+                            }
+                          ]
+                        }
+                      }, 
+                      "id": null, 
+                      "linkMetadata": [], 
+                      "metadata": []
+                    }
+                  }
+                ], 
+                "caseSecurity": null, 
+                "caseShortTitleText": null, 
+                "caseSubTypeText": null, 
+                "caseTypeText": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": "183571"
+                }, 
+                "citationAugmentation": [], 
+                "civilClaimAmount": null, 
+                "decedentPartyAssociation": [], 
+                "extendedData": [], 
+                "filerTypeText": null, 
+                "filingAssociation": [], 
+                "hearingSchedule": null, 
+                "id": null, 
+                "language": null, 
+                "linkMetadata": [], 
+                "lowerCourtCaseTypeText": null, 
+                "lowerCourtJudgeText": null, 
+                "lowerCourtText": null, 
+                "maxFeeAmount": null, 
+                "metadata": [], 
+                "organizationAssociation": [], 
+                "outOfStateIndicator": null, 
+                "partyService": [], 
+                "personAssociation": [], 
+                "personOrganizationAssociation": [], 
+                "physicalFeature": [], 
+                "probateEstateAmount": null, 
+                "procedureRemedy": null, 
+                "propertyAccountNumber": [], 
+                "providerCharge": null, 
+                "questionAnswer": [], 
+                "relatedCaseAssociation": [], 
+                "returnDate": null, 
+                "willFiledDate": null
+              }
+            }, 
+            {
+              "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+              "globalScope": true, 
+              "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}CauseOfActionCode", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": ""
+              }
+            }, 
+            {
+              "declaredType": "gov.niem.niem.proxy.xsd._2.Boolean", 
+              "globalScope": true, 
+              "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}ClassActionIndicator", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": false
+              }
+            }, 
+            {
+              "declaredType": "gov.niem.niem.proxy.xsd._2.Boolean", 
+              "globalScope": true, 
+              "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}JuryDemandIndicator", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": false
+              }
+            }, 
+            {
+              "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+              "globalScope": true, 
+              "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}ReliefTypeCode", 
+              "nil": false, 
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+              "typeSubstituted": false, 
+              "value": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": ""
+              }
+            }
+          ]
+        }
+      }, 
+      "error_msg": null, 
+      "response_code": 200
+    }, 
+    "nav": {
+      "current": null, 
+      "hidden": false, 
+      "past": [], 
+      "progressive": true
+    }, 
+    "package_name": "docassemble.playground116EFSPIntegration", 
+    "package_version_number": "playground", 
+    "proxy_conn": null, 
+    "speak_text": true, 
+    "subsequent_filing_template": {
+      "_class": "docassemble.base.core.DALazyTemplate", 
+      "instanceName": "subsequent_filing_template"
+    }, 
+    "user_forgot_password": false
+  }
+}
