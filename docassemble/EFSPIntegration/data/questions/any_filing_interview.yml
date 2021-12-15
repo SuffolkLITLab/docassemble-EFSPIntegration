@@ -1236,8 +1236,7 @@ code: |
     all_case_parties_tmp = []
         
   if not needs_all_info: 
-    raw_party_list = next(filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", found_case.case_details.get('value',{}).get('rest',[{}])), {}).get('value',{}).get('caseParticipant',[])
-    all_case_parties_tmp.extend([get_party_name_and_id(party) for party in raw_party_list])
+    all_case_parties_tmp.extend([(party.tyler_id, str(party.name)) for party in found_case.participants])
 
   all_case_parties = all_case_parties_tmp
   del all_case_parties_tmp

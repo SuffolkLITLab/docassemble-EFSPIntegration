@@ -112,23 +112,6 @@ def is_person(possible_person:dict):
   return not chain_xml(possible_person, ['value', 'entityRepresentation', 'value']
       ).get('personOtherIdentification') is None
 
-def get_party_name_and_id(party:dict):
-  """Helper for getting party ID"""
-  if is_person(party):
-    person_name = chain_xml(party, ['value', 'entityRepresentation', 'value', 'personName'])
-    person_name_str = f"{person_name.get('personGivenName',{}).get('value','')} {person_name.get('personMiddleName',{}).get('value','')} {person_name.get('personSurName',{}).get('value','')}"
-    person = chain_xml(party, ['value', 'entityRepresentation', 'value', 'personOtherIdentification'])
-    first_rep = next(iter(person),{})
-    return {first_rep.get('identificationID',{}).get('value'): person_name_str}
-  else:
-    org_name = chain_xml(party, ['value','entityRepresentation','value','organizationName','value'])
-    if not org_name:
-      org_name = ''
-    org_id = chain_xml(party, ['value', 'entityRepresentation', 'value', 'organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
-    if not org_id:
-      org_id = ''
-    return {org_id: org_name}
-
 def chain_xml(xml_val, elems: List[str]):
   val = xml_val
   for elem in elems:
@@ -137,7 +120,6 @@ def chain_xml(xml_val, elems: List[str]):
     else:
       val = val[elem]
   return val
-
 
 def parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
@@ -150,9 +132,11 @@ def parse_participant(part_obj, participant_val, roles:dict):
     part_obj.name.first = name.get('personGivenName', {}).get('value')
     part_obj.name.middle = name.get('personMiddleName', {}).get('value')
     part_obj.name.last = name.get('personSurName', {}).get('value')
+    part_obj.tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
   else:
     part_obj.person_type = 'business'
     part_obj.name.first = entity.get('organizationName', {}).get('value', {})
+    part_obj.tyler_id = chain_xml(entity, ['organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
   return part_obj
 
 def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):

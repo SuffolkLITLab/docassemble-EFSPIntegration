@@ -1270,12 +1270,7 @@ fields:
       all_case_parties  
 ---  
 code: |
-  raw_party_list = next(
-      filter(lambda augmentation: augmentation.get('declaredType') == "tyler.ecf.extensions.common.CaseAugmentationType", 
-          found_case.case_details.get('value',{}).get('rest',[{}])
-      ), {}).get('value',{}).get('caseParticipant',[])
-  all_case_parties = [get_party_name_and_id(party) for party in raw_party_list if is_person(party)]
-# TODO: add lookup based on found_case.tracking_id 
+  all_case_parties = [(party.tyler_id, str(party.name)) for party in found_case.participants]
 ---
 code: |
   if case_was_found:
