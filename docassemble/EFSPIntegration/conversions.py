@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable
 from docassemble.base.util import DADateTime, as_datetime, validation_error
 from docassemble.AssemblyLine.al_general import ALIndividual
+from docassemble.base.core import DAList 
 from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
 
@@ -138,9 +139,8 @@ def chain_xml(xml_val, elems: List[str]):
   return val
 
 
-def parse_participant(participant_val, roles:dict):
+def parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
-  part_obj = ALIndividual()
   part_obj.role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
   part_obj.role_name = roles.get(part_obj.role_code, {}).get('name')
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
@@ -168,12 +168,14 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))
-  new_case.participants = []
+  new_case.participants = DAList(new_case.instanceName + '.participants', object_type=ALIndividual, auto_gather=False)
   for aug in new_case.case_details.get('value', {}).get('rest', []):
     if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
       for participant in participant_xml:
-        new_case.participants.append(parse_participant(participant, roles))
+        partip_obj = new_case.participants.appendObject()
+        parse_participant(partip_obj, participant, roles)
+  new_case.participants.gathered = True
 
 def case_xml_to_parties(case_xml):
   rest_list = chain_xml(case_xml, ['value', 'rest'])
