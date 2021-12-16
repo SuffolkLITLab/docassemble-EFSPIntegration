@@ -26,6 +26,9 @@ class TestConversions(unittest.TestCase):
       self.assertNotEqual(partip.name.first, None)
       if partip.person_type == 'ALIndividual':
         self.assertNotEqual(partip.name.last, None)
+        # Make sure the name is title case: first letter is upper, everything else lower
+        self.assertEqual(partip.name.first[0], partip.name.first[0].upper())
+        self.assertEqual(partip.name.first[1], partip.name.first[1].lower())
       self.assertTrue(hasattr(partip, 'party_type'))
       self.assertTrue(hasattr(partip, 'party_type_name'))
       self.assertTrue(hasattr(partip, 'tyler_id'))

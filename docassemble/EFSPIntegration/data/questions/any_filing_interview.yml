@@ -10,6 +10,7 @@ include:
   - efiling_integration.yml
   - docassemble.AssemblyLine:al_package.yml
   - case_search.yml
+  - codes_helper.yml
 ---
 code: |
   user_wants_efile = True # This interview is always for e-filing
@@ -246,10 +247,6 @@ generic object: ALExhibitDocument
 code: |
   x.enabled = True
 ---
-generic object: ALExhibitDocument
-objects:
-  - x.optional_services: DAList.using(object_type=DAObject)
----
 objects:
   - al_court_bundle: ALDocumentBundle.using(filename="full_bundle.pdf", title="All forms to submit to the court", object_type=ALExhibitDocument, complete_attribute = 'completed', gathered=False, auto_gather=True, there_are_any=True)
 ---
@@ -397,35 +394,13 @@ code: |
   x.document_type
   x.motion_type
   x.filing_component
+  # Needed specifically for ALExhibitDocuments, not the default
   if x.exhibits.has_exhibits:
     x.as_pdf()
   x.filing_parties
   x.filing_action
   x.optional_services.gather(complete_attribute='complete')  
   x.completed =True
----
-generic object: ALDocument
-code: |
-  x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('code')
----
-generic object: ALDocument
-code: |
-  x.document_type = x.document_type_map.get(x.document_type_code,{}).get('code')
----
-generic object: ALDocument
-code: |
-  x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('code')
----
-generic object: ALDocument
-id: eserve
-question: |
-  Would you like to e-file this document, or serve to the desginated party?
-fields:
-  - Efile or serve?: x.filing_action
-    choices:
-      - Efile: efile
-      - Efile and Serve: efile_and_serve
-      - Serve: serve
 ---
 id: Additional parties
 question: |
@@ -595,23 +570,6 @@ fields:
       tyler_filing_attorney_options
     required: |
       filing_attorney_required_datafield.get('isrequired')
----
-reconsider:
-  - tyler_payment_account_options
-id: payment account
-question: |
-  Payment Account
-subquestion: |
-  Select an existing account below, or add a payment account
-  using the 
-  [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
-  
-  Refresh this page when you have finished adding the account.
-fields:
-  - Payment Account: tyler_payment_id
-    datatype: dropdown
-    code: |
-      tyler_payment_account_options
 ---
 generic object: ALDocument
 code: |
@@ -795,66 +753,6 @@ fields:
       party_type_options if is_nonindexed_filing else party_type_new_options
     default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
 ---
-code: |
-  def matching_tuple_option(option:str, options:List[Tuple]):
-    return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
----
-id: document type
-generic object: ALDocument
-question: |
-  Document type - ${ x.exhibits[0].title }
-subquestion: |
-  If a judge has ordered that this case is sealed, select
-  "Confidential". You should also attach a copy of the judge's order.
-fields:
-  - Document type: x.document_type_code
-    input type: radio
-    code: |
-      x.document_type_options
-    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
----
-id: filing component
-generic object: ALDocument
-if: |
-  not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
-question: |
-  Filing Component
-fields:
-  - Filing Component: x.filing_component_code
-    datatype: dropdown
-    code: |
-      x.filing_component_options
----
-generic object: ALDocument
-if: |
-  exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
-code: |
-  x.filing_component_code = next(iter(x.filing_component_options))[0]
----
-generic object: ALDocument
-id: motion_type
-question: |
-  Motion Type
-fields:
-  - Motion Type: x.motion_type_code
-    datatype: dropdown
-    code: |
-      x.motion_type_options
----
-generic object: ALDocument
-code: |
-  if x.motion_type_options:
-    x.motion_type = x.motion_type_map.get(x.motion_type_code)
-  else:
-    x.motion_type = None
----
-code: |
-  def exactly_one_required_filing_component(fc_opts, fc_map):
-    if len(fc_opts) > 1:
-      return False
-    filing_component_code = next(iter(fc_opts))[0]
-    return fc_map.get(filing_component_code,{}).get('required')
----
 # TODO(brycew): Need to force required filing types too
 code: |
   def any_required(fc_opts, fc_map):
@@ -919,37 +817,6 @@ fields:
     datatype: date
     min: ${ today() }
     default: ${ today() }
----
-id: any optional services
-generic object: ALDocument
-question: |
-  Optional services - ${ x.exhibits[0].title }
-subquestion: |
-  Do you want to add any optional services for this document?
-yesno: x.optional_services.there_are_any
----
-generic object: ALDocument
-code: |
-  if not x.optional_service_options:
-    x.optional_services.there_are_any = False
----
-id: another optional service
-generic object: ALDocument
-question: |
-  Are there any other optional services that you want for ${ x.title }?
-yesno: x.optional_services.there_is_another
----
-code: |
-  al_court_bundle[i].title = al_court_bundle[i].exhibits[0].title
----
-generic object: ALDocument
-code: |
-  my_code = x.optional_services[i].code
-  if x.optional_service_map.get(my_code,{}).get('multiplier'):
-    x.optional_services[i].multiplier
-  if x.optional_service_map.get(my_code,{}).get('hasfeeprompt'):
-    x.optional_services[i].fee_amount
-  x.optional_services[i].complete = True
 ---
 id: optional service type
 generic object: ALDocument
@@ -1017,24 +884,6 @@ subquestion: |
 fields: 
   - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
----
-generic object: ALDocument
-id: Parties resp for payment
-question: |
-  Parties responsible for payment
-fields: 
-  - Parties for payment: x.existing_parties_payment_dict
-    datatype: checkboxes
-    code: |
-      all_case_parties
----
-generic object: ALDocument
-code: |
-  if needs_all_info and len(users) == 1:
-    x.filing_parties = ['users[0]']
-    # explain_user_paying
-  else:
-    x.filing_parties = list(x.existing_parties_payment_dict.true_values())
 ---
 id: you are responsible for payment
 question: |
@@ -1142,9 +991,6 @@ code: |
   trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
 ---
 code: |
-  full_court_info = proxy_conn.get_court(court_id)
----
-code: |
   timing = 'Initial' if is_initial_filing else 'Subsequent'
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=True, timing=timing).data) 
   if not case_category_options:
@@ -1165,31 +1011,13 @@ code: |
       backing='attorneyID')
 ---
 code: |
-  allowable_card_types = full_court_info.data.get('allowablecardtypes', [])
-  res = proxy_conn.get_payment_account_list().data
-  if res:
-    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
-  else:
-    tyler_payment_account_options = []
-
-  res = proxy_conn.get_global_payment_account_list().data
-  if res:
-    tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types)) 
----
-code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
----
-code: |
-  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
 ---
 code: |  
   filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
----
-code: |
-  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, case_category, case_type, is_initial_filing).data)
 ---
 code: |
   party_type_options, party_type_map = \
@@ -1200,23 +1028,7 @@ code: |
 ---
 generic object: ALDocument
 code: |
-  raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
-  x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
----
-generic object: ALDocument
-code: |
-  raw_components = proxy_conn.get_filing_components(court_id, x.filing_type)
-  log('raw_components: ' + str(raw_components))
-  x.filing_component_options, x.filing_component_map = choices_and_map(raw_components.data)
-  log('map: ' + str(x.filing_component_map))
----
-generic object: ALDocument
-code: |
   x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
----
-generic object: ALDocument
-code: |
-  x.document_type_options, x.document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, x.filing_type).data)
 ---
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(jurisdiction_id, court_id).data)
@@ -1228,16 +1040,4 @@ code: |
 comment: |
   service_information
   submitted_page
----
-code: |    
-  if needs_all_info or is_adding_new_parties:
-    all_case_parties_tmp = [{user.instanceName: str(user)} for user in users]
-  else:
-    all_case_parties_tmp = []
-        
-  if not needs_all_info: 
-    all_case_parties_tmp.extend([(party.tyler_id, str(party.name)) for party in found_case.participants])
-
-  all_case_parties = all_case_parties_tmp
-  del all_case_parties_tmp
 ---

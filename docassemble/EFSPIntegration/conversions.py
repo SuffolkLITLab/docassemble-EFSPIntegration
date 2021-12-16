@@ -5,10 +5,9 @@ from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable
 from docassemble.base.util import DADateTime, as_datetime, validation_error
 from docassemble.AssemblyLine.al_general import ALIndividual
-from docassemble.base.core import DAList 
+from docassemble.base.core import DAList
 from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
-
 
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
@@ -64,7 +63,9 @@ def pretty_display(data, tab_depth=0) -> str:
     out = tab_str + str(data) + '\n'
   return out
 
-def debug_display(resp: ApiResponse):
+def debug_display(resp: ApiResponse) -> str:
+  """Returns a string with either the error of the response,
+  or it's data run through pretty_display"""
   if resp.is_ok() and resp.data is None:
     return 'All ok!'
   if not resp.is_ok():
@@ -75,6 +76,10 @@ def debug_display(resp: ApiResponse):
   return pretty_display(resp.data)
 
 def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
+  """
+  Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
+  returns the datetime it repsents.
+  """
   timestamp = tyler_daterep.get('dateRepresentation', {}).get('value', {}).get('value', 0)
   return tyler_timestamp_to_datetime(timestamp)
 
@@ -129,9 +134,9 @@ def parse_participant(part_obj, participant_val, roles:dict):
   if is_person(participant_val):
     part_obj.person_type = 'ALIndividual'
     name = entity.get('personName', {})
-    part_obj.name.first = name.get('personGivenName', {}).get('value')
-    part_obj.name.middle = name.get('personMiddleName', {}).get('value')
-    part_obj.name.last = name.get('personSurName', {}).get('value')
+    part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
+    part_obj.name.middle = name.get('personMiddleName', {}).get('value', '').title()
+    part_obj.name.last = name.get('personSurName', {}).get('value', '').title()
     part_obj.tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
   else:
     part_obj.person_type = 'business'
@@ -152,7 +157,8 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))
-  new_case.participants = DAList(new_case.instanceName + '.participants', object_type=ALIndividual, auto_gather=False)
+  new_case.participants = DAList(new_case.instanceName + '.participants',
+      object_type=ALIndividual, auto_gather=False)
   for aug in new_case.case_details.get('value', {}).get('rest', []):
     if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
