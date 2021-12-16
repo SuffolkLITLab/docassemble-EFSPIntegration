@@ -26,7 +26,7 @@ class TestConversions(unittest.TestCase):
       self.assertNotEqual(partip.name.first, None)
       if partip.person_type == 'ALIndividual':
         self.assertNotEqual(partip.name.last, None)
-      self.assertTrue(hasattr(partip, 'role_code'))
-      self.assertTrue(hasattr(partip, 'role_name'))
+      self.assertTrue(hasattr(partip, 'party_type'))
+      self.assertTrue(hasattr(partip, 'party_type_name'))
       self.assertTrue(hasattr(partip, 'tyler_id'))
     self.assertEqual(case.participants[0].instanceName, 'case.participants[0]')
