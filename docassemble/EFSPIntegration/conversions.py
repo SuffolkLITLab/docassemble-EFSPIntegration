@@ -123,8 +123,8 @@ def chain_xml(xml_val, elems: List[str]):
 
 def parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
-  part_obj.role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
-  part_obj.role_name = roles.get(part_obj.role_code, {}).get('name')
+  part_obj.party_type = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
+  part_obj.party_type_name = roles.get(part_obj.party_type, {}).get('name')
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
   if is_person(participant_val):
     part_obj.person_type = 'ALIndividual'
