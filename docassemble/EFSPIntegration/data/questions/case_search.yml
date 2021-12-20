@@ -100,9 +100,11 @@ subquestion: |
   % if can_file_non_indexed_case:
   ${ collapse_template(explain_case_search_choices_template) }
   % endif
-field: do_what_choice
-code: |
-  lookup_choices
+fields:
+  - no label: do_what_choice
+    datatype: radio
+    code: |
+      lookup_choices
 ---
 code: |
   lookup_choices = [
