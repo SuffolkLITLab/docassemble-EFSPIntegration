@@ -56,7 +56,7 @@ code: |
   del docket_case_response
 ---
 if: |
-  do_what_choice == 'non-indexed-case'
+  do_what_choice == 'non_indexed_case'
 code: |
   if can_file_non_indexed_case:
     non_indexed_docket_number
@@ -97,12 +97,20 @@ id: case lookup
 question: |
   Case lookup
 subquestion: |
+  % if can_file_non_indexed_case:
   ${ collapse_template(explain_case_search_choices_template) }
+  % endif
 field: do_what_choice
-choices:
-  - Find a case by party name: party_search
-  - Find a case by Case Number: docket_lookup
-  - I want to file into a non-indexed case: non-indexed-case
+code: |
+  lookup_choices
+---
+code: |
+  lookup_choices = [
+    {'party_search': 'Find a case by party name'},
+    {'docket_lookup': 'Find a case by case number'},
+  ]
+  if can_file_non_indexed_case:
+    lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})
 ---
 template: explain_case_search_choices_template
 subject: |
