@@ -272,5 +272,12 @@ code: |
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
         parse_case_info(proxy_conn, new_case, entry, court_id, {})
+        # Allows users to control what cases are shown as options
+        if not filter_fn(new_case):
+          found_cases.pop()
     found_cases.gathered = True
     cms_connection_issue = get_cases_response.response_code == 203
+---
+code: |
+  def filter_fn(new_case):
+    return True
