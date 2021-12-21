@@ -29,6 +29,11 @@ class TestConversions(unittest.TestCase):
         # Make sure the name is title case: first letter is upper, everything else lower
         self.assertEqual(partip.name.first[0], partip.name.first[0].upper())
         self.assertEqual(partip.name.first[1], partip.name.first[1].lower())
+        self.assertTrue(hasattr(partip, 'address'))
+        self.assertEqual(partip.address.city, 'RADOM')
+        self.assertEqual(partip.address.zip_code, '62876')
+        self.assertFalse(hasattr(partip, 'phone_number'))
+        self.assertFalse(hasattr(partip, 'email'))
       self.assertTrue(hasattr(partip, 'party_type'))
       self.assertTrue(hasattr(partip, 'party_type_name'))
       self.assertTrue(hasattr(partip, 'tyler_id'))
