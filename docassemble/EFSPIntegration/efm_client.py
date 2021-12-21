@@ -3,8 +3,8 @@ import re
 import json
 import logging
 import isodate
-from datetime import datetime, timedelta
-from typing import Union, List, Dict, Optional
+from datetime import datetime
+from typing import Union, List, Dict
 import http.client as http_client
 
 from urllib.parse import urlencode
@@ -34,20 +34,20 @@ class ApiResponse(DAObject):
   def is_ok(self):
     return self.response_code in [200, 201, 202, 203, 204, 205]
 
-def _recursive_give_data_url(bundle):
-  """Prepares the document types by setting a semi-permanent enabled and a data url"""
+def _give_data_url(bundle: ALDocumentBundle):
+  """Prepares the filing documents by setting a semi-permanent enabled and a data url
+  The document bundle can either consist of documents or other document bundles. But each top element will
+  sent to Tyler as a separate filing document, and needs to have the necessary attributes set (tyler_filing_id, etc)
+  """
   if bundle is None:
     return
   for doc in bundle:
-    if isinstance(doc, ALDocumentBundle):
-      _recursive_give_data_url(doc)
-    else:
-      doc.proxy_enabled = doc.always_enabled or doc.enabled
-      if doc.proxy_enabled:
-        doc.data_url = doc.as_pdf().url_for(temporary=True)
-        doc.page_count = doc.as_pdf().num_pages()
-      if hasattr(doc, 'enabled'):
-        del doc.enabled
+    doc.proxy_enabled = doc.always_enabled or doc.enabled
+    if doc.proxy_enabled:
+      doc.data_url = doc.as_pdf().url_for(temporary=True)
+      doc.page_count = doc.as_pdf().num_pages()
+    if hasattr(doc, 'enabled'):
+      del doc.enabled
 
 class ProxyConnection:
   def __init__(self, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login'):
@@ -472,14 +472,14 @@ class ProxyConnection:
     return self._call_proxy(send) 
 
   def check_filing(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _recursive_give_data_url(court_bundle)
+    _give_data_url(court_bundle)
     all_vars = json.dumps(all_variables())
     log(f'headers: {self.proxy_client.headers}')
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
   def file_for_review(self, jurisdiction: str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _recursive_give_data_url(court_bundle)
+    _give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings',
@@ -490,7 +490,7 @@ class ProxyConnection:
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
     if court_info.data.get('hasconditionalservicetypes'):
-      _recursive_give_data_url(court_bundle)
+      _give_data_url(court_bundle)
       all_vars_obj = all_variables()
       all_vars = json.dumps(all_vars_obj)
       send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/servicetypes',
@@ -501,7 +501,7 @@ class ProxyConnection:
       
   # TODO(brycew): rethink service API
   #def serve(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-  #  _recursive_give_data_url(court_bundle)
+  #  _give_data_url(court_bundle)
   #  all_vars_obj = all_variables()
   #  all_vars = json.dumps(all_vars_obj)
   #  send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/serve',
@@ -509,21 +509,21 @@ class ProxyConnection:
   #  return self._call_proxy(send)
   
   def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _recursive_give_data_url(court_bundle)
+    _give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars = json.dumps(all_vars_obj)
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/fees',
           data=all_vars)
-    return self._call_proxy(send)    
+    return self._call_proxy(send)
 
   def get_return_date(self, court_id:str, req_return_date, court_bundle:ALDocumentBundle):
-    _recursive_give_data_url(court_bundle)
+    _give_data_url(court_bundle)
     all_vars_obj = all_variables()
     all_vars_obj['return_date'] = req_return_date.isoformat()
     send = lambda: self.proxy_client.post(self.base_url + f'scheduling/courts/{court_id}/return_date', data=json.dumps(all_vars_obj))
     return self._call_proxy(send)
 
-  def reserve_court_date(self, court_id:str, doc_id:str, 
+  def reserve_court_date(self, court_id:str, doc_id:str,
       range_after:datetime=None, range_before:datetime=None, estimated_duration=None):
     if range_after is not None and not isinstance(range_after, str):
       range_after = range_after.isoformat()
@@ -551,7 +551,7 @@ class ProxyConnection:
           'first_name': person_name.get('first') if person_name is not None else None,
           'middle_name': person_name.get('middle') if person_name is not None else None,
           'last_name': person_name.get('last') if person_name is not None else None,
-          'business_name': business_name, 
+          'business_name': business_name,
           'docket_id': docket_id})
     return self._call_proxy(send)
 
