@@ -2,6 +2,18 @@
 include:
   - efiling_integration.yml
 ---
+comment: |
+  generic object only works on a single type of object. However, in ALDocumentBundles, we
+  treat ALDocuments and ALDocumentBundles the same: we just call as_pdf().
+  From the Tyler perspective, authors should be able to declare at what level the ALDocument
+  or ALDocumentBundles are going to be combined and sent to Tyler, and at that level, we need
+  to define all of the below attributes (tyler_filing_type, etc.)
+
+  For simplicity, the generic objects below will mostly be DAObjects, to catch both ALDocumentBundles
+  and ALDocuments. However, it would be best to eventually in AssemblyLine core to make sure both
+  classes multiple-inherit from a dummy object, Pdfizable (TODO(brycew): make a better name), so there
+  can be a more specific object to make generic
+---
 generic object: ALDocument
 code: |
   x.filing_type
@@ -17,19 +29,34 @@ code: |
   x.as_pdf()
   x.completed =True
 ---
-generic object: ALDocument
+generic object: ALDocumentBundle
+code: |
+  x.filing_type
+  x.filing_description
+  x.reference_number
+  x.tyler_filing_type 
+  x.document_type
+  x.motion_type
+  x.filing_component
+  x.filing_parties
+  x.filing_action
+  x.optional_services.gather(complete_attribute='complete')
+  x.as_pdf()
+  x.completed =True
+---
+generic object: DAObject
 code: |
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('code')
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   x.document_type = x.document_type_map.get(x.document_type_code,{}).get('code')
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('code')
 ---
-generic object: ALDocument
+generic object: DAObject
 id: eserve
 question: |
   Would you like to e-file this document, or serve to the desginated party?
@@ -40,7 +67,7 @@ fields:
       - Efile and Serve: efile_and_serve
       - Serve: serve
 ---
-generic object: ALDocument
+generic object: DAObject
 id: any optional services
 question: |
   Optional services - ${ x.title }
@@ -48,18 +75,18 @@ subquestion: |
   Do you want to add any optional services for this document?
 yesno: x.optional_services.there_are_any
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   if not x.optional_service_options:
     x.optional_services.there_are_any = False
 ---
-generic object: ALDocument
+generic object: DAObject
 id: another optional service
 question: |
   Are there any other optional services that you want for ${ x.title }?
 yesno: x.optional_services.there_is_another
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   my_code = x.optional_services[i].code
   if x.optional_service_map.get(my_code,{}).get('multiplier'):
@@ -68,25 +95,27 @@ code: |
     x.optional_services[i].fee_amount
   x.optional_services[i].complete = True
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
   x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
+  del row_opt_servs
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   raw_components = proxy_conn.get_filing_components(court_id, x.filing_type)
   x.filing_component_options, x.filing_component_map = choices_and_map(raw_components.data)
+  del raw_components
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   x.document_type_options, x.document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, x.filing_type).data)
 ---
-generic object: ALDocument
+generic object: DAObject
 id: document type
 question: |
   Document type - ${ x.title }
@@ -100,7 +129,7 @@ fields:
       x.document_type_options
     default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
 ---
-generic object: ALDocument
+generic object: DAObject
 id: filing component
 if: |
   not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
@@ -112,13 +141,13 @@ fields:
     code: |
       x.filing_component_options
 ---
-generic object: ALDocument
+generic object: DAObject
 if: |
   exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 code: |
   x.filing_component_code = next(iter(x.filing_component_options))[0]
 ---
-generic object: ALDocument
+generic object: DAObject
 id: motion_type
 question: |
   Motion Type
@@ -128,14 +157,14 @@ fields:
     code: |
       x.motion_type_options
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   if x.motion_type_options:
     x.motion_type = x.motion_type_map.get(x.motion_type_code)
   else:
     x.motion_type = None
 ---
-generic object: ALDocument
+generic object: DAObject
 id: Parties resp for payment
 question: |
   Parties responsible for payment
@@ -145,7 +174,7 @@ fields:
     code: |
       all_case_parties
 ---
-generic object: ALDocument
+generic object: DAObject
 code: |
   if needs_all_info and len(users) == 1:
     x.filing_parties = ['users[0]']
@@ -153,7 +182,7 @@ code: |
   else:
     x.filing_parties = list(x.existing_parties_payment_dict.true_values())
 ---
-generic object: ALDocument
+generic object: DAObject
 objects:
   - x.optional_services: DAList.using(object_type=DAObject)
 ---
@@ -169,7 +198,7 @@ code: |
 ---
 code: |
   if needs_all_info or any([u.is_new for u in users]):
-    all_case_parties_tmp = [{user.instanceName: str(user)} for user in users]
+    all_case_parties_tmp = [[user.instanceName: str(user)] for user in users]
   else:
     all_case_parties_tmp = []
 
