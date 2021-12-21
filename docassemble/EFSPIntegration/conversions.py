@@ -3,10 +3,10 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable
-from docassemble.base.util import DADateTime, as_datetime, validation_error
+from docassemble.base.util import DADateTime, Address, as_datetime, validation_error
 from docassemble.AssemblyLine.al_general import ALIndividual
 from docassemble.base.core import DAList
-from docassemble.base.functions import get_config
+from docassemble.base.functions import get_config, prefix_constructor_two_arguments
 from .efm_client import ApiResponse
 
 def convert_court_to_id(trial_court) -> str:
@@ -126,6 +126,37 @@ def chain_xml(xml_val, elems: List[str]):
       val = val[elem]
   return val
 
+def parse_phone_number(phone_xml) -> str:
+  """Parses a gov.niem.niem.niem_core._2.TelephoneNumberType / nc:TelephoneNumberType into a string"""
+  if phone_xml is None:
+    return None
+  if phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber':
+    return phone_xml.get('value', {}).get('telephoneNumberFullID', {}).get('value')
+  elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}InternationalTelephoneNumber':
+    return phone_xml.get('value', {}).get('telephoneCountryCodeID', {}).get('value', '') +\
+        phone_xml.get('value', {}).get('telephoneNumberID', {}).get('value', '')
+  elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}NANPTelephoneNumber':
+    tp = phone_xml.get('value', {})
+    return tp.get('telephoneAreaCodeID', {}).get('value', '') +\
+        tp.get('telephoneExchanceID').get('value', '') +\
+        tp.get('telephoneLineID').get('value', '')
+  else:
+    # TODO(brycew): no telephone type we recognize?
+    return None
+
+def parse_address(address_xml) -> Address:
+  address = Address()
+  city_xml = address_xml.get('value', {}).get('locationCityName', {})
+  if city_xml:
+    address.city = city_xml.get('value')
+  zip_xml = address_xml.get('value', {}).get('locationPostalCode', {})
+  if zip_xml:
+    address.zip_code = zip_xml.get('value')
+  state_xml = address_xml.get('value', {}).get('locationState', {})
+  if state_xml.get('value', {}).get('value'):
+    address.state = state_xml.get('value', {}).get('value')
+  return address
+
 def parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
   part_obj.party_type = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
@@ -137,6 +168,22 @@ def parse_participant(part_obj, participant_val, roles:dict):
     part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
     part_obj.name.middle = name.get('personMiddleName', {}).get('value', '').title()
     part_obj.name.last = name.get('personSurName', {}).get('value', '').title()
+    # TODO(brycew): parse the address, phone, and email if possible
+    contact_xml = next(iter(entity.get('personAugmentation', {}).get('contactInformation', []))).get('contactMeans', [])
+    for contact_info in contact_xml:
+      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber':
+        phone = parse_phone_number(contact_info.get('value', {}).get('telephoneNumberRepresentation'))
+        if phone:
+          part_obj.phone_number = phone
+      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress':
+        address = parse_address(contact_info.get('value', {}).get('addressRepresentation'))
+        if address:
+          part_obj.address = address
+          part_obj.address.instanceName = part_obj.instanceName + '.address'
+      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactEmailID':
+        email = contact_info.get('value', {}).get('value')
+        if email:
+          part_obj.email = email
     part_obj.tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
   else:
     part_obj.person_type = 'business'
