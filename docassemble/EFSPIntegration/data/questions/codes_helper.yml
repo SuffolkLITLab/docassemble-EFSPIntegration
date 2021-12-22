@@ -198,12 +198,12 @@ code: |
 ---
 code: |
   if needs_all_info or any([u.is_new for u in users]):
-    all_case_parties_tmp = [[user.instanceName: str(user)] for user in users]
+    all_case_parties_tmp = [[user.instanceName, str(user)] for user in users]
   else:
     all_case_parties_tmp = []
 
   if not needs_all_info:
-    all_case_parties_tmp.extend([(party.tyler_id, str(party.name)) for party in found_case.participants])
+    all_case_parties_tmp.extend([[party.tyler_id, str(party.name)] for party in found_case.participants])
 
   all_case_parties = all_case_parties_tmp
   del all_case_parties_tmp
