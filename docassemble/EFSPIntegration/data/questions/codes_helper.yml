@@ -99,7 +99,7 @@ generic object: DAObject
 code: |
   raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
   x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
-  del row_opt_servs
+  del raw_opt_servs
 ---
 generic object: DAObject
 code: |
