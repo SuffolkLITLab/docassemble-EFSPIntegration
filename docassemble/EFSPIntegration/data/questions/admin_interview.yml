@@ -1,6 +1,6 @@
 ---
 modules:
-  - .efm_client  
+  - .efm_client
   - .conversions
 ---
 include:
@@ -78,15 +78,10 @@ code: |
     ('remove_global_payment_account', 'RemoveGlobal Payment Account'),
   ]
 ---
-code: |
-  my_var = proxy_conn.get_case('adams', '')
----
 id: Admin tasks
 question: | 
   ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
 subquestion: |
-  ${ debug_display(my_var) }
-
   % if logged_in_user_is_global_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
@@ -488,7 +483,7 @@ fields:
       trial_court_options
 ---
 code: |
-  court_id = convert_court_to_id(trial_court)
+  court_id = conversions.convert_court_to_id(trial_court)
 ---
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
@@ -1343,7 +1338,7 @@ id: results
 question: |
   Results of your request
 subquestion: |
-  ${ debug_display(resp) }
+  ${ conversions.debug_display(resp) }
 continue button field: show_resp
 ---
 id: results role update

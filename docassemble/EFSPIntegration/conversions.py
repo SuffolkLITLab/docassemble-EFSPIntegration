@@ -6,8 +6,23 @@ from typing import List, Dict, Tuple, Any, Callable
 from docassemble.base.util import DADateTime, Address, as_datetime, validation_error
 from docassemble.AssemblyLine.al_general import ALIndividual
 from docassemble.base.core import DAList
-from docassemble.base.functions import get_config, prefix_constructor_two_arguments
+from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
+
+__all__ = [
+  'convert_court_to_id',
+  'choices_and_map',
+  'pretty_display',
+  'debug_display',
+  'tyler_daterep_to_datetime',
+  'tyler_timestamp_to_datetime',
+  'validate_tyler_regex',
+  'parse_case_info',
+  'filter_payment_accounts',
+  'payment_account_labels',
+  'filing_id_and_label',
+  'get_tyler_roles'
+]
 
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
@@ -111,7 +126,7 @@ def validate_tyler_regex(data_field:Dict)->Callable:
     validation_error(validation_message)
   return fn_validate
 
-def is_person(possible_person:dict):
+def _is_person(possible_person:dict):
   """Helper for getting party ID"""
   # TODO(brycew): could also check the declaredType?
   return not chain_xml(possible_person, ['value', 'entityRepresentation', 'value']
@@ -126,7 +141,7 @@ def chain_xml(xml_val, elems: List[str]):
       val = val[elem]
   return val
 
-def parse_phone_number(phone_xml) -> str:
+def _parse_phone_number(phone_xml) -> str:
   """Parses a gov.niem.niem.niem_core._2.TelephoneNumberType / nc:TelephoneNumberType into a string"""
   if phone_xml is None:
     return None
@@ -144,7 +159,7 @@ def parse_phone_number(phone_xml) -> str:
     # TODO(brycew): no telephone type we recognize?
     return None
 
-def parse_address(address_xml) -> Address:
+def _parse_address(address_xml) -> Address:
   address = Address()
   city_xml = address_xml.get('value', {}).get('locationCityName', {})
   if city_xml:
@@ -157,12 +172,12 @@ def parse_address(address_xml) -> Address:
     address.state = state_xml.get('value', {}).get('value')
   return address
 
-def parse_participant(part_obj, participant_val, roles:dict):
+def _parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
   part_obj.party_type = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
   part_obj.party_type_name = roles.get(part_obj.party_type, {}).get('name')
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
-  if is_person(participant_val):
+  if _is_person(participant_val):
     part_obj.person_type = 'ALIndividual'
     name = entity.get('personName', {})
     part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
@@ -172,11 +187,11 @@ def parse_participant(part_obj, participant_val, roles:dict):
     contact_xml = next(iter(entity.get('personAugmentation', {}).get('contactInformation', []))).get('contactMeans', [])
     for contact_info in contact_xml:
       if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber':
-        phone = parse_phone_number(contact_info.get('value', {}).get('telephoneNumberRepresentation'))
+        phone = _parse_phone_number(contact_info.get('value', {}).get('telephoneNumberRepresentation'))
         if phone:
           part_obj.phone_number = phone
       if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress':
-        address = parse_address(contact_info.get('value', {}).get('addressRepresentation'))
+        address = _parse_address(contact_info.get('value', {}).get('addressRepresentation'))
         if address:
           part_obj.address = address
           part_obj.address.instanceName = part_obj.instanceName + '.address'
@@ -211,22 +226,8 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
       for participant in participant_xml:
         partip_obj = new_case.participants.appendObject()
-        parse_participant(partip_obj, participant, roles)
+        _parse_participant(partip_obj, participant, roles)
   new_case.participants.gathered = True
-
-def case_xml_to_parties(case_xml):
-  rest_list = chain_xml(case_xml, ['value', 'rest'])
-  tyler_aug = [aug for aug in rest_list if 'tyler.ecf' in aug.get('declaredType')][0]
-  return chain_xml(tyler_aug, ['value', 'caseParticipant'])
-
-def parties_xml_to_choices(parties_xml):
-  choices = []
-  for party in parties_xml:
-    entity = chain_xml(party, ['value', 'entityRepresentation', 'value'])
-    name = entity.get('personName', {})
-    per_id = chain_xml(entity, ['personOtherIdentification', 0, 'identificationID', 'value'])
-    choices.append((per_id, name))
-  return choices
 
 def _payment_labels(acc):
   if acc.get('paymentAccountTypeCode') == 'CC':
