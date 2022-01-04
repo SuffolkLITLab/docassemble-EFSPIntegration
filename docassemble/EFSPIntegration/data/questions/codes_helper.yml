@@ -224,6 +224,7 @@ code: |
     return fc_map.get(filing_component_code,{}).get('required')
 ---
 code: |
+  from typing import List, Tuple
   def matching_tuple_option(option:str, options:List[Tuple]):
     return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
 ---
