@@ -1,4 +1,5 @@
 import os
+import sys
 from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
