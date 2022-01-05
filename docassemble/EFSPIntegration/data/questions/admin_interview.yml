@@ -483,7 +483,7 @@ fields:
       trial_court_options
 ---
 code: |
-  court_id = conversions.convert_court_to_id(trial_court)
+  court_id = convert_court_to_id(trial_court)
 ---
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
@@ -1338,7 +1338,7 @@ id: results
 question: |
   Results of your request
 subquestion: |
-  ${ conversions.debug_display(resp) }
+  ${ debug_display(resp) }
 continue button field: show_resp
 ---
 id: results role update
