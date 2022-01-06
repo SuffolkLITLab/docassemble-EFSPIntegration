@@ -93,7 +93,6 @@ subquestion: |
       initial_filing_template,
       efsp_template,
       subsequent_filing_template,
-      eservice_template,
       ecf_template,
       filings_template) }
   % elif logged_in_user_is_admin:
@@ -107,7 +106,6 @@ subquestion: |
       initial_filing_template,
       efsp_template,
       subsequent_filing_template,
-      eservice_template,
       ecf_template,
       filings_template) }
   % else:
@@ -182,15 +180,15 @@ subject: |
 content: |  
   Tests:
 
-  * Create a new firm administrator of new firm :far-fa-check-square:
-  * Attempt to create users with bad/missing info :far-fa-check-square:
-  * Create additional users with approprate info :far-fa-check-square:
-  * Change all info for user (email, first, middle last) :far-fa-check-square:
+  * Create a new firm administrator of new firm
+  * Attempt to create users with bad/missing info
+  * Create additional users with approprate info
+  * Change all info for user (email, first, middle last)
   * Attempt 6 bad logins to lock out user 
-  * User firm admin to elevate the new user to admin :far-fa-check-square:
-  * Update firm details with new info :far-fa-check-square:
-  * De-elevate the new user back to regular user :far-fa-check-square:
-  * Use firm admin to remove user. :far-fa-check-square:
+  * User firm admin to elevate the new user to admin
+  * Update firm details with new info
+  * De-elevate the new user back to regular user
+  * Use firm admin to remove user
   * Merge existing user into firm, verify they're in List     
   
   ${ action_button_html(url_ask(
@@ -230,10 +228,10 @@ template: firm_admin_attorneys_template
 subject: |
   Attorneys
 content: |
-  * Login as admin. Add several Attorneys :far-fa-check-square:
-  * Attempt to create Attorney with bad info (e.g., invalid bar number?) :far-fa-check-square:
-  * Change info for a selected attorney :far-fa-check-square:
-  * Use firm admin and rm at attorney from the firm   :far-fa-check-square:
+  * Login as admin. Add several Attorneys
+  * Attempt to create Attorney with bad info (e.g., invalid bar number?)
+  * Change info for a selected attorney
+  * Use firm admin and rm at attorney from the firm
 
   % for elem in firm_admin_attorneys_list:
   ${ action_button_html(url_ask(
@@ -246,6 +244,11 @@ template: firm_admin_service_contacts
 subject: |
   Service contacts
 content: |
+  * ECF Service - Access E-Service SMTP Logs
+  * ECF Service - Notification of Service
+  * ECF Service - Access Service Information History
+  * ECF Service - Access List of Attached Cases
+
   ${ action_button_html(url_ask(
     [{'recompute': ['get_service_contact_list', 'show_resp']}]),
     label='Get service contact list') }
@@ -290,8 +293,6 @@ content: |
   ${ action_button_html(url_ask(
     [{'recompute': ['get_attached_cases', 'show_resp']}]),
     label='View attached cases') }
-
-    
 ---
 template: payment_template
 subject: |
@@ -410,22 +411,12 @@ content: |
   
   ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }  
 ---
-template: eservice_template
-subject: |
-  Firm admin - eService
-content: |  
-  * eService
----
 template: ecf_template
 subject: |
   ECF Filing
 content: |
   * ECF Filing - Subsequent Filing into Non-indexed case
-  * ECF Filing - Filing with Courtesy Copies
-  * ECF Service - Access E-Service SMTP Logs
-  * ECF Service - Notification of Service
-  * ECF Service - Access Service Information History
-  * ECF Service - Access List of Attached Cases  
+  * ECF Filing - Filing with Courtesy Copies 
   
   ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
 ---
