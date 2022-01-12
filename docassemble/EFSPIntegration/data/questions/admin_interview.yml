@@ -706,8 +706,11 @@ subquestion: |
   % if url_args.get('completed', 'false') == 'true':
   You've created your new payment account!
   % endif
+  % if url_args.get('errored', 'false') == 'true':
+  An error has occured. Please try again.
+  % endif
 script: |
-  % if url_args.get('completed', 'false') != 'true':
+  % if url_args.get('completed', None) != 'true':
   <script>
       //data = '<PaymentRequest></PaymentRequest>'; 
       
@@ -742,6 +745,11 @@ script: |
       url.name = 'original_url';
       url.value = '${ interview_url(temporary=1, completed='true') }';
       form.appendChild(url);
+      const errorUrl  = document.createElement('input');
+      errorUrl.type = 'hidden';
+      errorUrl.name = 'error_url';
+      errorUrl.value = '${ interview_url(temporary=1, completed='false', errored='true') }';
+      form.appendChild(errorUrl);
       document.body.appendChild(form);
       form.submit();
   </script>
