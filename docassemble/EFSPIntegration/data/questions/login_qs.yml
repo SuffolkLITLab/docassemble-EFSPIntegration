@@ -35,8 +35,9 @@ code: |
     tyler_login_resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
     del my_password
     if not tyler_login_resp.is_ok():
+      log(f'Failed to login: {tyler_login_resp}')
       login_failed_screen
-  tyler_login = True      
+  tyler_login = True
   # TODO(brycew): handle improper login info
 ---
 code: |
