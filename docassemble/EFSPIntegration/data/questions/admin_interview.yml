@@ -703,14 +703,16 @@ question: |
 # TODO: using url_args this way means you can only create one
 # payment account per session!
 subquestion: |
-  % if url_args.get('completed', 'false') == 'true':
+  % if defined('creation_status'):
+  % if creation_status == 'success':
   You've created your new payment account!
   % endif
-  % if url_args.get('errored', 'false') == 'true':
+  % if creation_status == 'failure':
   An error has occured. Please try again.
   % endif
+  % endif
 script: |
-  % if url_args.get('completed', None) != 'true':
+  % if not defined('creation_status'):
   <script>
       //data = '<PaymentRequest></PaymentRequest>'; 
       
@@ -743,18 +745,23 @@ script: |
       const url = document.createElement('input');
       url.type = 'hidden';
       url.name = 'original_url';
-      url.value = '${ interview_url(temporary=1, completed='true') }';
+      url.value = '${ interview_url_action('completed_payment_account', creation_status='success') }';
       form.appendChild(url);
       const errorUrl  = document.createElement('input');
       errorUrl.type = 'hidden';
       errorUrl.name = 'error_url';
-      errorUrl.value = '${ interview_url(temporary=1, completed='false', errored='true') }';
+      errorUrl.value = '${ interview_url_action('completed_payment_account', creation_status='failure') }';
       form.appendChild(errorUrl);
       document.body.appendChild(form);
       form.submit();
   </script>
   % endif
 continue button field: new_payment_account
+---
+event: completed_payment_account
+code: |
+  if 'creation_status' in action_arguments():
+    creation_status = action_arguments('creation_status')
 ---
 id: new payment account
 question: |
