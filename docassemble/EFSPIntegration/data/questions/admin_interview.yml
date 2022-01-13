@@ -761,7 +761,7 @@ continue button field: new_payment_account
 event: completed_payment_account
 code: |
   if 'creation_status' in action_arguments():
-    creation_status = action_arguments('creation_status')
+    creation_status = action_argument('creation_status')
 ---
 id: new payment account
 question: |
