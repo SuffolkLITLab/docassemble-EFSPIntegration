@@ -284,7 +284,7 @@ def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
   if not login_data:
     return False, False
 
-  user_details = proxy_conn.get_user(login_data.get('TYLER-ID'))
+  user_details = proxy_conn.get_user(login_data.get('TYLER-ID', login_data.get('TYLER_ID')))
   if not user_details.data:
     return False, False
 

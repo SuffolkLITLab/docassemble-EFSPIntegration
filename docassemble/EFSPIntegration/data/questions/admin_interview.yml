@@ -738,7 +738,7 @@ script: |
       const tylerInfo = document.createElement('input');
       tylerInfo.type = 'hidden';
       tylerInfo.name = 'tyler_info';
-      tylerInfo.value = '${ proxy_conn.proxy_client.headers['TYLER-TOKEN'] }';
+      tylerInfo.value = '${ proxy_conn.proxy_client.headers.get('TYLER-TOKEN', proxy_conn.proxy_client.headers.get('TYLER_TOKEN')) }';
       form.appendChild(tylerInfo);
       const url = document.createElement('input');
       url.type = 'hidden';
