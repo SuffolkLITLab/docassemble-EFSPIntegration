@@ -303,7 +303,7 @@ content: |
   * eCheck
 
   ${ action_button_html(url_ask([
-      {'undefine': ['new_payment_account', 'creation_status']},
+      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
       {'recompute': ['new_payment_account']}
     ]),
     label='New payment Account') }
@@ -320,7 +320,7 @@ subject: |
   Payment accounts
 content: |
   ${ action_button_html(url_ask([
-      {'undefine': ['new_payment_account', 'creation_status']},
+      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
       {'recompute': ['new_payment_account']}
     ]),
     label='New payment Account') }
