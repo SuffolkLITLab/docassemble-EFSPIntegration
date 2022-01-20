@@ -488,6 +488,8 @@ code: |
 id: filing id
 question: |
   Filing id?
+subquestion: |
+  Select an option below. If none are available (no filings were found), you can type your own.
 fields:
   - Filing id: filing_id
     datatype: combobox
@@ -794,6 +796,7 @@ fields:
     datatype: date
     default: ${ today().plus(days=1).format("yyyy-MM-dd")}
     required: False
+continue button field: ask_for_search_dates
 ---
 code: |
   if reg_type == "FIRM_ADMINISTRATOR":
@@ -959,11 +962,13 @@ code: |
   get_policy = True
 ---
 code: |
+  ask_for_search_dates
   resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
       start_date if defined('start_date') else None, 
       end_date if defined('end_date') else None)
   if resp.data is None:
     resp.data = []
+  del ask_for_search_dates
   del trial_court
   del court_id
   get_filings = True
@@ -995,11 +1000,13 @@ code: |
 code: |
   # TODO(qs): requires a bundle
   resp = proxy_conn.file_for_review(jurisdiction_id, court_id)
+  del trial_court
   del court_id
   dummy_filing = True
 ---
 code: |
   resp = proxy_conn.cancel_filing_status(jurisdiction_id, court_id, filing_id)
+  del trial_court
   del court_id
   del filing_id
   cancel_filing = True
@@ -1170,6 +1177,7 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_attached_cases(court_id, service_contact_id)
+  del trial_court
   del court_id
   del service_contact_id
   get_attached_cases = True
@@ -1300,6 +1308,7 @@ code: |
 code: |
   if case_was_found:
     resp = proxy_conn.get_case_service_history(court_id, found_case.tracking_id)
+    del trial_court
     del court_id
     get_case_service_history = True
   else:
@@ -1339,6 +1348,7 @@ fields:
 ---
 code: |
   resp=proxy_conn.get_datafield(court_id, field_name)
+  del trial_court
   del court_id
   del field_name
   get_datafield = True
