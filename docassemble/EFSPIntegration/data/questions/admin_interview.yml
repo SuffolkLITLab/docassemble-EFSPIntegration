@@ -462,7 +462,7 @@ fields:
   - User ID: user_id
     datatype: combobox
     code: |
-      [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data ]
+      [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data or []]
 ---
 id: admin trial court
 question: |
@@ -478,8 +478,8 @@ code: |
 ---
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
-  trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
-  trial_court_options.append(('0', '0'))
+  trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data or []]
+  trial_court_options.append(('0', 'All courts'))
 ---
 event: query_variables
 code: |
@@ -492,7 +492,7 @@ fields:
   - Filing id: filing_id
     datatype: combobox
     code: |
-      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1) ).data]
+      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1) ).data or []]
 ---
 id: firm id
 question: |
@@ -509,7 +509,7 @@ fields:
   - Attorney id: attorney_id
     datatype: combobox
     code: |
-      [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data ]
+      [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data or []]
 ---
 id: payment account id
 question: |
@@ -575,7 +575,7 @@ fields:
   - Service contact id: service_contact_id
     datatype: combobox
     code: |
-      [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data]
+      [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data or []]
 ---
 id: tracking id
 question: |
@@ -584,7 +584,7 @@ fields:
   - Case Tracking ID: attached_case_tracking_id
     datatype: combobox
     code: |
-      [(y['value']['caseTrackingID']['value'], y['value']['caseTitleText']['value']) for y in all_attached_case_tracking_ids.data] 
+      [(y['value']['caseTrackingID']['value'], y['value']['caseTitleText']['value']) for y in all_attached_case_tracking_ids.data or []] 
 ---
 code: |
   all_attached_case_tracking_ids = proxy_conn.get_attached_cases(court_id, service_contact_id)
@@ -948,11 +948,13 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_court(court_id)
+  del trial_court
   del court_id
   get_court = True
 ---
 code: |
   resp = proxy_conn.get_policy(jurisdiction_id, court_id)
+  del trial_court
   del court_id
   get_policy = True
 ---
@@ -960,6 +962,9 @@ code: |
   resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
       start_date if defined('start_date') else None, 
       end_date if defined('end_date') else None)
+  if resp.data is None:
+    resp.data = []
+  del trial_court
   del court_id
   get_filings = True
 ---
@@ -975,12 +980,14 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_filing_status(jurisdiction_id, court_id, filing_id)
+  del trial_court
   del court_id
   del filing_id
   get_filing_status = True
 ---
 code: |
   resp = proxy_conn.get_filing(jurisdiction_id, court_id, filing_id)
+  del trial_court
   del court_id
   del filing_id
   get_filing = True
@@ -1021,7 +1028,7 @@ fields:
       [{
          y.get('code'): y.get('description'), 
          'default': next(filter(lambda choice: choice.get('code') == y.get('code'), existing_notification_preferences.data)).get('isActive')
-       } for y in notification_options.data ]
+       } for y in notification_options.data or []]
 ---
 code: |
   # sample:
