@@ -479,7 +479,7 @@ code: |
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
   trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data or []]
-  trial_court_options.append(('0', 'All courts'))
+  trial_court_options.insert(0, ('0', 'All courts'))
 ---
 event: query_variables
 code: |
