@@ -496,6 +496,17 @@ fields:
     code: |
       [filing_id_and_label(y) for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1) ).data or []]
 ---
+id: filtering user id
+question: |
+  Filings by which user?
+subquestion: |
+  Select an option below. If none are available (no users were found), you can type your own.
+fields:
+  - User: filtering_user_id
+    datatype: combobox
+    code: |
+      [{None: 'Any user (no filter)'}] + [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data or []]
+---
 id: firm id
 question: |
   Firm id?
@@ -964,10 +975,12 @@ code: |
 code: |
   ask_for_search_dates
   resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
-      start_date if defined('start_date') else None, 
-      end_date if defined('end_date') else None)
+      user_id = filtering_user_id,
+      start_date = start_date if defined('start_date') else None, 
+      end_date = end_date if defined('end_date') else None)
   if resp.data is None:
     resp.data = []
+  del filtering_user_id
   del ask_for_search_dates
   del trial_court
   del court_id
