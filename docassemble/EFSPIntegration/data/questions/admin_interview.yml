@@ -276,6 +276,7 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
+      'trial_court',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',
@@ -357,6 +358,7 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
+      'trial_court',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',
@@ -370,6 +372,7 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
+      'trial_court',
       'court_id',
       'case_search_task_status',
       'case_search_waiting_screen',

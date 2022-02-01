@@ -91,7 +91,10 @@ code: |
       lead_contact.email
     #TODO(qs): if not a waiver account...
     ready_to_efile
-    review_fees
+    if fees_resp.is_ok():
+      review_fees
+    else:
+      bad_fees
 
   show_disclaimers
   efile
@@ -278,10 +281,15 @@ fields:
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
-    #show if:
-    #  code: |
-    #    has_fees
-#continue button field: review_fees        
+---
+id: bad fees
+event: bad_fees
+question: |
+  Something went wrong
+subquestion: |
+  Sorry, something went wrong when trying to figure out what fees you might have to pay.
+ 
+  More details: ${ debug_display(fees_resp) }
 ---
 depends on:
   - fees_resp
@@ -475,7 +483,7 @@ question: |
 subquestion: |
   What attorneys are you adding?
 fields:
-  - Attorneys: x.attorney_adding_ids
+  - Attorneys: x.attorney_adding_opts
     datatype: multiselect
     required: False
     code: |
@@ -502,22 +510,22 @@ question: |
   Adding attorneys to existing users
 fields: 
   - To party: existing_parties_new_atts[i].existing_party
-  - Attorneys: existing_parties_new_atts[i].attorney_adding_ids
+  - Attorneys: existing_parties_new_atts[i].attorney_adding_opts
     datatype: multiselect
     code: |
       tyler_filing_attorney_options
 ---
 generic object: ALIndividual
 code: |
-  x.attorney_ids = [att[0] for att in x.attorney_adding_ids.items() if att[1]]
+  x.attorney_ids = x.attorney_adding_opts.true_values()
 ---
 code: |
   attorney_ids = functools.reduce(lambda new_list, exst: exst.attorney_ids + new_list, users, [])
   for exst_user in existing_parties_new_atts:
-    attorney_ids.extend(exst_user.attorney_adding_ids)
+    attorney_ids.extend(exst_user.attorney_adding_opts.true_values())
   party_to_attorneys = {y.instanceName: y.attorney_ids for y in users}
   for y in existing_parties_new_atts:
-    party_to_attorneys[y.existing_party] = y.attorney_adding_ids 
+    party_to_attorneys[y.existing_party] = y.attorney_ids
 ---
 id: location
 question: | 
