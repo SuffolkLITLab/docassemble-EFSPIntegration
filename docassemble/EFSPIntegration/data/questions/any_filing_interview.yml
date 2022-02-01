@@ -53,7 +53,7 @@ code: |
 
   users.gather()
   other_parties.gather()
-  existing_parties_new_atts.gather()
+  existing_parties_new_atts.gather(complete_attribute='attorney_ids')
   attorney_ids
   party_to_attorneys
   all_case_parties
@@ -507,22 +507,25 @@ code: |
     existing_parties_new_atts.there_are_any = False
 ---
 question: |
-  Adding attorneys to existing users
+  Add attorneys to existing users
 fields: 
   - To party: existing_parties_new_atts[i].existing_party
+    datatype: select
+    code: |
+      [(part.tyler_id, str(part.name)) for part in found_case.participants if part.tyler_id not in [ext_part.existing_party for ext_part in existing_parties_new_atts if defined('ext_part.existing_party')]]
   - Attorneys: existing_parties_new_atts[i].attorney_adding_opts
     datatype: multiselect
     code: |
       tyler_filing_attorney_options
 ---
-generic object: ALIndividual
+generic object: DAObject
 code: |
   x.attorney_ids = x.attorney_adding_opts.true_values()
 ---
 code: |
   attorney_ids = functools.reduce(lambda new_list, exst: exst.attorney_ids + new_list, users, [])
   for exst_user in existing_parties_new_atts:
-    attorney_ids.extend(exst_user.attorney_adding_opts.true_values())
+    attorney_ids.extend(exst_user.attorney_ids) 
   party_to_attorneys = {y.instanceName: y.attorney_ids for y in users}
   for y in existing_parties_new_atts:
     party_to_attorneys[y.existing_party] = y.attorney_ids
