@@ -325,6 +325,7 @@ code: |
   x.complete = True
 ---
 code: |
+  users[i].is_form_filler
   str(users[i].name)
   users[i].party_type = party_type_map.get(users[i].party_type_code).get('code')
   users[i].attorney_ids
