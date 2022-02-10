@@ -49,6 +49,20 @@ def _give_data_url(bundle: ALDocumentBundle):
     if hasattr(doc, 'enabled'):
       del doc.enabled
 
+def _get_all_vars(bundle: ALDocumentBundle):
+  """Strips out some extra big variables that we don't need to serialize and send across the network"""
+  _give_data_url(bundle)
+  all_vars_dict = all_variables()
+  all_vars_dict.pop('trial_court_resp', None)
+  all_vars_dict.pop('x', None)
+  all_vars_dict.pop('trial_court_options', None)
+  all_vars_dict.pop('found_case', None)
+  all_vars_dict.pop('selected_exisiting_case', None)
+  all_vars_dict.pop('filing_type_options', None)
+  all_vars_dict.pop('filing_type_map', None)
+  all_vars_dict.pop('party_type_options', None)
+  return json.dumps(all_vars_dict)
+
 class ProxyConnection:
   def __init__(self, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login'):
     temp_efile_config = get_config('efile proxy', {})
@@ -472,16 +486,12 @@ class ProxyConnection:
     return self._call_proxy(send) 
 
   def check_filing(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _give_data_url(court_bundle)
-    all_vars = json.dumps(all_variables())
-    log(f'headers: {self.proxy_client.headers}')
+    all_vars = _get_all_vars(court_bundle) 
     send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/check', data=all_vars)
     return self._call_proxy(send)
 
   def file_for_review(self, jurisdiction: str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _give_data_url(court_bundle)
-    all_vars_obj = all_variables()
-    all_vars = json.dumps(all_vars_obj)
+    all_vars = _get_all_vars(court_bundle) 
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filings',
           data=all_vars)
     return self._call_proxy(send)
@@ -490,9 +500,7 @@ class ProxyConnection:
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
     if court_info.data.get('hasconditionalservicetypes'):
-      _give_data_url(court_bundle)
-      all_vars_obj = all_variables()
-      all_vars = json.dumps(all_vars_obj)
+      all_vars = _get_all_vars(court_bundle) 
       send = lambda: self.proxy_client.get(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/servicetypes',
         data=all_vars)
       return self._call_proxy(send)
@@ -501,17 +509,13 @@ class ProxyConnection:
       
   # TODO(brycew): rethink service API
   #def serve(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-  #  _give_data_url(court_bundle)
-  #  all_vars_obj = all_variables()
-  #  all_vars = json.dumps(all_vars_obj)
+  #  all_vars = _get_all_vars(court_bundle) 
   #  send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/serve',
   #                                        data=all_vars)
   #  return self._call_proxy(send)
   
   def calculate_filing_fees(self, jurisdiction:str, court_id:str, court_bundle:ALDocumentBundle=None):
-    _give_data_url(court_bundle)
-    all_vars_obj = all_variables()
-    all_vars = json.dumps(all_vars_obj)
+    all_vars = _get_all_vars(court_bundle)
     send = lambda: self.proxy_client.post(self.base_url + f'filingreview/jurisdictions/{jurisdiction}/courts/{court_id}/filing/fees',
           data=all_vars)
     return self._call_proxy(send)
