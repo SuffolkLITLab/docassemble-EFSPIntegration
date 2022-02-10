@@ -57,13 +57,15 @@ code: |
   attorney_ids
   party_to_attorneys
   all_case_parties
-  if needs_all_info:
+  if needs_all_info or showifdef('users[0].is_form_filler', False):
     lead_contact = users[0]
+  else:
+    lead_contact.name.first
+  
+  if needs_all_info:
     reconsider('missing_required_party_types')
     if missing_required_party_types:
       party_review_screen
-  else:
-    lead_contact.name.first
   
   lead_doc.completed
   append_lead_doc
@@ -731,7 +733,7 @@ fields:
       party_type_options if is_nonindexed_filing else party_type_new_options
 ---
 code: |
-  if is_initial_filing:
+  if is_initial_filing or users[0].is_form_filler:
     if showifdef('user_ask_role') == 'plaintiff':
       plantiff = matching_tuple_option('plaintiff', party_type_options)
       petitioner = matching_tuple_option('petitioner', party_type_options)
