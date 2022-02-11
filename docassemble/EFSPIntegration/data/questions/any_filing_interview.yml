@@ -933,7 +933,7 @@ subquestion: |
   
   If you add a new contact, refresh this screen to view the new contact.
   % else:
-  You need to [add a service contact using the admin interface]([Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
+  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
   % endif
 fields: 
   - Contact Id: service_contacts[i].contact_id
