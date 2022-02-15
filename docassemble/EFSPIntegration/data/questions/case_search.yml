@@ -49,7 +49,7 @@ code: |
     warn_no_results
     found_case = None
   else:
-    found_case = DAObject()
+    found_case = DAObject('found_case')
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id, {})
     display_case
   del docket_id_from_user
