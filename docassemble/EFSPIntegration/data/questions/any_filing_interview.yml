@@ -917,7 +917,6 @@ code: |
   while not service_contacts[i].contact_id:
     del service_contacts[i].contact_id
     service_contacts[i].contact_id
-  # service_contacts[i].party_association
   service_contacts[i].complete = True
 ---
 # TODO: hack, but should work? Not sure if works for pro se filers
@@ -955,7 +954,7 @@ fields:
     required: False
     show if: service_contacts[i].attach_service_contact_to_party
     code: |
-      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new]
+      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (found_case.participants if defined('found_case.participants') else [])]
 continue button label: ${'Continue' if service_contact_options else 'Try again'}
 ---
 id: existing service contacts
