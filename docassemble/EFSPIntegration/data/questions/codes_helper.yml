@@ -59,7 +59,7 @@ code: |
 generic object: DAObject
 id: eserve
 question: |
-  Would you like to e-file this document, or serve to the desginated party?
+  Would you like to e-file this document, serve to the desginated party, or both?
 fields:
   - Efile or serve?: x.filing_action
     choices:
