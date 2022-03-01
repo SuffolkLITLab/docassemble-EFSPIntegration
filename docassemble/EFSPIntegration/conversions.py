@@ -44,7 +44,7 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
   codes_map = { vv[backing] : vv for vv in codes_list }
   return choices_list, codes_map
 
-def pretty_display(data, tab_depth=0) -> str:
+def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
   """Given an arbitrarily nested JSON structure, print it nicely.
   Recursive, for subsequent calls `tab_depth` increases."""
   tab_inc = 4
@@ -70,6 +70,14 @@ def pretty_display(data, tab_depth=0) -> str:
       elif key == 'nil' and not val:
         continue
       elif key == 'globalScope' and val:
+        continue
+      elif key == 'scope' and 'GlobalScope' in val:
+        continue
+      elif key == 'typeSubstituted' and (not val or val == 'False'):
+        continue
+      elif skip_xml and key == 'declaredType':
+        continue
+      elif skip_xml and key == 'name' and ('niem-core' in val or 'legalxml-courtfiling' in val):
         continue
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'

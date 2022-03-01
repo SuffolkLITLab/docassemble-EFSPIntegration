@@ -46,14 +46,16 @@ code: |
   docket_id_from_user
   docket_case_response
   if not docket_case_response.is_ok() or len(docket_case_response.data) == 0:
+    del docket_id_from_user
+    del docket_case_response
     warn_no_results
     found_case = None
   else:
     found_case = DAObject('found_case')
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id, {})
+    del docket_id_from_user
+    del docket_case_response
     display_case
-  del docket_id_from_user
-  del docket_case_response
 ---
 if: |
   do_what_choice == 'non_indexed_case'
