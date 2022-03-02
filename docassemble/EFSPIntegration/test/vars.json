@@ -50,6 +50,382 @@
     ], 
     "multi_user": true, 
     "my_username": "bwilley@suffolk.edu", 
+    "my_service_contacts": [
+      {
+        "entityRepresentation": {
+          "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.commontypes_4.PersonType", 
+          "globalScope": true, 
+          "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}EntityPerson", 
+          "nil": false, 
+          "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+          "typeSubstituted": false, 
+          "value": {
+            "id": null, 
+            "linkMetadata": [], 
+            "metadata": [], 
+            "personAugmentation": {
+              "contactInformation": [
+                {
+                  "contactEntity": null, 
+                  "contactEntityDescriptionText": null, 
+                  "contactInformationDescriptionText": null, 
+                  "contactMeans": [
+                    {
+                      "declaredType": "gov.niem.niem.niem_core._2.TelephoneNumberType", 
+                      "globalScope": true, 
+                      "name": "{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber", 
+                      "nil": false, 
+                      "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                      "typeSubstituted": false, 
+                      "value": {
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": [], 
+                        "telephoneNumberRepresentation": {
+                          "declaredType": "gov.niem.niem.niem_core._2.FullTelephoneNumberType", 
+                          "globalScope": true, 
+                          "name": "{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber", 
+                          "nil": false, 
+                          "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                          "typeSubstituted": false, 
+                          "value": {
+                            "id": null, 
+                            "linkMetadata": [], 
+                            "metadata": [], 
+                            "telephoneNumberFullID": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": ""
+                            }, 
+                            "telephoneSuffixID": null
+                          }
+                        }
+                      }
+                    }, 
+                    {
+                      "declaredType": "gov.niem.niem.proxy.xsd._2.String", 
+                      "globalScope": true, 
+                      "name": "{http://niem.gov/niem/niem-core/2.0}ContactEmailID", 
+                      "nil": false, 
+                      "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                      "typeSubstituted": false, 
+                      "value": {
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": [], 
+                        "value": "bryce.steven.willey+faketylerprose@gmail.com"
+                      }
+                    }, 
+                    {
+                      "declaredType": "gov.niem.niem.niem_core._2.AddressType", 
+                      "globalScope": true, 
+                      "name": "{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress", 
+                      "nil": false, 
+                      "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                      "typeSubstituted": false, 
+                      "value": {
+                        "addressRepresentation": {
+                          "declaredType": "gov.niem.niem.niem_core._2.StructuredAddressType", 
+                          "globalScope": true, 
+                          "name": "{http://niem.gov/niem/niem-core/2.0}StructuredAddress", 
+                          "nil": false, 
+                          "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                          "typeSubstituted": false, 
+                          "value": {
+                            "addressDeliveryPoint": [
+                              {
+                                "declaredType": "gov.niem.niem.niem_core._2.StreetType", 
+                                "globalScope": true, 
+                                "name": "{http://niem.gov/niem/niem-core/2.0}LocationStreet", 
+                                "nil": false, 
+                                "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                "typeSubstituted": false, 
+                                "value": {
+                                  "id": null, 
+                                  "linkMetadata": [], 
+                                  "metadata": [], 
+                                  "streetCategoryText": null, 
+                                  "streetExtensionText": null, 
+                                  "streetFullText": {
+                                    "id": null, 
+                                    "linkMetadata": [], 
+                                    "metadata": [], 
+                                    "value": "2222 Dorchester Avenue"
+                                  }, 
+                                  "streetName": null, 
+                                  "streetNumberText": null, 
+                                  "streetPostdirectionalText": null, 
+                                  "streetPredirectionalText": null
+                                }
+                              }, 
+                              {
+                                "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                                "globalScope": true, 
+                                "name": "{http://niem.gov/niem/niem-core/2.0}AddressSecondaryUnitText", 
+                                "nil": false, 
+                                "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                                "typeSubstituted": false, 
+                                "value": {
+                                  "id": null, 
+                                  "linkMetadata": [], 
+                                  "metadata": [], 
+                                  "value": ""
+                                }
+                              }
+                            ], 
+                            "addressRecipientName": null, 
+                            "id": null, 
+                            "linkMetadata": [], 
+                            "locationCityName": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": "Boston"
+                            }, 
+                            "locationCountry": {
+                              "declaredType": "gov.niem.niem.fips_10_4._2.CountryCodeType", 
+                              "globalScope": true, 
+                              "name": "{http://niem.gov/niem/niem-core/2.0}LocationCountryFIPS10-4Code", 
+                              "nil": false, 
+                              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                              "typeSubstituted": false, 
+                              "value": {
+                                "id": null, 
+                                "linkMetadata": [], 
+                                "metadata": [], 
+                                "value": "US"
+                              }
+                            }, 
+                            "locationCounty": null, 
+                            "locationPostalCode": {
+                              "id": null, 
+                              "linkMetadata": [], 
+                              "metadata": [], 
+                              "value": "02124"
+                            }, 
+                            "locationPostalExtensionCode": null, 
+                            "locationState": {
+                              "declaredType": "gov.niem.niem.niem_core._2.ProperNameTextType", 
+                              "globalScope": true, 
+                              "name": "{http://niem.gov/niem/niem-core/2.0}LocationStateName", 
+                              "nil": false, 
+                              "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                              "typeSubstituted": false, 
+                              "value": {
+                                "id": null, 
+                                "linkMetadata": [], 
+                                "metadata": [], 
+                                "value": "MA"
+                              }
+                            }, 
+                            "metadata": []
+                          }
+                        }, 
+                        "id": null, 
+                        "linkMetadata": [], 
+                        "metadata": []
+                      }
+                    }
+                  ], 
+                  "contactResponder": null, 
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": []
+                }
+              ], 
+              "electronicServiceInformation": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "receivingMDELocationID": {
+                  "id": null, 
+                  "identificationCategory": null, 
+                  "identificationID": null, 
+                  "identificationJurisdiction": null, 
+                  "identificationSourceText": null, 
+                  "linkMetadata": [], 
+                  "metadata": []
+                }, 
+                "receivingMDEProfileCode": "", 
+                "serviceRecipientID": {
+                  "id": null, 
+                  "identificationCategory": null, 
+                  "identificationID": {
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "value": "6707a4f8-9f4c-4bbb-8498-ed4890208c6d"
+                  }, 
+                  "identificationJurisdiction": null, 
+                  "identificationSourceText": null, 
+                  "linkMetadata": [], 
+                  "metadata": []
+                }
+              }, 
+              "id": null, 
+              "metadata": [], 
+              "personContactInformationAssociation": [], 
+              "personDriverLicense": null, 
+              "personInsurance": []
+            }, 
+            "personBirthDate": null, 
+            "personCapability": null, 
+            "personCitizenship": [], 
+            "personDNA": null, 
+            "personEthnicity": null, 
+            "personEyeColor": null, 
+            "personFingerprintSet": [], 
+            "personHairColor": null, 
+            "personHeightMeasure": null, 
+            "personLanguageEnglishIndicator": null, 
+            "personName": {
+              "id": null, 
+              "linkMetadata": [], 
+              "metadata": [], 
+              "personFullName": null, 
+              "personGivenName": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": "Bryce"
+              }, 
+              "personMaidenName": null, 
+              "personMiddleName": null, 
+              "personNameCommentText": null, 
+              "personNamePrefixText": null, 
+              "personNameSuffixText": null, 
+              "personSurName": {
+                "id": null, 
+                "linkMetadata": [], 
+                "metadata": [], 
+                "value": "Willey"
+              }
+            }, 
+            "personOtherIdentification": [
+              {
+                "id": null, 
+                "identificationCategory": {
+                  "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                  "globalScope": true, 
+                  "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                  "nil": false, 
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                  "typeSubstituted": false, 
+                  "value": {
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "value": "FIRMNAME"
+                  }
+                }, 
+                "identificationID": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": "Individual"
+                }, 
+                "identificationJurisdiction": null, 
+                "identificationSourceText": null, 
+                "linkMetadata": [], 
+                "metadata": []
+              }, 
+              {
+                "id": null, 
+                "identificationCategory": {
+                  "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                  "globalScope": true, 
+                  "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                  "nil": false, 
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                  "typeSubstituted": false, 
+                  "value": {
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "value": "ISPUBLIC"
+                  }
+                }, 
+                "identificationID": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": "false"
+                }, 
+                "identificationJurisdiction": null, 
+                "identificationSourceText": null, 
+                "linkMetadata": [], 
+                "metadata": []
+              }, 
+              {
+                "id": null, 
+                "identificationCategory": {
+                  "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                  "globalScope": true, 
+                  "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                  "nil": false, 
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                  "typeSubstituted": false, 
+                  "value": {
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "value": "ISINFIRMMASTERLIST"
+                  }
+                }, 
+                "identificationID": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": "true"
+                }, 
+                "identificationJurisdiction": null, 
+                "identificationSourceText": null, 
+                "linkMetadata": [], 
+                "metadata": []
+              }, 
+              {
+                "id": null, 
+                "identificationCategory": {
+                  "declaredType": "gov.niem.niem.niem_core._2.TextType", 
+                  "globalScope": true, 
+                  "name": "{http://niem.gov/niem/niem-core/2.0}IdentificationCategoryText", 
+                  "nil": false, 
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope", 
+                  "typeSubstituted": false, 
+                  "value": {
+                    "id": null, 
+                    "linkMetadata": [], 
+                    "metadata": [], 
+                    "value": "OWNEDBYFIRMID"
+                  }
+                }, 
+                "identificationID": {
+                  "id": null, 
+                  "linkMetadata": [], 
+                  "metadata": [], 
+                  "value": "fc27ea73-14b2-4464-a217-57f4035f2150"
+                }, 
+                "identificationJurisdiction": null, 
+                "identificationSourceText": null, 
+                "linkMetadata": [], 
+                "metadata": []
+              }
+            ], 
+            "personPhysicalFeature": [], 
+            "personPrimaryLanguage": null, 
+            "personRace": null, 
+            "personSex": null, 
+            "personStateIdentification": null, 
+            "personTaxIdentification": null, 
+            "personWeightMeasure": null
+          }
+        }, 
+        "id": null, 
+        "linkMetadata": [], 
+        "metadata": []
+      }
+    ], 
     "my_var": {
       "_class": "docassemble.playground116EFSPIntegration.efm_client.ApiResponse", 
       "data": {

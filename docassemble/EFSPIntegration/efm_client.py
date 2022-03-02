@@ -435,11 +435,6 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(url)
     return self._call_proxy(send)
 
-  def get_case_service_history(self, court_id:str, case_tracking_id:str):
-    url = self.base_url + f"cases/courts/{court_id}/cases/{case_tracking_id}/service-information-history"
-    send = lambda: self.proxy_client.get(url)
-    return self._call_proxy(send)
-  
   def get_public_list(self):
     send = lambda: self.proxy_client.get(self.base_url + f'firmattorneyservice/service-contacts/public')
     return self._call_proxy(send)
@@ -571,12 +566,14 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/service-contacts/{service_contact_id}/cases')
     return self._call_proxy(send)
 
-  def get_service_information(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information')
+  def get_service_information(self, court_id:str, case_tracking_id:str):
+    send = lambda: self.proxy_client.get(
+        self.base_url + f'cases/courts/{court_id}/cases/{case_tracking_id}/service-information')
     return self._call_proxy(send)
 
-  def get_service_information_history(self, court_id:str, case_id:str):
-    send = lambda: self.proxy_client.get(self.base_url + f'cases/courts/{court_id}/cases/{case_id}/service-information-history')
+  def get_service_information_history(self, court_id:str, case_tracking_id:str):
+    send = lambda: self.proxy_client.get(
+        self.base_url + f'cases/courts/{court_id}/cases/{case_tracking_id}/service-information-history')
     return self._call_proxy(send)
   
   def get_case_categories(self, court_id:str, fileable_only:bool=False, timing:str=None):

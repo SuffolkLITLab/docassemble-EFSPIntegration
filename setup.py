@@ -53,7 +53,7 @@ setup(name='docassemble.EFSPIntegration',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.AssemblyLine>=2.10.0', 'requests>=2.25.1'],
+      install_requires=['docassemble.AssemblyLine>=2.10.1', 'requests>=2.25.1'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
      )

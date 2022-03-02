@@ -923,11 +923,10 @@ code: |
 reconsider: service_contact_options
 id: service contact
 question: |
-  Service Contact
+  Attach a Service Contact
 subquestion: |
   % if service_contact_options:
-  Select an existing contact below, or add a contact
-  using the 
+  Select an existing contact below, or add a contact using the 
   [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
   
   If you add a new contact, refresh this screen to view the new contact.
@@ -1058,7 +1057,10 @@ code: |
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
 ---
 code: |
-  service_contact_options = [(vv.get('serviceContactID'), f"{vv.get('firstName')} {vv.get('middleName')} {vv.get('lastName')}") for vv in proxy_conn.get_service_contact_list().data]
+  service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
+  if not needs_all_info:
+    resp_data = proxy_conn.get_service_information(court_id, found_case.tracking_id).data
+    service_contact_options = service_contact_options + parse_service_contacts(resp_data)
 ---
 comment: |
   service_information
