@@ -160,7 +160,7 @@ def combine_opt_strs(elems: List[Optional[str]], title=True):
         ret += ' ' + val.title()
       else:
         ret += ' ' + val
-  return ret
+  return ret.strip()
 
 def _parse_phone_number(phone_xml) -> str:
   """Parses a gov.niem.niem.niem_core._2.TelephoneNumberType / nc:TelephoneNumberType into a string"""
