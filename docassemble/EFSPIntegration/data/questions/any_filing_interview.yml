@@ -1058,7 +1058,7 @@ code: |
 ---
 code: |
   service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
-  if found_case:
+  if not needs_all_info:
     resp_data = proxy_conn.get_service_information(court_id, found_case.tracking_id).data
     service_contact_options = service_contact_options + parse_service_contacts(resp_data)
 ---
