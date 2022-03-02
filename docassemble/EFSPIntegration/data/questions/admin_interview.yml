@@ -370,6 +370,20 @@ content: |
     ]},
     {'recompute': ['case_was_found', 'display_case', 'display_found_case']}]),
     label="Find a case") }
+
+  ${ action_button_html(url_ask(
+    [{'undefine': [
+      'do_what_choice',
+      'trail_court',
+      'court_id', 
+      'case_search_task_status',
+      'case_search_waiting_screen',
+      'warn_no_results',
+      'found_case',
+      'get_case_response',
+    ]},
+    {'recompute': ['case_was_found', 'get_service_information', 'show_resp']}]),
+    label="Get case service information") }
     
   ${ action_button_html(url_ask(
     [{'undefine': [
@@ -382,7 +396,7 @@ content: |
       'found_case',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found', 'get_case_service_history', 'show_resp']}]),
+    {'recompute': ['case_was_found', 'get_service_information_history', 'show_resp']}]),
     label="Get case service history") }
     
 ---
@@ -1325,13 +1339,23 @@ code: |
 ---
 code: |
   if case_was_found:
-    resp = proxy_conn.get_case_service_history(court_id, found_case.tracking_id)
+    resp = proxy_conn.get_service_information_history(court_id, found_case.tracking_id)
     del trial_court
     del court_id
-    get_case_service_history = True
+    get_service_information_history = True
   else:
     resp = ApiResponse(-1, '', None)
-    get_case_service_history = False
+    get_service_information_history = False
+---
+code: |
+  if case_was_found:
+    resp = proxy_conn.get_service_information(court_id, found_case.tracking_id)
+    del trial_court
+    del court_id
+    get_service_information = True
+  else:
+    resp = ApiResponse(-1, '', None)
+    get_service_information = False
 ---
 code: |
   resp = proxy_conn.get_global_payment_account_list()

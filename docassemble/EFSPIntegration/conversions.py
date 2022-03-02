@@ -2,8 +2,8 @@
 
 import re
 from datetime import datetime, timezone
-from typing import List, Dict, Tuple, Any, Callable
-from docassemble.base.util import DADateTime, Address, as_datetime, validation_error
+from typing import List, Dict, Tuple, Any, Callable, Optional
+from docassemble.base.util import DADateTime, Address, as_datetime, validation_error, log
 from docassemble.AssemblyLine.al_general import ALIndividual
 from docassemble.base.core import DAList
 from docassemble.base.functions import get_config
@@ -14,6 +14,7 @@ __all__ = [
   'choices_and_map',
   'pretty_display',
   'debug_display',
+  'parse_service_contacts',
   'tyler_daterep_to_datetime',
   'tyler_timestamp_to_datetime',
   'validate_tyler_regex',
@@ -44,7 +45,7 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
   codes_map = { vv[backing] : vv for vv in codes_list }
   return choices_list, codes_map
 
-def pretty_display(data, tab_depth=0) -> str:
+def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
   """Given an arbitrarily nested JSON structure, print it nicely.
   Recursive, for subsequent calls `tab_depth` increases."""
   tab_inc = 4
@@ -70,6 +71,14 @@ def pretty_display(data, tab_depth=0) -> str:
       elif key == 'nil' and not val:
         continue
       elif key == 'globalScope' and val:
+        continue
+      elif key == 'scope' and 'GlobalScope' in val:
+        continue
+      elif key == 'typeSubstituted' and (not val or val == 'False'):
+        continue
+      elif skip_xml and key == 'declaredType':
+        continue
+      elif skip_xml and key == 'name' and ('niem-core' in val or 'legalxml-courtfiling' in val):
         continue
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
@@ -135,11 +144,23 @@ def _is_person(possible_person:dict):
 def chain_xml(xml_val, elems: List[str]):
   val = xml_val
   for elem in elems:
+    if not val:
+      return None
     if isinstance(val, dict):
       val = val.get(elem, {})
     else:
       val = val[elem]
   return val
+
+def combine_opt_strs(elems: List[Optional[str]], title=True):
+  ret = ''
+  for val in elems:
+    if val:
+      if title:
+        ret += ' ' + val.title()
+      else:
+        ret += ' ' + val
+  return ret.strip()
 
 def _parse_phone_number(phone_xml) -> str:
   """Parses a gov.niem.niem.niem_core._2.TelephoneNumberType / nc:TelephoneNumberType into a string"""
@@ -205,6 +226,25 @@ def _parse_participant(part_obj, participant_val, roles:dict):
     part_obj.name.first = entity.get('organizationName', {}).get('value', {})
     part_obj.tyler_id = chain_xml(entity, ['organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
   return part_obj
+
+def parse_service_contacts(service_list):
+  """We'll take both Tyler service contact lists and Niem service contact lists.
+  Tyler's are just `{"firstName": "Bob", "middleName": "P", ..., "serviceContactId": "abcrunh-13..."
+  Niem's are more complicated
+  """
+  info = []
+  for contact in service_list:
+    if 'firstName' in contact and 'lastName' in contact and 'serviceContactID' in contact:
+      serv_id = contact['serviceContactID']
+      display_name = combine_opt_strs([
+        contact.get('firstName', ''), contact.get('middleName', ''), contact.get('lastName', ''), contact.get('firmName', '')
+      ])
+    else:
+      serv_id = chain_xml(contact, ['entityRepresentation', 'value', 'personAugmentation', 'electronicServiceInformation', 'serviceRecipientID', 'identificationID', 'value'])
+      per_name = chain_xml(contact, ['entityRepresentation', 'value', 'personName'])
+      display_name = combine_opt_strs([chain_xml(per_name, ['personGivenName', 'value']),  chain_xml(per_name, ['personMiddleName', 'value']), chain_xml(per_name, ['personSurName', 'value'])], title=True) if per_name else '(No name given)'
+    info.append((serv_id, display_name))
+  return info
 
 def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.details = entry
