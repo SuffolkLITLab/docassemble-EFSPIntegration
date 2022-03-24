@@ -135,11 +135,10 @@ def validate_tyler_regex(data_field:Dict)->Callable:
     validation_error(validation_message)
   return fn_validate
 
-def _is_person(possible_person:dict):
+def _is_person(possible_person_entity:dict):
   """Helper for getting party ID"""
   # TODO(brycew): could also check the declaredType?
-  return not chain_xml(possible_person, ['value', 'entityRepresentation', 'value']
-      ).get('personOtherIdentification') is None
+  return possible_person_entity.get('personOtherIdentification') is not None
 
 def chain_xml(xml_val, elems: List[str]):
   val = xml_val
@@ -193,12 +192,23 @@ def _parse_address(address_xml) -> Address:
     address.state = state_xml.get('value', {}).get('value')
   return address
 
+def _is_attorney(participant_val):
+  role_code = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
+  return role_code.upper() == 'ATTY'
+
+def _parse_participant_id(entity):
+  """Just get the participant ID from the Participant"""
+  if _is_person(entity): 
+    return next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
+  else:
+    return chain_xml(entity, ['organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
+
 def _parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
   part_obj.party_type = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
   part_obj.party_type_name = roles.get(part_obj.party_type, {}).get('name')
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
-  if _is_person(participant_val):
+  if _is_person(entity): 
     part_obj.person_type = 'ALIndividual'
     name = entity.get('personName', {})
     part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
@@ -220,11 +230,10 @@ def _parse_participant(part_obj, participant_val, roles:dict):
         email = contact_info.get('value', {}).get('value')
         if email:
           part_obj.email = email
-    part_obj.tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
   else:
     part_obj.person_type = 'business'
     part_obj.name.first = entity.get('organizationName', {}).get('value', {})
-    part_obj.tyler_id = chain_xml(entity, ['organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
+  part_obj.tyler_id = _parse_participant_id(participant_val)
   return part_obj
 
 def parse_service_contacts(service_list):
@@ -249,6 +258,8 @@ def parse_service_contacts(service_list):
 def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.details = entry
   new_case.court_id = court_id
+  new_case.attorney_ids = []
+  new_case.party_to_attorneys = {}
   new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
   new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
@@ -265,8 +276,22 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
     if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
       for participant in participant_xml:
-        partip_obj = new_case.participants.appendObject()
-        _parse_participant(partip_obj, participant, roles)
+        if not _is_attorney(participant):
+          partip_obj = new_case.participants.appendObject()
+          _parse_participant(partip_obj, participant, roles)
+
+      attorneys = aug.get('value', {}).get('caseOtherEntityAttorney')
+      for attorney in attorneys:
+          entity = chain_xml(attorney, ['roleOfPersonReference', 'ref'])
+          attorney_tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
+          new_case.attorney_ids.append(attorney_tyler_id)
+          parties = attorney.get('caseRepresentedPartyReference', [])
+          for party in parties:
+              party_id = _parse_participant_id(party.get('ref', {}))
+              if party_id in new_case.party_to_attorneys:
+                  new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
+              else:
+                  new_case.party_to_attorneys[party_id] = attorney_tyler_id
   new_case.participants.gathered = True
 
 def _payment_labels(acc):

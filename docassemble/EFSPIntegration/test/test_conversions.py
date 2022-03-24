@@ -8,10 +8,11 @@ from ..efm_client import ProxyConnection, ApiResponse
 from ..conversions import parse_case_info, parse_service_contacts
 
 class TestConversions(unittest.TestCase):
+  """Tests conversions.py on the "vars.json" file"""
   def setUp(self):
     with open(Path(__file__).parent / 'vars.json', 'r') as file:
       full_json = json.load(file).get('variables')
-    self.my_var = full_json.get('my_var').get('data')
+      self.my_var = full_json.get('my_var').get('data')
     self.my_service_contacts = full_json.get('my_service_contacts')
     self.proxy_conn = ProxyConnection()
     self.proxy_conn.get_case = MagicMock('get_case', return_value=ApiResponse(200, '', self.my_var))
@@ -48,3 +49,22 @@ class TestConversions(unittest.TestCase):
     self.assertEqual(len(service_contacts), 1)
     self.assertEqual(service_contacts[0][0], "6707a4f8-9f4c-4bbb-8498-ed4890208c6d")
     self.assertEqual(service_contacts[0][1], "Bryce Willey")
+
+
+class TestConversionIgnoreAttorneys(unittest.TestCase):
+  def setUp(self):
+    with open(Path(__file__).parent / 'temp2.json', 'r') as file:
+      full_json = json.load(file).get('selected_existing_case')
+      self.first_resp = full_json.get('details')
+      self.more_details = full_json.get('case_details')
+    self.proxy_conn = ProxyConnection()
+    self.proxy_conn.get_case = MagicMock('get_case', return_value=ApiResponse(200, '', self.more_details)) 
+
+  def test_ignore_attorneys(self):
+    """Attorneys are just stuck in the middle with normal case participants. You can't attach service contacts to them, so"""
+    case = DAObject('case')
+    parse_case_info(self.proxy_conn, case, self.first_resp, 'peoria', {})
+    self.assertEqual(len(case.attorney_ids), 2)
+    self.assertTrue('e650827f-3a2b-4550-b76c-f7d22ed479ff' in case.attorney_ids)
+    self.assertTrue('7ff43f9b-53ff-4e6d-9253-e393318549d0' in case.attorney_ids)
+
