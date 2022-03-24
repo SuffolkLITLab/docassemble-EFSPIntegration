@@ -233,7 +233,7 @@ def _parse_participant(part_obj, participant_val, roles:dict):
   else:
     part_obj.person_type = 'business'
     part_obj.name.first = entity.get('organizationName', {}).get('value', {})
-  part_obj.tyler_id = _parse_participant_id(participant_val)
+  part_obj.tyler_id = _parse_participant_id(entity)
   return part_obj
 
 def parse_service_contacts(service_list):

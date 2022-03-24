@@ -26,6 +26,7 @@ class TestConversions(unittest.TestCase):
       self.assertIsInstance(partip, ALIndividual)
       self.assertIn(partip.person_type, ['ALIndividual', 'business'])
       self.assertNotEqual(partip.name.first, None)
+      self.assertNotEqual(partip.tyler_id, None)
       if partip.person_type == 'ALIndividual':
         self.assertNotEqual(partip.name.last, None)
         # Make sure the name is title case: first letter is upper, everything else lower
