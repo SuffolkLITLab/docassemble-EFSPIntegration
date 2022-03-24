@@ -72,6 +72,7 @@ code: |
   al_court_bundle.auto_gather=True
   al_court_bundle.gather()
   
+  contacts_to_attach.gather()
   service_contacts.gather()
   cross_references.gather()
   al_court_bundle.as_pdf()
@@ -242,6 +243,7 @@ edit:
   - rearrange_pages  
 ---
 objects:
+  - contacts_to_attach: DAList.using(object_type=DAObject, complete_attribute='complete')
   - service_contacts: DAList.using(object_type=DAObject, complete_attribute='complete')
 ---
 objects:
@@ -426,11 +428,6 @@ subquestion: |
   Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
-generic object: ALDocument
-code: |
-  if not service_contacts:
-    x.filing_action = 'efile'
----
 id: return date
 question: |
   Closest available return date
@@ -448,6 +445,12 @@ subquestion: |
   ${ debug_display(return_date_resp) }
   % endif
 continue button field: show_allowed_return_date
+---
+generic object: ALDocument
+code: |
+  contacts_to_attach.gather()
+  if not service_contacts:
+    x.filing_action = 'efile'
 ---
 id: initial filing
 question: |
@@ -918,29 +921,31 @@ code: |
     service_contacts[i].contact_id
   service_contacts[i].complete = True
 ---
+code: |
+  contacts_to_attach[i].contact_id
+  while not contacts_to_attach[i].contact_id:
+    del contacts_to_attach[i].contact_id
+    contacts_to_attach[i].contact_id
+  resp = proxy_conn.attach_service_contact(contacts_to_attach[i].contact_id, case_id=found_case.tracking_id)
+  log(f'attempted attaching {contacts_to_attach[i].contact_id}: {resp}')
+  del resp
+  contacts_to_attach[i].complete = True
+---
 id: attach service contact to case
 question: |
   Attach a Service Contact
 subquestion: |
+  % if service_contact_options:
   This will let you or other parties on the case serve filings to this contact.
   We'll ask if you want to serve them in this filing later.
+  % else:
+  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
+  % endif
 fields:
   - Contact Id: contacts_to_attach[i].contact_id
     datatype: dropdown
     code: |
       service_contact_options
-  - Do you want to associate this service contact with a party?: service_contacts[i].attach_service_contact_to_party
-    datatype: yesnoradio
-    default: False
-    show if:
-      code: |
-        service_contact_options and sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) > 0
-  - Which party is this contact for?: service_contacts[i].party_association
-    datatype: radio
-    required: False
-    show if: service_contacts[i].attach_service_contact_to_party
-    code: |
-      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (found_case.participants if defined('found_case.participants') else [])]
 ---
 # TODO: hack, but should work? Not sure if works for pro se filers
 reconsider: service_contact_options
@@ -965,17 +970,39 @@ fields:
     datatype: dropdown
     code: |
       service_contact_options and service_type_options
+  - Do you want to associate this service contact with a party?: service_contacts[i].attach_service_contact_to_party
+    datatype: yesnoradio
+    default: False
+    show if:
+      code: |
+        service_contact_options and sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) > 0
+  - Which party is this contact for?: service_contacts[i].party_association
+    datatype: radio
+    required: False
+    show if: service_contacts[i].attach_service_contact_to_party
+    code: |
+      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (found_case.participants if defined('found_case.participants') else [])]
 continue button label: ${'Continue' if service_contact_options else 'Try again'}
 ---
 id: existing service contacts
 question: |
-  Do you want to add a service contact?
+  Do you want to serve a service contact in this filing?
 yesno: service_contacts.there_are_any
+---
+id: attach service contacts
+question: |
+  Do you want to attach a service contact to this case for others or yourself to serve?
+yesno: contacts_to_attach.there_are_any
 ---
 id: Any more existing service contacts
 question: |
-  Any more service contacts?
+  Do you want to serve any more service contacts?
 yesno: service_contacts.there_is_another
+---
+id: any more attaching service contacts
+question: |
+  Do you want to attach any more service contacts to this case?
+yesno: contacts_to_attach.there_is_another
 ---
 id: your email
 question: |
