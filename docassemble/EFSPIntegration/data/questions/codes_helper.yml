@@ -171,6 +171,8 @@ question: |
 fields: 
   - Parties for payment: x.existing_parties_payment_dict
     datatype: checkboxes
+    none of the above: False
+    min length: 1
     code: |
       all_case_parties
 ---
