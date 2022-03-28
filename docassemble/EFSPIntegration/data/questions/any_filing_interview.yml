@@ -899,7 +899,7 @@ question: |
   Optional Service ${ i } fee amount?
 subquestion: |
   ${ x.optional_service_map.get(x.optional_services[i].code).get('feeprompttext') }
-fields: 
+fields:
   - Fee Amount: x.optional_services[i].fee_amount
     datatype: currency
 ---
@@ -998,6 +998,10 @@ id: Any more existing service contacts
 question: |
   Do you want to serve any more service contacts?
 yesno: service_contacts.there_is_another
+---
+code: |
+  if not service_contact_options:
+    contacts_to_attach.there_are_any = False
 ---
 id: any more attaching service contacts
 question: |
