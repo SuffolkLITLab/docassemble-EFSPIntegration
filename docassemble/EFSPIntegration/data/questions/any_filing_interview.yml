@@ -951,9 +951,9 @@ fields:
 reconsider: service_contact_options
 id: service contact
 question: |
-  Attach a Service Contact
+  Serve a Service Contact
 subquestion: |
-  % if service_contact_options:
+  % if attached_service_contacts:
   Select an existing contact below, or add a contact using the 
   [Admin Interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}
   
@@ -961,7 +961,7 @@ subquestion: |
   % else:
   You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
   % endif
-fields: 
+fields:
   - Contact Id: service_contacts[i].contact_id
     datatype: dropdown
     code: |
@@ -969,7 +969,7 @@ fields:
   - Service Type: service_contacts[i].service_type
     datatype: dropdown
     code: |
-      service_contact_options and service_type_options
+      attached_service_contacts and service_type_options
   - Do you want to associate this service contact with a party?: service_contacts[i].attach_service_contact_to_party
     datatype: yesnoradio
     default: False
@@ -982,7 +982,7 @@ fields:
     show if: service_contacts[i].attach_service_contact_to_party
     code: |
       [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (found_case.participants if defined('found_case.participants') else [])]
-continue button label: ${'Continue' if service_contact_options else 'Try again'}
+continue button label: ${'Continue' if attached_service_contacts else 'Try again'}
 ---
 id: existing service contacts
 question: |
