@@ -975,7 +975,7 @@ fields:
     default: False
     show if:
       code: |
-        attached_service_contacts and sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) > 0
+        attached_service_contacts and (sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) + sum([1 for pty in (found_case.participants if defined('found_case.participants') else [])])) > 0
   - Which party is this contact for?: service_contacts[i].party_association
     datatype: radio
     required: False
