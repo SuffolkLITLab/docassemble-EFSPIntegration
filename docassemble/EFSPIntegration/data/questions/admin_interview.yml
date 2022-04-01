@@ -278,6 +278,7 @@ content: |
       'do_what_choice',
       'trial_court',
       'court_id',
+      'can_file_non_indexed_case',
       'display_case',
       'case_search_task_status',
       'case_search_waiting_screen',
@@ -1338,11 +1339,16 @@ code: |
   all_case_parties = [(party.tyler_id, str(party.name)) for party in found_case.participants]
 ---
 code: |
+  if not service_contact_id:
+    error_message = "You don't have any service contacts you can add." 
+    show_error_event
   if case_was_found:
     resp = proxy_conn.attach_service_contact(service_contact_id, found_case.tracking_id, case_party_id)
     globals().pop('all_case_parties', None)
     globals().pop('service_contact_id', None)
     globals().pop('case_party_id', None)
+    globals().pop('trial_court', None)
+    globals().pop('court_id', None)
     attach_service_contact = True
   else:
     resp = ApiResponse(-1, '', None)

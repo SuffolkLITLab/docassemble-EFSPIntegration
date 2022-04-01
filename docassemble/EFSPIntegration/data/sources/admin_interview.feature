@@ -21,15 +21,15 @@ Feature: The interviews run without erroring
   @admin_interview
   Scenario: multiple-times through attach/detach
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
-    And I set the variable "my_username" to secret "PROSE_EMAIL"
-    And I set the variable "my_password" to secret "PROSE_PASSWORD"
+    And the maximum seconds for each Step in this Scenario is 40
+    And I set the variable "my_username" to secret "TYLER_EMAIL"
+    And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" element
     And I tap the "attach_service_contact" element
-    And I set the variable "do_what_choice" to "docket_lookup"
-    And I tap to continue
     And I set the variable "trial_court" to "peoria"
+    And I tap to continue
+    And I set the variable "do_what_choice" to "docket_lookup"
     And I tap to continue
     And I set the variable "docket_id_from_user" to "22-AD-00005"
     And I tap to continue
@@ -42,9 +42,9 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" element
     And I tap the "attach_service_contact" element
-    And I set the variable "do_what_choice" to "docket_lookup"
-    And I tap to continue
     And I set the variable "trial_court" to "peoria"
+    And I tap to continue
+    And I set the variable "do_what_choice" to "docket_lookup"
     And I tap to continue
     And I set the variable "docket_id_from_user" to "22-AD-00005"
     And I tap to continue
@@ -55,3 +55,22 @@ Feature: The interviews run without erroring
     And I set the variable "case_party_id" to "66488af3-c376-4500-b99e-3ff665fcc5fd"
     And I tap to continue
     And I see the phrase "Service Contact already attached to case."
+
+  @admin_interview
+  Scenario: earlyish stop attach when no service contacts
+    Given I start the interview at "admin_interview.yml"
+    And the maximum seconds for each Step in this Scenario is 40
+    And I set the variable "my_username" to secret "PROSE_EMAIL"
+    And I set the variable "my_password" to secret "PROSE_PASSWORD"
+    And I tap to continue
+    And I tap the "Tests-Service_contacts-tab" element
+    And I tap the "attach_service_contact" element
+    And I set the variable "trial_court" to "peoria"
+    And I tap to continue
+    And I set the variable "do_what_choice" to "docket_lookup"
+    And I tap to continue
+    And I set the variable "docket_id_from_user" to "22-AD-00005"
+    And I tap to continue
+    And I see the phrase "IMPOUNDED ADOPTION"
+    And I tap to continue
+    Then I see the phrase "You don’t have any service contacts you can add."
