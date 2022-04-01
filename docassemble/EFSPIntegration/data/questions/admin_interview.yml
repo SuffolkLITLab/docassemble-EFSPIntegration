@@ -730,8 +730,8 @@ if: |
 code: |
   # TODO: this isn't wired up yet!
   resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
-  global().pop('new_account_name', None)
-  global().pop('new_account_is_global', None)
+  globals().pop('new_account_name', None)
+  globals().pop('new_account_is_global', None)
   show_resp
   new_payment_account = True 
 ---
@@ -899,8 +899,8 @@ code: |
     first_name=updated_user.name.first,
     last_name=updated_user.name.last,
     middle_name=updated_user.name.middle )
-  global().pop('user_id', None)
-  global().pop('updated_user', None)
+  globals().pop('user_id', None)
+  globals().pop('updated_user', None)
   update_user = True
 ---
 code: |
@@ -1402,8 +1402,8 @@ code: |
 ---
 code: |
   resp = proxy_conn.change_password(user_id, email, new_user_password)
-  global().pop('user_id', None)
-  global().pop('new_user_password', None)
+  globals().pop('user_id', None)
+  globals().pop('new_user_password', None)
   change_password = True
 ---
 id: field
@@ -1414,9 +1414,9 @@ fields:
 ---
 code: |
   resp=proxy_conn.get_datafield(court_id, field_name)
-  global().pop('trial_court', None)
-  global().pop('court_id', None)
-  global().pop('field_name', None)
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
+  globals().pop('field_name', None)
   get_datafield = True
 ---
 code: |
