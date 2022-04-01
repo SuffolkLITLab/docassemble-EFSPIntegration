@@ -597,18 +597,30 @@ question: |
 fields:
   - Global payment account id: global_payment_account_id
 ---
+code: |
+  service_contact_options = proxy_conn.get_service_contact_list().data or []
+---
+reconsider: service_contact_options
 id: service contact id
 question: |
   Service contact id?
 subquestion: |
+  % if service_contact_options:
   Type in the GUID of a service contact or select from 
   existing contacts in your firm.
+  % else:
+  You don't have any service contacts to select. Go back and create a new service contact.
+  % endif
 fields:
   - Service contact id: service_contact_id
     datatype: combobox
     code: |
-      [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in proxy_conn.get_service_contact_list().data or []]
+      [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in service_contact_options]
 ---
+code: |
+  attached_case_ids = proxy_conn.get_attached_cases(court_id, service_contact_id).data or []
+---
+reconsider: attached_case_ids
 id: tracking id
 question: |
   Enter the case tracking ID
@@ -616,10 +628,7 @@ fields:
   - Case Tracking ID: attached_case_tracking_id
     datatype: combobox
     code: |
-      [(y['value']['caseTrackingID']['value'], y['value']['caseTitleText']['value']) for y in all_attached_case_tracking_ids.data or []] 
----
-code: |
-  all_attached_case_tracking_ids = proxy_conn.get_attached_cases(court_id, service_contact_id)
+      [(y['value']['caseTrackingID']['value'], y['value']['caseTitleText']['value']) for y in attached_case_ids] 
 ---
 id: update user information
 question: |
@@ -1309,11 +1318,14 @@ code: |
   del service_contact_id
   remove_service_contact = True
 ---
+reconsider:
+  - all_case_parties
 id: case party id
 question: |
   Case party id?
 fields:
   - no label: case_party_id
+    required: False
     code: |
       all_case_parties  
 ---  
