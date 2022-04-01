@@ -613,20 +613,25 @@ subquestion: |
   % endif
 fields:
   - Service contact id: service_contact_id
-    datatype: combobox
+    datatype: dropdown
     code: |
       [{contact.get('serviceContactID'): f"{contact.get('firstName')} {contact.get('lastName')} ({contact.get('email')})"} for contact in service_contact_options]
 ---
 code: |
-  attached_case_ids = proxy_conn.get_attached_cases(court_id, service_contact_id).data or []
+  valid_court_id_getter = lambda: convert_court_to_id(next(iter(trial_court_options))[0])
+  attached_case_ids = proxy_conn.get_attached_cases(valid_court_id_getter(), service_contact_id).data or []
 ---
 reconsider: attached_case_ids
 id: tracking id
 question: |
+  % if attached_case_ids:
   Enter the case tracking ID
+  % else:
+  This service contact isn't attached to any cases. Choose a different contact.
+  % endif
 fields:
   - Case Tracking ID: attached_case_tracking_id
-    datatype: combobox
+    datatype: dropdown 
     code: |
       [(y['value']['caseTrackingID']['value'], y['value']['caseTitleText']['value']) for y in attached_case_ids] 
 ---
@@ -725,8 +730,8 @@ if: |
 code: |
   # TODO: this isn't wired up yet!
   resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
-  del new_account_name
-  del new_account_is_global
+  global().pop('new_account_name', None)
+  global().pop('new_account_is_global', None)
   show_resp
   new_payment_account = True 
 ---
@@ -894,8 +899,8 @@ code: |
     first_name=updated_user.name.first,
     last_name=updated_user.name.last,
     middle_name=updated_user.name.middle )
-  del user_id
-  del updated_user
+  global().pop('user_id', None)
+  global().pop('updated_user', None)
   update_user = True
 ---
 code: |
@@ -990,14 +995,14 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_court(court_id)
-  del trial_court
-  del court_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
   get_court = True
 ---
 code: |
   resp = proxy_conn.get_policy(jurisdiction_id, court_id)
-  del trial_court
-  del court_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
   get_policy = True
 ---
 code: |
@@ -1008,10 +1013,10 @@ code: |
       end_date = end_date if defined('end_date') else None)
   if resp.data is None:
     resp.data = []
-  del filtering_user_id
-  del ask_for_search_dates
-  del trial_court
-  del court_id
+  globals().pop('filtering_user_id', None)
+  globals().pop('ask_for_search_dates', None)
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
   get_filings = True
 ---
 code: |
@@ -1026,30 +1031,30 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_filing_status(jurisdiction_id, court_id, filing_id)
-  del trial_court
-  del court_id
-  del filing_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
+  globals().pop('filing_id', None)
   get_filing_status = True
 ---
 code: |
   resp = proxy_conn.get_filing(jurisdiction_id, court_id, filing_id)
-  del trial_court
-  del court_id
-  del filing_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
+  globals().pop('filing_id', None)
   get_filing = True
 ---
 code: |
   # TODO(qs): requires a bundle
   resp = proxy_conn.file_for_review(jurisdiction_id, court_id)
-  del trial_court
-  del court_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
   dummy_filing = True
 ---
 code: |
   resp = proxy_conn.cancel_filing_status(jurisdiction_id, court_id, filing_id)
-  del trial_court
-  del court_id
-  del filing_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
+  globals().pop('filing_id', None)
   cancel_filing = True
 ---
 code: |
@@ -1085,8 +1090,8 @@ code: |
     {'code': item[0], 'isActive': item[1]} for item in interim_notification_selections.items()
   ]
   resp = proxy_conn.update_notification_preferences(new_notification_preferences)
-  del new_notification_preferences
-  del interim_notification_selections
+  globals().pop('new_notification_preferences', None)
+  globals().pop('interim_notification_selections', None)
   update_notification_preferences = True
 ---
 code: |
@@ -1168,8 +1173,8 @@ code: |
     updated_attorney.name.first, 
     middle_name=updated_attorney.name.middle, 
     last_name=updated_attorney.name.last)
-  del updated_attorney
-  del attorney_id
+  globals().pop('updated_attorney', None)
+  globals().pop('attorney_id', None)
   update_attorney = True
 ---
 code: |
@@ -1192,9 +1197,9 @@ code: |
 ---
 code: |
   resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
-  del payment_account_id
-  del payment_account_name
-  del payment_account_active
+  globals().pop('payment_account_id', None)
+  globals().pop('payment_account_name', None)
+  globals().pop('payment_account_active', None)
   update_payment_account = True
 ---
 code: |
@@ -1218,9 +1223,9 @@ code: |
 ---
 code: |
   resp = proxy_conn.get_attached_cases(court_id, service_contact_id)
-  del trial_court
-  del court_id
-  del service_contact_id
+  globals().pop('trial_court', None)
+  globals().pop('court_id', None)
+  globals().pop('service_contact_id', None)
   get_attached_cases = True
 ---
 need:
@@ -1309,8 +1314,8 @@ need:
 code: |
   resp = proxy_conn.update_service_contact(service_contact_id,
     updated_service_contact) # TODO(qs): are there additional params to add here?
-  del updated_service_contact
-  del service_contact_id
+  globals().pop('updated_service_contact', None)
+  globals().pop('service_contact_id', None)
   update_service_contact = True  
 ---
 code: |
@@ -1335,25 +1340,32 @@ code: |
 code: |
   if case_was_found:
     resp = proxy_conn.attach_service_contact(service_contact_id, found_case.tracking_id, case_party_id)
-    del service_contact_id
-    del all_case_parties
+    globals().pop('all_case_parties', None)
+    globals().pop('service_contact_id', None)
+    globals().pop('case_party_id', None)
     attach_service_contact = True
   else:
     resp = ApiResponse(-1, '', None)
     attach_service_contact = False
 ---
 code: |
+  if not service_contact_id:
+    error_message = f"You don't have any service contacts, so you can't detach any from cases."
+    show_error_event
+  if not attached_case_tracking_id:
+    error_message = f"Couldn't find any cases attached to service contact {service_contact_id}"
+    show_error_event
   resp = proxy_conn.detach_service_contact(service_contact_id, attached_case_tracking_id)
   log(f'{service_contact_id}, {attached_case_tracking_id})')
-  del service_contact_id
-  del attached_case_tracking_id
+  globals().pop('service_contact_id', None)
+  globals().pop('attached_case_tracking_id', None)
   detach_service_contact = True
 ---
 code: |
   if case_was_found:
     resp = proxy_conn.get_service_information_history(court_id, found_case.tracking_id)
-    del trial_court
-    del court_id
+    globals().pop('trial_court', None)
+    globals().pop('court_id', None)
     get_service_information_history = True
   else:
     resp = ApiResponse(-1, '', None)
@@ -1362,8 +1374,8 @@ code: |
 code: |
   if case_was_found:
     resp = proxy_conn.get_service_information(court_id, found_case.tracking_id)
-    del trial_court
-    del court_id
+    globals().pop('trial_court', None)
+    globals().pop('court_id', None)
     get_service_information = True
   else:
     resp = ApiResponse(-1, '', None)
@@ -1390,8 +1402,8 @@ code: |
 ---
 code: |
   resp = proxy_conn.change_password(user_id, email, new_user_password)
-  del user_id
-  del new_user_password
+  global().pop('user_id', None)
+  global().pop('new_user_password', None)
   change_password = True
 ---
 id: field
@@ -1402,9 +1414,9 @@ fields:
 ---
 code: |
   resp=proxy_conn.get_datafield(court_id, field_name)
-  del trial_court
-  del court_id
-  del field_name
+  global().pop('trial_court', None)
+  global().pop('court_id', None)
+  global().pop('field_name', None)
   get_datafield = True
 ---
 code: |
@@ -1427,6 +1439,12 @@ subquestion: |
   Removing roles: ${ del_resp }
 
 continue button field: show_role_resp
+---
+event: show_error_event
+question: |
+  Error
+subquestion: |
+  ${ error_message }
 ---
 code: |
   jurisdiction_id = 'illinois'
