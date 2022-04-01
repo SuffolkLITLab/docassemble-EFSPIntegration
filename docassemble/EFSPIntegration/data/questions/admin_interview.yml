@@ -236,7 +236,7 @@ content: |
   % for elem in firm_admin_attorneys_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      label=elem[1], id_tag=elem[0]) }
   
   % endfor
 ---
@@ -271,7 +271,7 @@ content: |
 
   ${ action_button_html(url_ask(
     [{'recompute': ['remove_service_contact', 'show_resp']}]),
-    label='Remove service contact') }
+    label='Remove service contact', id_tag='remove_service_contact') }
 
   ${ action_button_html(url_ask(
     [{'undefine': [
@@ -286,16 +286,16 @@ content: |
       'found_case',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found','attach_service_contact', 'show_resp']}]),
-    label='Attach service contact') }
+    {'recompute': ['case_was_found', 'attach_service_contact', 'show_resp']}]),
+    label='Attach service contact', id_tag='attach_service_contact') }
 
   ${ action_button_html(url_ask(
     [{'recompute': ['detach_service_contact', 'show_resp']}]),
-    label='Detach service contact') }
+    label='Detach service contact', id_tag='detach_service_contact') }
 
   ${ action_button_html(url_ask(
     [{'recompute': ['get_attached_cases', 'show_resp']}]),
-    label='View attached cases') }
+    label='View attached cases', id_tag='get_attached_cases') }
 ---
 template: payment_template
 subject: |
