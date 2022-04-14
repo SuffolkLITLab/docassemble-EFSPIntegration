@@ -7,7 +7,7 @@ Feature: The interviews run without erroring
 
   These tests are made to work with the ALKiln testing framework, an automated testing framework made under the Document Assembly Line Project.
 
-  @admin_interview 
+  @admin_interview  @taps
   Scenario: admin_interview.yml runs
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
@@ -17,9 +17,20 @@ Feature: The interviews run without erroring
     And I tap the "Tests-Attorneys-tab" element
     And I tap the "create_attorney" element
     Then I see the phrase "Comment: Tyler validates the bar number" 
+  
+  @admin_interview @taps
+  Scenario: admin_interview.yml runs
+    Given I start the interview at "admin_interview.yml"
+    And the maximum seconds for each Step in this Scenario is 20
+    And I set the variable "my_username" to secret "PROSE_EMAIL"
+    And I set the variable "my_password" to secret "PROSE_PASSWORD"
+    And I tap to continue
+    And I tap the "Tests-Attorneys-tab" element
+    And I tap the "create_attorney" element
+    Then I should not see the phrase "Comment: Tyler validates the bar number" 
 
-  @admin_interview
-  Scenario: multiple-times through attach/detach
+  @admin_interview @attach
+  Scenario: multiple-times through attach
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40
     And I set the variable "my_username" to secret "TYLER_EMAIL"
@@ -56,7 +67,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I see the phrase "Service Contact already attached to case."
 
-  @admin_interview
+  @admin_interview @attach
   Scenario: earlyish stop attach when no service contacts
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40
