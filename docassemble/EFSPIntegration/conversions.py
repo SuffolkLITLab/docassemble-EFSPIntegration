@@ -350,8 +350,7 @@ def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
     return False, False
 
   user_details = proxy_conn.get_user(login_data.get('TYLER-ID', login_data.get('TYLER_ID')))
-  # TODO(brycew): wrong params for get_firm
-  firm_details = proxy_conn.get_firm(login_data.get('TYLER-ID', login_data.get('TYLER_ID')))
+  firm_details = proxy_conn.get_firm() 
   if not user_details.data:
     return False, False
 
