@@ -90,10 +90,8 @@ subquestion: |
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
       global_admin_payment_template,
-      initial_filing_template,
+      make_filing_template,
       efsp_template,
-      subsequent_filing_template,
-      ecf_template,
       filings_template) }
   % elif logged_in_user_is_admin:
     ${ tabbed_templates_html("Tests", login_status_template,
@@ -103,14 +101,14 @@ subquestion: |
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
       payment_template,
-      initial_filing_template,
+      make_filing_template,
       efsp_template,
-      subsequent_filing_template,
-      ecf_template,
       filings_template) }
   % else:
   ${ tabbed_templates_html("Tests", login_status_template, 
+      firm_admin_service_contacts,
       payment_template,
+      make_filing_template,
       efsp_template, 
       filings_template) }
   % endif
@@ -336,16 +334,11 @@ content: |
   
   % endfor
 ---
-template: initial_filing_template
+template: make_filing_template
 subject: |
-  Initial filing
+  Make filing
 content: |
-  * Login as Pro Se, create initial filing with credit card
-  * Continue preparing. Attach documents
-  * Submit Filing for clerk review
-  * Accept envelope
-  * Repeat as: waiver account; e-check
-  * Repeat as: firm user: credit card, waiver, e-check
+  Make either an initial or subsequent filing
 
   ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
 ---  
@@ -417,28 +410,6 @@ subquestion: |
   ${ found_case.title } (${ found_case.tracking_id })
   % endif
 continue button field: display_found_case  
----
-template: subsequent_filing_template
-subject: |
-  Subsequent filing
-content: |
-  * Subsequent Filing - Firm User
-  * Subsequent Filing - Pro Se Filer
-  * Subsequent Filing - Business Origination
-  * Subsequent Filing - Add/Remove Case Party & Attorney
-  * Subsequest Filing - Add Service and Multiple Service contacts to an existing case
-  * Subsequent Filing - Add/Remove Service Contact to case party
-  
-  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }  
----
-template: ecf_template
-subject: |
-  ECF Filing
-content: |
-  * ECF Filing - Subsequent Filing into Non-indexed case
-  * ECF Filing - Filing with Courtesy Copies 
-  
-  ${ action_button_html(interview_url(i=user_info().package + ":any_filing_interview.yml",reset=1), label="Launch filing interview") }
 ---
 template: filings_template
 subject: |

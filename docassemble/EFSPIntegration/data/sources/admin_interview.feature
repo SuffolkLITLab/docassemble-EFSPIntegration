@@ -14,9 +14,9 @@ Feature: The interviews run without erroring
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
-    And I tap the "Tests-Attorneys-tab" element
-    And I tap the "create_attorney" element
-    Then I see the phrase "Comment: Tyler validates the bar number" 
+    And I tap the "Tests-Attorneys-tab" tab 
+    And I tap the "#create_attorney" element
+    Then I should not see the phrase "Comment: Tyler validates the bar number" 
   
   @admin_interview @taps
   Scenario: admin_interview.yml runs
@@ -25,9 +25,8 @@ Feature: The interviews run without erroring
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
-    And I tap the "Tests-Attorneys-tab" element
-    And I tap the "create_attorney" element
-    Then I should not see the phrase "Comment: Tyler validates the bar number" 
+    And I tap the "Tests-Service_contacts-tab" tab 
+    Then I tap the "#attach_service_contact" element
 
   @admin_interview @attach
   Scenario: multiple-times through attach
@@ -36,8 +35,8 @@ Feature: The interviews run without erroring
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
-    And I tap the "Tests-Service_contacts-tab" element
-    And I tap the "attach_service_contact" element
+    And I tap the "Tests-Service_contacts-tab" tab 
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"
@@ -51,8 +50,8 @@ Feature: The interviews run without erroring
     And I set the variable "case_party_id" to "66488af3-c376-4500-b99e-3ff665fcc5fd"
     And I tap to continue
     And I tap to continue
-    And I tap the "Tests-Service_contacts-tab" element
-    And I tap the "attach_service_contact" element
+    And I tap the "Tests-Service_contacts-tab" tab 
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"
@@ -74,8 +73,8 @@ Feature: The interviews run without erroring
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
-    And I tap the "Tests-Service_contacts-tab" element
-    And I tap the "attach_service_contact" element
+    And I tap the "Tests-Service_contacts-tab" tab 
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"
