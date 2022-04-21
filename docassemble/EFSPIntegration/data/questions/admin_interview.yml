@@ -157,7 +157,7 @@ content: |
   % for elem in firm_admin_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1] id_tag=elem[0]) }
+      label=elem[1], id_tag=elem[0]) }
 
   % endfor  
 ---
@@ -170,7 +170,7 @@ content: |
   
   ${ action_button_html(url_ask(
     [{'recompute': ['get_datafield', 'show_resp']}]),
-    label="Get datafield") }
+    label="Get datafield", id_tag='get_datafield') }
 ---
 template: firm_admin_users_template
 subject: |
@@ -196,7 +196,7 @@ content: |
   % for elem in user_admin_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      label=elem[1], id_tag=elem[0]) }
 
   % endfor
 
@@ -220,7 +220,7 @@ content: |
 
   ${ action_button_html(url_ask(
     [{'recompute': ['change_password', 'show_resp']}]),
-    label='Change password') }
+    label='Change password', id_tag='change_password') }
 ---
 template: firm_admin_attorneys_template
 subject: |
@@ -325,12 +325,12 @@ content: |
       {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
       {'recompute': ['new_payment_account']}
     ]),
-    label='New payment Account') }
+    label='New payment Account', id_tag='new_payment_account') }
 
   % for elem in global_admin_payment_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      label=elem[1], id_tag=elem[0]) }
   
   % endfor
 ---
@@ -363,7 +363,7 @@ content: |
       'get_case_response',
     ]},
     {'recompute': ['case_was_found', 'display_case', 'display_found_case']}]),
-    label="Find a case") }
+    label="Find a case", id_tag="find_a_case") }
 
   ${ action_button_html(url_ask(
     [{'undefine': [
@@ -377,7 +377,7 @@ content: |
       'get_case_response',
     ]},
     {'recompute': ['case_was_found', 'get_service_information', 'show_resp']}]),
-    label="Get case service information") }
+    label="Get case service information", id_tag="get_case_service_info") }
     
   ${ action_button_html(url_ask(
     [{'undefine': [
@@ -391,7 +391,7 @@ content: |
       'get_case_response',
     ]},
     {'recompute': ['case_was_found', 'get_service_information_history', 'show_resp']}]),
-    label="Get case service history") }
+    label="Get case service history", id_tag="get_case_service_info_history") }
     
 ---
 id: display case admin interview
