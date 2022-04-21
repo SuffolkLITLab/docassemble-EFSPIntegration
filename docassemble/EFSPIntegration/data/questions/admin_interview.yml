@@ -157,7 +157,7 @@ content: |
   % for elem in firm_admin_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      label=elem[1] id_tag=elem[0]) }
 
   % endfor  
 ---
@@ -418,7 +418,7 @@ content: |
   % for elem in filing_admin_list:
   ${ action_button_html(url_ask(
       [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      label=elem[1], id_tag=elem[0]) }
   
   % endfor
 ---
