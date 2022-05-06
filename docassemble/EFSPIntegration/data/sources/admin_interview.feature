@@ -16,7 +16,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I tap the "Tests-Attorneys-tab" tab 
     And I tap the "#create_attorney" element.
-    Then I should not see the phrase "Comment: Tyler validates the bar number" 
+    Then I should see the phrase "Comment: Tyler validates the bar number" 
   
   @admin_interview @taps @prose @service_contacts
   Scenario: admin_interview.yml Pro Se login 
@@ -31,7 +31,7 @@ Feature: The interviews run without erroring
   @admin_interview @taps @firm
   Scenario: admin_interview.yml Get Firm
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 50
+    And the maximum seconds for each Step in this Scenario is 20
     And I check the page for accessibility issues
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
@@ -45,6 +45,31 @@ Feature: The interviews run without erroring
     And I tap the "Tests-Firm-tab" tab
     And I tap the "#get_firm" element and wait 5 seconds
     Then I should see the phrase "Suffolk FIT Lab"
+
+  @admin_interview @taps @accessibility
+  Scenario: admin_interview.yml is accessible
+    Given I start the interview at "admin_interview.yml"
+    And the maximum seconds for each Step in this Scenario is 50
+    Then I check the page for accessibility issues
+    And I set the variable "my_username" to secret "TYLER_EMAIL"
+    And I set the variable "my_password" to secret "TYLER_PASSWORD"
+    And I tap to continue
+    Then I check the page for accessibility issues
+    And I tap the "Tests-Firm-tab" tab
+    And I tap the "#get_firm" element and wait 5 seconds
+    Then I check the page for accessibility issues
+    Then I should see the phrase "Suffolk FIT Lab"
+    And I tap to continue
+    And I tap the "Tests-Filings-tab" tab
+    And I tap the "#get_courts" element and wait 5 seconds
+    Then I check the page for accessibility issues
+    And I tap to continue
+    And I tap the "Tests-Filings-tab" tab
+    Then I check the page for accessibility issues
+    And I tap the "#get_court" element.
+    And I set the variable "trial_court" to "cook:dr5"
+    And I tap to continue
+    Then I check the page for accessibility issues
 
   @admin_interview @taps @admin @courts
   Scenario: admin_interview.yml See court information
