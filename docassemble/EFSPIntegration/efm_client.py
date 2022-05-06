@@ -4,7 +4,7 @@ import json
 import logging
 import isodate
 from datetime import datetime
-from typing import Union, List, Dict
+from typing import Optional, Union, List, Dict
 import http.client as http_client
 
 from urllib.parse import urlencode
@@ -44,7 +44,7 @@ def _give_data_url(bundle: ALDocumentBundle):
   for doc in bundle:
     doc.proxy_enabled = doc.always_enabled or doc.enabled
     if doc.proxy_enabled:
-      doc.data_url = doc.as_pdf().url_for(temporary=True)
+      doc.data_url = doc.as_pdf().url_for(external=True, temporary=True)
       doc.page_count = doc.as_pdf().num_pages()
     if hasattr(doc, 'enabled'):
       del doc.enabled
@@ -294,10 +294,6 @@ class ProxyConnection:
     send = lambda: self.proxy_client.post(self.base_url + 'adminusers/user/password/reset', data=email)
     return self._call_proxy(send)
 
-  def get_password_question(self, email:str):
-    send = lambda: self.proxy_client.get(self.base_url + 'adminusers/user/password-question', data=email)
-    return self._call_proxy(send)
-
   # Managing a Firm
   def get_firm(self):
     send = lambda: self.proxy_client.get(self.base_url + 'firmattorneyservice/firm')
@@ -339,8 +335,12 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.base_url + f'payments/types')
     return self._call_proxy(send)
 
-  def get_payment_account_list(self):
-    send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts')
+  def get_payment_account_list(self, court_id:Optional[str]=None):
+    if not court_id:
+      send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts')
+    else:
+      params = {'court_id': court_id}
+      send = lambda: self.proxy_client.get(self.base_url + f'payments/payment-accounts', params=params)
     return self._call_proxy(send) 
 
   def get_payment_account(self, payment_account_id):

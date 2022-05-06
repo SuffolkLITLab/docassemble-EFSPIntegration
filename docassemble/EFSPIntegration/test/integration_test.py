@@ -54,6 +54,14 @@ class TestClass:
     assert(resp.is_ok())
     return resp
 
+  def test_hateos(self):
+    base_url = self.proxy_conn.base_url
+    base_send = lambda: self.proxy_conn.proxy_client.get(base_url) 
+    next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
+    for url in next_level_urls.values():
+      send = lambda: self.proxy_conn.proxy_client.get(url) 
+      self.basic_assert(self.proxy_conn._call_proxy(send))
+
 
   def test_self_user(self):
     myself = self.basic_assert(self.proxy_conn.get_user())
@@ -72,7 +80,6 @@ class TestClass:
     changed_back = self.basic_assert(self.proxy_conn.self_change_password(new_password, current_password))
     self.basic_assert(self.proxy_conn.authenticate_user(tyler_email=email, tyler_password=current_password))
 
-    self.basic_assert(self.proxy_conn.get_password_question(email)) 
     self.basic_assert(self.proxy_conn.get_notification_options())
     self.basic_assert(self.proxy_conn.get_notification_preferences())
     self.basic_assert(self.proxy_conn.update_notification_preferences(
@@ -203,15 +210,19 @@ class TestClass:
         account_name=account.data['accountName'])
     assert(update_account.response_code == 200)
 
+    global_account = self.basic_assert(self.proxy_conn.create_waiver_account('integration test global account', True))
+    self.basic_assert(self.proxy_conn.remove_global_payment_account(global_account.data))
+
 
   def test_payment_accounts(self):
     self.basic_assert(self.proxy_conn.get_payment_account_type_list())
     self.basic_assert(self.proxy_conn.get_payment_account_list())
+    self.basic_assert(self.proxy_conn.get_payment_account_list('adams'))
 
-    new_account = self.basic_assert(self.proxy_conn.create_waiver_account('New Test account', False))
+    new_account = self.basic_assert(self.proxy_conn.create_waiver_account('New Integration Test account', False))
     id = new_account.data
     one_account = self.basic_assert(self.proxy_conn.get_payment_account(id))
-    assert(one_account.data['accountName'] == 'New Test account')
+    assert(one_account.data['accountName'] == 'New Integration Test account')
     assert(one_account.data['paymentAccountID'] == id)
 
     self.basic_assert(self.proxy_conn.update_payment_account(id, account_name='New, Better Name'))
@@ -220,9 +231,6 @@ class TestClass:
 
     self.basic_assert(self.proxy_conn.update_payment_account(id, account_name=one_account.data['accountName']))
     self.basic_assert(self.proxy_conn.remove_payment_account(new_account.data))
-
-    global_account = self.basic_assert(self.proxy_conn.create_waiver_account('test global account', True))
-    self.basic_assert(self.proxy_conn.remove_global_payment_account(global_account.data))
 
 
   def test_court_record(self):
@@ -289,19 +297,24 @@ def main(args):
   base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key)
+  intentional_bad_resp = proxy_conn.authenticate_user()
+  assert(intentional_bad_resp.response_code == 403)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 
       tyler_password=os.getenv('bryce_user_password'))
   assert(resp.response_code == 200)
   tc = TestClass(proxy_conn, verbose=True)
+  tc.test_hateos()
   tc.test_self_user()
   tc.test_firm()
   tc.test_service_contacts()
   tc.test_get_courts()
+  # TODO(brycew): waiting on Tyler ticket 
   tc.test_global_payment_accounts()
   tc.test_payment_accounts()
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
+    # TODO(brycew): needs a more up to date JSON from any filing interiview
   #tc.test_filings()
 
 if __name__ == '__main__':
