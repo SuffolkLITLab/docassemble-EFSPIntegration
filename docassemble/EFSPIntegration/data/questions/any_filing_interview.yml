@@ -419,7 +419,9 @@ code: |
 id: Additional parties
 question: |
   Are you adding any additional parties to this filing?
-yesno: is_adding_new_parties
+fields:
+  - no label: is_adding_new_parties
+    datatype: yesnoradio
 ---
 id: make a filing
 question: |
@@ -717,12 +719,16 @@ subquestion: |
   % else:
   The existing opposing parties include
   % endif
-yesno: other_parties.there_are_any
+fields:
+  - no label: other_parties.there_are_any
+    datatype: yesnoradio
 ---
 id: any other opposing parties
 question: |
   Is there any other opposing party?
-yesno: other_parties.there_is_another  
+fields:
+  - no label: other_parties.there_is_another  
+    datatype: yesnoradio
 ---
 id: party type of x
 generic object: ALIndividual
@@ -891,7 +897,9 @@ validation code: |
 id: another cross reference
 question: |
   Do you have any other types of cross references?
-yesno: cross_references.there_is_another
+fields:
+  - no label: cross_references.there_is_another
+    datatype: yesnoradio
 ---
 id: optional service fee amount
 generic object: ALDocument
@@ -987,17 +995,23 @@ continue button label: ${'Continue' if attached_service_contacts else 'Try again
 id: existing service contacts
 question: |
   Do you want to serve a service contact in this filing?
-yesno: service_contacts.there_are_any
+fields:
+  - no label: service_contacts.there_are_any
+    datatype: yesnoradio
 ---
 id: attach service contacts
 question: |
   Do you want to attach a service contact to this case for others or yourself to serve?
-yesno: contacts_to_attach.there_are_any
+fields:
+  - no label: contacts_to_attach.there_are_any
+    datatype: yesnoradio
 ---
 id: Any more existing service contacts
 question: |
   Do you want to serve any more service contacts?
-yesno: service_contacts.there_is_another
+fields:
+  - no label: service_contacts.there_is_another
+    datatype: yesnoradio
 ---
 code: |
   if not service_contact_options:
@@ -1006,7 +1020,9 @@ code: |
 id: any more attaching service contacts
 question: |
   Do you want to attach any more service contacts to this case?
-yesno: contacts_to_attach.there_is_another
+fields:
+  - no label: contacts_to_attach.there_is_another
+    datatype: yesnoradio
 ---
 id: your email
 question: |
