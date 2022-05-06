@@ -73,7 +73,9 @@ question: |
   Optional services - ${ x.title }
 subquestion: |
   Do you want to add any optional services for this document?
-yesno: x.optional_services.there_are_any
+fields:
+  - no label: x.optional_services.there_are_any
+    datatype: yesnoradio
 ---
 generic object: DAObject
 code: |
@@ -84,7 +86,9 @@ generic object: DAObject
 id: another optional service
 question: |
   Are there any other optional services that you want for ${ x.title }?
-yesno: x.optional_services.there_is_another
+fields:
+  - no label: x.optional_services.there_is_another
+    datatype: yesnoradio
 ---
 generic object: DAObject
 code: |
