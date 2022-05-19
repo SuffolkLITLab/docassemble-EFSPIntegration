@@ -8244,16 +8244,6 @@
       ]
     ], 
     "tyler_login": true, 
-    "tyler_login_resp": {
-      "_class": "docassemble.playground1efsp.efm_client.ApiResponse", 
-      "data": {
-        "JEFFNET-TOKEN": "QGNL4E89XQRBSBXY3WPFFR64XR9FNQV91QULXYGEN8RQX5", 
-        "TYLER-ID": "fbe174a6-693d-43e8-96f1-ac118cb93796", 
-        "TYLER-TOKEN": "bwilley@suffolk.edu:23fec6e3-2b01-4506-8dbb-74bcd5f4fea8"
-      }, 
-      "error_msg": null, 
-      "response_code": 200
-    }, 
     "tyler_payment_account_options": [
       [
         "3edbc236-14e1-4850-b101-50c1da073e30", 

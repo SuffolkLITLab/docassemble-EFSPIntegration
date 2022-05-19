@@ -104,7 +104,7 @@ code: |
   summary_page
 ---
 code: |
-  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
 features:
   question back button: True
@@ -300,7 +300,7 @@ code: |
   has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
 ---
 code: |
-  fees_resp = proxy_conn.calculate_filing_fees(jurisdiction_id, court_id, al_court_bundle)
+  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
   if not fees_resp.is_ok():
     log(f'fees not ok! {fees_resp}')
 ---
@@ -1106,7 +1106,7 @@ code: |
   x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
 ---
 code: |
-  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(jurisdiction_id, court_id).data)
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
 ---
 code: |
