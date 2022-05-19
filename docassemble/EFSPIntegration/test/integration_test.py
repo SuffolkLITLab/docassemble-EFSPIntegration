@@ -320,6 +320,7 @@ def main(args):
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
+  tc.test_codes()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
   #tc.test_filings()
 
