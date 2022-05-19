@@ -67,12 +67,16 @@ code: |
     if missing_required_party_types:
       party_review_screen
   
+  if not needs_all_info:
+    contacts_to_attach.gather()
+  else:
+    contacts_to_attach.gathered = True
+
   lead_doc.completed
   append_lead_doc
   al_court_bundle.auto_gather=True
   al_court_bundle.gather()
-  
-  contacts_to_attach.gather()
+
   service_contacts.gather()
   cross_references.gather()
   al_court_bundle.as_pdf()
@@ -845,7 +849,7 @@ fields:
 id: optional service type
 generic object: ALDocument
 question: |
-  Optional Services Type ${ i }
+  ${ ordinal_number(i) } optional services for ${ x.title }
 fields:
   - Optional Services: x.optional_services[i].code
     datatype: dropdown
@@ -967,7 +971,7 @@ subquestion: |
   
   If you add a new contact, refresh this screen to view the new contact.
   % else:
-  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
+  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1, target="_blank"}) to continue.
   % endif
 fields:
   - Contact Id: service_contacts[i].contact_id
