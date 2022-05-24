@@ -20,7 +20,7 @@ fields:
     required: False
   - Other phone number: users[0].phone_number
     required: False
-  - Email address: users[0].email    
+  - Email address: users[0].email
     datatype: email
     # Email is required if the user wants to efile,
     # and we have to be able to attempt efiling, meaning the court has to be right
@@ -217,7 +217,7 @@ id: get available_efile_courts
 code: |
   resp = proxy_conn.authenticate_user()  # Uses default config keys
   if resp.response_code == 200:
-    available_efile_courts = sorted(proxy_conn.get_court_list(jurisdiction_id).data)
+    available_efile_courts = sorted(proxy_conn.get_court_list().data)
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
@@ -242,7 +242,7 @@ id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
   if can_check_efile:
-    check_resp = proxy_conn.check_filing(jurisdiction_id, court_id, al_court_bundle)
+    check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
     remaining_to_check = check_resp.data
     log('check_resp: ' + str(check_resp))
     if not check_resp.is_ok():
@@ -325,7 +325,7 @@ code: |
 ---
 id: separate efile
 code: |
-  efile_resp = proxy_conn.file_for_review(jurisdiction_id, court_id, al_court_bundle)
+  efile_resp = proxy_conn.file_for_review(court_id, al_court_bundle)
 ---
 question: |
   Which court date would you like ?

@@ -7,7 +7,7 @@ include:
   - common_qs.yml
 ---
 code: |
-  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction='illinois')
 ---
 id: eFile Login
 question: |
@@ -30,7 +30,7 @@ fields:
 code: |
   if showifdef('user_forgot_password'):
     tyler_reset_password_resp = proxy_conn.reset_user_password(my_username)
-    reset_password_screen    
+    reset_password_screen
   else:
     tyler_login_resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
     del my_password

@@ -67,12 +67,16 @@ code: |
     if missing_required_party_types:
       party_review_screen
   
+  if not needs_all_info:
+    contacts_to_attach.gather()
+  else:
+    contacts_to_attach.gathered = True
+
   lead_doc.completed
   append_lead_doc
   al_court_bundle.auto_gather=True
   al_court_bundle.gather()
-  
-  contacts_to_attach.gather()
+
   service_contacts.gather()
   cross_references.gather()
   al_court_bundle.as_pdf()
@@ -104,7 +108,7 @@ code: |
   summary_page
 ---
 code: |
-  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
 features:
   question back button: True
@@ -300,7 +304,7 @@ code: |
   has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
 ---
 code: |
-  fees_resp = proxy_conn.calculate_filing_fees(jurisdiction_id, court_id, al_court_bundle)
+  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
   if not fees_resp.is_ok():
     log(f'fees not ok! {fees_resp}')
 ---
@@ -845,7 +849,7 @@ fields:
 id: optional service type
 generic object: ALDocument
 question: |
-  Optional Services Type ${ i }
+  ${ ordinal_number(i) } optional services for ${ x.title }
 fields:
   - Optional Services: x.optional_services[i].code
     datatype: dropdown
@@ -947,7 +951,7 @@ subquestion: |
   This will let you or other parties on the case serve filings to this contact.
   We'll ask if you want to serve them in this filing later.
   % else:
-  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
+  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"} to continue.
   % endif
 fields:
   - Contact Id: contacts_to_attach[i].contact_id
@@ -967,7 +971,7 @@ subquestion: |
   
   If you add a new contact, refresh this screen to view the new contact.
   % else:
-  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"}) to continue.
+  You need to [add a service contact using the admin interface](${ interview_url(i=user_info().package + ":admin_interview.yml", reset=1) }){:target="_blank"} to continue.
   % endif
 fields:
   - Contact Id: service_contacts[i].contact_id
@@ -1106,7 +1110,7 @@ code: |
   x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
 ---
 code: |
-  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(jurisdiction_id, court_id).data)
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
 ---
 code: |

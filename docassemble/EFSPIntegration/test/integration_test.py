@@ -59,6 +59,8 @@ class TestClass:
     base_send = lambda: self.proxy_conn.proxy_client.get(base_url) 
     next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
     for url in next_level_urls.values():
+      if 'authenticate' in url:
+        continue
       send = lambda: self.proxy_conn.proxy_client.get(url) 
       self.basic_assert(self.proxy_conn._call_proxy(send))
 
@@ -293,10 +295,14 @@ class TestClass:
       detail_resp = self.basic_assert(self.proxy_conn.get_filing(court, filing_id))
       cancel_resp = self.basic_assert(self.proxy_conn.cancel_filing_status(court, filing_id))
 
+  def test_codes(self):
+    self.basic_assert(self.proxy_conn.get_court_list())
+    self.basic_assert(self.proxy_conn.get_case_categories('adams'))
+
 def main(args):
   base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
-  proxy_conn = ProxyConnection(url=base_url, api_key=api_key)
+  proxy_conn = ProxyConnection(url=base_url, api_key=api_key, default_jurisdiction='illinois')
   intentional_bad_resp = proxy_conn.authenticate_user()
   assert(intentional_bad_resp.response_code == 403)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 
@@ -314,6 +320,7 @@ def main(args):
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
+  tc.test_codes()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
   #tc.test_filings()
 

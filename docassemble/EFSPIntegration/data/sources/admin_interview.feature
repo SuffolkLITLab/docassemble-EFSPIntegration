@@ -15,7 +15,7 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Attorneys-tab" tab 
-    And I tap the "#create_attorney" element.
+    And I tap the "#create_attorney" element
     Then I should see the phrase "Comment: Tyler validates the bar number" 
   
   @admin_interview @taps @prose @service_contacts
@@ -26,50 +26,43 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" tab 
-    Then I tap the "#attach_service_contact" element.
+    Then I tap the "#attach_service_contact" element
 
-  @admin_interview @taps @firm
+  @admin_interview @taps @firm @accessibility
   Scenario: admin_interview.yml Get Firm
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
-    And I check the page for accessibility issues
+    And I check all pages for accessibility issues
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
-    And I check the page for accessibility issues
     And I tap the "Tests-Firm-tab" tab
     And I tap the "#get_firm" element and wait 5 seconds
-    And I check the page for accessibility issues
-    Then I should see the phrase "Suffolk FIT Lab"
+    Then I should see the phrase "Suffolk LIT Lab"
     And I tap to continue
     And I tap the "Tests-Firm-tab" tab
     And I tap the "#get_firm" element and wait 5 seconds
-    Then I should see the phrase "Suffolk FIT Lab"
+    Then I should see the phrase "Suffolk LIT Lab"
 
   @admin_interview @taps @accessibility
   Scenario: admin_interview.yml is accessible
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
-    Then I check the page for accessibility issues
+    And I check all pages for accessibility issues
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
-    Then I check the page for accessibility issues
     And I tap the "Tests-Firm-tab" tab
     And I tap the "#get_firm" element and wait 5 seconds
-    Then I check the page for accessibility issues
-    Then I should see the phrase "Suffolk FIT Lab"
+    Then I should see the phrase "Suffolk LIT Lab"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
     And I tap the "#get_courts" element and wait 5 seconds
-    Then I check the page for accessibility issues
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    Then I check the page for accessibility issues
-    And I tap the "#get_court" element.
+    And I tap the "#get_court" element
     And I set the variable "trial_court" to "cook:dr5"
     And I tap to continue
-    Then I check the page for accessibility issues
 
   @admin_interview @taps @admin @courts
   Scenario: admin_interview.yml See court information
@@ -84,7 +77,7 @@ Feature: The interviews run without erroring
     Then I should see the phrase "cook:dr5"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    And I tap the "#get_court" element.
+    And I tap the "#get_court" element
     And I set the variable "trial_court" to "cook:dr5" 
     And I tap to continue
     Then I should see the phrase "name: Cook County - Domestic Relations - District 5 - Bridgeview"
@@ -97,7 +90,7 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" tab 
-    And I tap the "#attach_service_contact" element.
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"
@@ -112,7 +105,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" tab 
-    And I tap the "#attach_service_contact" element.
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"
@@ -135,7 +128,7 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" tab 
-    And I tap the "#attach_service_contact" element.
+    And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
     And I set the variable "do_what_choice" to "docket_lookup"

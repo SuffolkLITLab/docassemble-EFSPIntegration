@@ -25,7 +25,7 @@ objects:
   - person_to_reg: ALIndividual
   - new_attorney: ALIndividual
   - updated_attorney: ALIndividual
-  - updated_user: ALIndividual    
+  - updated_user: ALIndividual
   - updated_self: ALIndividual
   - new_firm: Person
   - updated_firm: Person
@@ -485,7 +485,7 @@ fields:
   - Filing id: filing_id
     datatype: combobox
     code: |
-      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(jurisdiction_id, court_id, today().minus(years=1), today().plus(days=1) ).data or []]
+      [filing_id_and_label(y) for y in proxy_conn.get_filing_list(court_id, today().minus(years=1), today().plus(days=1) ).data or []]
 ---
 id: filtering user id
 question: |
@@ -972,14 +972,14 @@ code: |
   get_court = True
 ---
 code: |
-  resp = proxy_conn.get_policy(jurisdiction_id, court_id)
+  resp = proxy_conn.get_policy(court_id)
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   get_policy = True
 ---
 code: |
   ask_for_search_dates
-  resp = proxy_conn.get_filing_list(jurisdiction_id, court_id, 
+  resp = proxy_conn.get_filing_list(court_id, 
       user_id = filtering_user_id,
       start_date = start_date if defined('start_date') else None, 
       end_date = end_date if defined('end_date') else None)
@@ -1002,14 +1002,14 @@ code: |
   resend_activation = True
 ---
 code: |
-  resp = proxy_conn.get_filing_status(jurisdiction_id, court_id, filing_id)
+  resp = proxy_conn.get_filing_status(court_id, filing_id)
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   globals().pop('filing_id', None)
   get_filing_status = True
 ---
 code: |
-  resp = proxy_conn.get_filing(jurisdiction_id, court_id, filing_id)
+  resp = proxy_conn.get_filing(court_id, filing_id)
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   globals().pop('filing_id', None)
@@ -1017,13 +1017,13 @@ code: |
 ---
 code: |
   # TODO(qs): requires a bundle
-  resp = proxy_conn.file_for_review(jurisdiction_id, court_id)
+  resp = proxy_conn.file_for_review(court_id)
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   dummy_filing = True
 ---
 code: |
-  resp = proxy_conn.cancel_filing_status(jurisdiction_id, court_id, filing_id)
+  resp = proxy_conn.cancel_filing_status(court_id, filing_id)
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   globals().pop('filing_id', None)
