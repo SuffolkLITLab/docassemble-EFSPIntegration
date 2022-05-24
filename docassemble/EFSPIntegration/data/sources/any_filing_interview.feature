@@ -48,7 +48,7 @@ Feature: Make any type of filing
       | review_fees['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
-  @any_filing_interview
+  @any_filing_interview @prose
   Scenario: any_filing_interview can handle a pro-se user
     Given I start the interview at "any_filing_interview.yml"
     And the maximum seconds for each Step in this Scenario is 120
