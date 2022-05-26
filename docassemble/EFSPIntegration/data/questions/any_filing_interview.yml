@@ -84,7 +84,7 @@ code: |
   if needs_all_info:
     lead_contact.email
   
-  if full_court_info.data.get('allowreturndate'):
+  if full_court_info.get('allowreturndate'):
     return_date
     show_allowed_return_date
 

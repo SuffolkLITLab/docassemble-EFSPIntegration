@@ -130,7 +130,7 @@ continue button field: fallback_user_choice
 question: |
   Do you want to efile this document directly with the court?
 subquestion: |
-  You are able to electronically-file (e-file) this document with ${ trial_court }!
+  You are able to electronically-file (e-file) this document with ${ full_court_info['name'] }!
 
   This means you don't have to print out the document. The court
   will communicate with you through your email or phone.

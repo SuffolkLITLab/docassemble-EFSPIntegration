@@ -253,7 +253,7 @@ fields:
       tyler_payment_account_options
 ---
 code: |
-  allowable_card_types = full_court_info.data.get('allowablecardtypes', [])
+  allowable_card_types = full_court_info.get('allowablecardtypes', [])
   res = proxy_conn.get_payment_account_list().data
   if res:
     tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
@@ -264,6 +264,12 @@ code: |
   if res:
     tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
 ---
+only sets: full_court_info
 code: |
-  full_court_info = proxy_conn.get_court(court_id)
+  full_court_resp = proxy_conn.get_court(court_id)
+  if full_court_resp.is_ok():
+    full_court_info = full_court_resp.data
+  else:
+    log(f"Couldn't get full court info for {court_id}")
+    full_court_info = {}
 ---
