@@ -1,0 +1,76 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.EFSPIntegration:efiling_integration.yml
+  - docassemble.EFSPIntegration:login_qs.yml
+  - docassemble.EFSPIntegration:codes_helper.yml
+---
+code: |
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction='illinois')
+---
+objects:
+  - lead_contact: ALIndividual
+---
+objects:
+  - main_document: ALDocument.using(enabled=True, filename="mainDoc.pdf", title="Main Doc")
+---
+objects:
+  - al_court_bundle: ALDocumentBundle.using(filename="full_bundle.pdf", title="All forms to submit to the court", elements=[main_document], enabled=True)
+---
+code: |
+  trial_court = 'adams'
+  tyler_case_category = '7306'
+  tyler_case_type = '25361'
+---
+code: |
+  users[i].name.first
+  users[i].party_type = '7067'
+  if i == 0:
+    users[i].email
+  users[i].completed = True
+---
+code: |
+  other_parties[i].name.first
+  other_parties[i].party_type = '20640'
+  other_parties[i].completed = True
+---
+code: |
+  main_document.document_type = '5766'
+  main_document.filing_component = '332'
+  main_document.tyler_filing_type = '29730'
+  main_document.filing_parties = ['users[0]']
+  main_document.filing_action = 'efile'
+  main_document.completed = True
+---
+mandatory: True
+id: main interview order block
+code: |
+  user_ask_role = 'plaintiff'
+  users.gather(complete_attribute='completed')
+  other_parties.gather(complete_attribute='completed')
+  if can_check_efile:
+    tyler_login
+    lead_contact = users[0]
+    main_document.completed
+    tyler_payment_id = get_config('efile proxy', {}).get('global waiver', '')
+    ready_to_efile
+    efile
+    ending_screen
+  else:
+    cannot_efile
+---
+event: cannot_efile
+question: Cannot Efile
+---
+event: ending_screen
+question: All Done!
+---
+attachment:
+  variable name: main_document[i]  # this will be used for `preview` and `final` keys
+  content: |
+    Here is some content
+    % if i == 'final':
+    ${ users[0].signature }
+    % elif i == 'preview':
+    [ Your signature here ]
+    % endif
