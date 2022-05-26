@@ -224,7 +224,7 @@ code: |
 ---
 code: |
   def exactly_one_required_filing_component(fc_opts, fc_map) -> bool:
-    if len(fc_opts) > 1:
+    if len(fc_opts) > 1 or len(fc_opts) == 0:
       return False
     filing_component_code = next(iter(fc_opts))[0]
     return fc_map.get(filing_component_code,{}).get('required')

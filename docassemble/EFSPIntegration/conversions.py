@@ -28,6 +28,9 @@ __all__ = [
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
     return trial_court
+  if isinstance(trial_court, dict):
+    return trial_court['code']
+  # TODO(brycew): not sure what input this would be
   return str(trial_court.name)
 
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:

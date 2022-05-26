@@ -3,12 +3,15 @@ modules:
   - .efm_client
   - .conversions
 ---
+include:
+  - common_qs.yml
+---
 code: |
   proxy_conn = ProxyConnection()  # Uses default configs in the python module
 ---
-# You can override this value in your own interview
+# It's best to leave this be, but it's changable if you can't access the server configuration
 code: |
-  efile_author_mode = True
+  efile_author_mode = get_config("debug")
 ---
 id: your contact information
 question: |
@@ -65,17 +68,17 @@ help:
   content: |
     Some additional information:
     
-    % if defined('case_category'):
+    % if defined('case_category') and defined('case_category_map'):
     * Case category: ${ case_category } ${ case_category_map.get(case_category) }
     % endif
-    % if defined('case_type'):
+    % if defined('case_type') and defined('case_type_map'):
     * Case type: ${ case_type } ${ case_type_map.get(case_type) }
     % endif
-    % if defined('lead_doc.tyler_filing_type'):
-    * Lead document type: ${ lead_doc.tyler_filing_type }
+    % if defined('al_court_bundle[0].tyler_filing_type'):
+    * Lead document type: ${ al_court_bundle[0].tyler_filing_type }
     % endif
-    % if defined('lead_doc.document_type'):
-    * Document security: ${ lead_doc.document_type }
+    % if defined('al_court_bundle[0].document_type'):
+    * Document security: ${ al_court_bundle[0].document_type }
     % endif
 
     ${ efile_resp }
@@ -279,7 +282,7 @@ code: |
     efile_resp
     show_resp
     # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
-    if efile_resp.is_ok() and jurisdiction_id != 'louisiana':
+    if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana':
       show_court_reserve_resp
     efile = True
   else:

@@ -53,14 +53,11 @@ def _get_all_vars(bundle: ALDocumentBundle):
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
   _give_data_url(bundle)
   all_vars_dict = all_variables()
-  all_vars_dict.pop('trial_court_resp', None)
-  all_vars_dict.pop('x', None)
-  all_vars_dict.pop('trial_court_options', None)
-  all_vars_dict.pop('found_case', None)
-  all_vars_dict.pop('selected_exisiting_case', None)
-  all_vars_dict.pop('filing_type_options', None)
-  all_vars_dict.pop('filing_type_map', None)
-  all_vars_dict.pop('party_type_options', None)
+  vars_to_pop = ['trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
+      'filing_type_options', 'filing_type_map', 'party_type_options',
+      'available_efile_courts', 'case_category_map']
+  for var in vars_to_pop:
+    all_vars_dict.pop(var, None)
   return json.dumps(all_vars_dict)
 
 class ProxyConnection:
@@ -628,19 +625,19 @@ class ProxyConnection:
     return self._call_proxy(send)
   
   def get_document_types(self, court_id:str, filing_type:str):
-    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_codes/{filing_type}/document_types'))
+    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/document_types'))
     return self._call_proxy(send)
   
   def get_motion_types(self, court_id:str, filing_type:str):
-    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_codes/{filing_type}/motion_types'))
+    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/motion_types'))
     return self._call_proxy(send)
   
   def get_filing_components(self, court_id:str, filing_type:str):
-    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_codes/{filing_type}/filing_components'))
+    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/filing_components'))
     return self._call_proxy(send)
   
   def get_optional_services(self, court_id:str, filing_type:str):
-    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_codes/{filing_type}/optional_services'))
+    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/optional_services'))
     return self._call_proxy(send)
   
   def get_cross_references(self, court_id:str, case_type:str):

@@ -136,17 +136,6 @@ fields:
   code: |
     somebody.name_fields(person_or_business='unknown')
 ---
-id: court
-question: |
-  Choose a court
-fields:
-  - no label: trial_court
-    code: |
-      all_courts
----
-code: |
-  all_courts = proxy_conn.get_courts().data
----
 event: case_search_waiting_screen
 question: |
   Your search is in progress, please wait
