@@ -13,9 +13,6 @@ objects:
 objects:
   - somebody: ALIndividual
 ---
-objects:
-  - background_spinner: DAStaticFile.using(filename="Ajax-loader.gif", alt="")
----
 id: interview order
 comment: |
   Main API of this YAML file. You should only depend on variables declared in this block. 
@@ -141,9 +138,7 @@ fields:
 ---
 event: case_search_waiting_screen
 question: |
-  Your search is in progress, please wait
-subquestion: |
-  ${ background_spinner }
+  <i class="fas fa-cog fa-spin"></i> Your search is in progress, please wait <i class="fas fa-cog fa-spin"></i>
 ---
 code: |
   case_search_task_status = background_action('case_search_task', 'refresh')
