@@ -61,7 +61,7 @@ def _get_all_vars(bundle: ALDocumentBundle):
   return json.dumps(all_vars_dict)
 
 class ProxyConnection:
-  def __init__(self, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login', *, default_jurisdiction:str=None):
+  def __init__(self, *, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login', default_jurisdiction:str=None):
     temp_efile_config = get_config('efile proxy', {})
     if url is None:
       url = temp_efile_config.get('url', '')

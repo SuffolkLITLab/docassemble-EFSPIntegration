@@ -16,32 +16,34 @@ comment: |
 ---
 generic object: ALDocument
 code: |
-  x.filing_type
-  x.filing_description
-  x.reference_number
-  x.tyler_filing_type 
-  x.document_type
-  x.motion_type
-  x.filing_component
-  x.filing_parties
-  x.filing_action
-  x.optional_services.gather(complete_attribute='complete')
-  x.as_pdf()
+  if x.enabled:
+    x.filing_type
+    x.filing_description
+    x.reference_number
+    x.tyler_filing_type
+    x.document_type
+    x.motion_type
+    x.filing_component
+    x.filing_parties
+    x.filing_action
+    x.optional_services.gather(complete_attribute='complete')
+    x.as_pdf()
   x.completed =True
 ---
 generic object: ALDocumentBundle
 code: |
-  x.filing_type
-  x.filing_description
-  x.reference_number
-  x.tyler_filing_type 
-  x.document_type
-  x.motion_type
-  x.filing_component
-  x.filing_parties
-  x.filing_action
-  x.optional_services.gather(complete_attribute='complete')
-  x.as_pdf()
+  if x.enabled:
+    x.filing_type
+    x.filing_description
+    x.reference_number
+    x.tyler_filing_type
+    x.document_type
+    x.motion_type
+    x.filing_component
+    x.filing_parties
+    x.filing_action
+    x.optional_services.gather(complete_attribute='complete')
+    x.as_pdf()
   x.completed =True
 ---
 generic object: DAObject
@@ -230,9 +232,8 @@ code: |
     return fc_map.get(filing_component_code,{}).get('required')
 ---
 code: |
-  from typing import List, Tuple
-  def matching_tuple_option(option:str, options:List[Tuple]):
-    return next(filter(lambda type: option in type[1].lower(), options),[None])[0]
+  def matching_tuple_option(option:str, options):
+    return next([o for o in options if option in o[1].lower()],[None])[0]
 ---
 ############ Payments Stuff ############
 reconsider:
