@@ -229,11 +229,10 @@ subquestion: |
   The court's case management system isn't online. The case information might be out of date.
   % endif
 
-  We found ${ quantity_noun(len(found_cases), "case") }:
+  We found len(found_cases) ${ noun_plural("case", found_cases) }:
   
   % for case in found_cases:
   * ${ case.title } (${ case.date })
-
   % endfor
 
   ${ collapse_template(case_results_template) }
