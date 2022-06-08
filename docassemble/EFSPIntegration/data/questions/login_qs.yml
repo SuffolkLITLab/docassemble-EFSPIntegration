@@ -133,10 +133,10 @@ event: login_failed_screen
 question: |
   Tyler Login failed
 subquestion: |
-  % if int(tyler_login_resp.response_code) != 403:
-  Something went wrong when logging you in. We will not be able to e-file your form.
+  % if int(tyler_login_resp.response_code) == 403:
+  Your login information was not correct. Go back and try again.
   % else:
-  You login information was not correct. Go back and try again
+  Something went wrong when logging you in. We will not be able to e-file your form.  
   % endif
 buttons:
   - restart
