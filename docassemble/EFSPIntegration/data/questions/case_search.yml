@@ -26,6 +26,8 @@ code: |
   if not case_was_found and can_file_non_indexed_case:
     non_indexed_docket_number
 ---
+only sets:
+  - found_case
 if: |
   do_what_choice == 'party_search'
 code: |
@@ -38,8 +40,13 @@ code: |
       found_case = None
     else:
       found_case = case_choice
+  del case_search_task_status
   del somebody
+  globals().pop('found_cases', None)
+  globals().pop('case_choice', None)
 ---
+depends on:
+  - docket_id_from_user
 if: |
   do_what_choice == 'docket_lookup'
 code: |
@@ -140,12 +147,18 @@ event: case_search_waiting_screen
 question: |
   <i class="fas fa-cog fa-spin"></i> Your search is in progress, please wait <i class="fas fa-cog fa-spin"></i>
 ---
+depends on:
+  - court_id
+  - somebody
 code: |
   case_search_task_status = background_action('case_search_task', 'refresh')
 ---
 event: case_search_task
 code: |
   background_response_action('case_search_done', case_response = proxy_conn.get_cases(court_id, somebody, None))
+---
+objects:
+  - get_cases_response: DAEmpty
 ---
 event: case_search_done
 code: |
@@ -156,7 +169,6 @@ id: docket id
 question: |
   Case number
 subquestion: |
-
   % if 'cook' in court_id:
   ${ collapse_template(case_number_format_cook_county_template) }
   % else:
@@ -205,13 +217,24 @@ code: |
   docket_case_response = proxy_conn.get_cases(court_id, docket_id=docket_id_from_user)
   cms_connection_issue = docket_case_response.response_code == 203
 ---
-id: results for case tracking_choice
+needs:
+  - found_cases
+depends on:
+  - found_cases
+id: results for case search 
 question: |
-  Results
+  Case Search Results
 subquestion: |
   % if cms_connection_issue:
   The court's case management system isn't online. The case information might be out of date.
   % endif
+
+  We found ${ quantity_noun(len(found_cases), "case") }:
+  
+  % for case in found_cases:
+  * ${ case.title } (${ case.date })
+
+  % endfor
 
   ${ collapse_template(case_results_template) }
 fields:
@@ -237,7 +260,7 @@ content: |
 id: display case
 continue button field: display_case
 question: |
-  Results
+  Your case was found
 subquestion: |
   % if cms_connection_issue:
   The court's case management system isn't online. The case information might be out of date.
@@ -255,10 +278,12 @@ need:
   - court_id
   - somebody.name.first
   - found_cases
+depends on:
+  - get_cases_response
 id: get cleaned up results
 code: |
     found_cases.clear()
-    first_pass = get_cases_response = proxy_conn.get_cases(court_id, person=somebody)
+    first_pass = get_cases_response # = proxy_conn.get_cases(court_id, person=somebody)
     if first_pass.is_ok():
       for entry in first_pass.data:
         new_case = found_cases.appendObject()
@@ -268,6 +293,7 @@ code: |
           found_cases.pop()
     found_cases.gathered = True
     cms_connection_issue = get_cases_response.response_code == 203
+    del get_cases_response
 ---
 code: |
   def filter_fn(new_case):
