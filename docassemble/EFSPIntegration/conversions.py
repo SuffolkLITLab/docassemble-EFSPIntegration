@@ -3,8 +3,8 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
-from docassemble.base.util import DADateTime, Address, as_datetime, validation_error, log
-from docassemble.AssemblyLine.al_general import ALIndividual
+from docassemble.base.util import DADateTime, as_datetime, validation_error, log
+from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.core import DAList
 from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
@@ -182,8 +182,8 @@ def _parse_phone_number(phone_xml) -> str:
     # TODO(brycew): no telephone type we recognize?
     return None
 
-def _parse_address(address_xml) -> Address:
-  address = Address()
+def _parse_address(address_xml) -> ALAddress:
+  address = ALAddress()
   city_xml = address_xml.get('value', {}).get('locationCityName', {})
   if city_xml:
     address.city = city_xml.get('value')
