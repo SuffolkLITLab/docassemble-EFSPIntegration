@@ -3,8 +3,8 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
-from docassemble.base.util import DADateTime, Address, as_datetime, validation_error, log
-from docassemble.AssemblyLine.al_general import ALIndividual
+from docassemble.base.util import DADateTime, as_datetime, validation_error, log
+from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.core import DAList
 from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
@@ -68,7 +68,7 @@ def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
         out += tab_str + f"* {data['name']}: {data['value']['value']}\n"
         return out
     for key, val in data.items():
-      if val is not None and (isinstance(val, dict) or isinstance(val, list)) \
+      if val is not None and (isinstance(val, dict)) \
           and 'value' in val and isinstance(val['value'], str):
         out += tab_str + f"* {key}: {val['value']}\n"
       elif key == 'nil' and not val:
@@ -164,7 +164,7 @@ def combine_opt_strs(elems: List[Optional[str]], title=True):
         ret += ' ' + val
   return ret.strip()
 
-def _parse_phone_number(phone_xml) -> str:
+def _parse_phone_number(phone_xml) -> Optional[str]:
   """Parses a gov.niem.niem.niem_core._2.TelephoneNumberType / nc:TelephoneNumberType into a string"""
   if phone_xml is None:
     return None
@@ -182,8 +182,8 @@ def _parse_phone_number(phone_xml) -> str:
     # TODO(brycew): no telephone type we recognize?
     return None
 
-def _parse_address(address_xml) -> Address:
-  address = Address()
+def _parse_address(address_xml) -> ALAddress:
+  address = ALAddress()
   city_xml = address_xml.get('value', {}).get('locationCityName', {})
   if city_xml:
     address.city = city_xml.get('value')
@@ -286,7 +286,8 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
       attorneys = aug.get('value', {}).get('caseOtherEntityAttorney')
       for attorney in attorneys:
           entity = chain_xml(attorney, ['roleOfPersonReference', 'ref'])
-          attorney_tyler_id = next(iter(entity.get('personOtherIdentification', {})), {}).get('identificationID', {}).get('value')
+          tmp: Dict = next(iter(entity.get('personOtherIdentification', {})), {})
+          attorney_tyler_id = tmp.get('identificationID', {}).get('value', None)
           new_case.attorney_ids.append(attorney_tyler_id)
           parties = attorney.get('caseRepresentedPartyReference', [])
           for party in parties:

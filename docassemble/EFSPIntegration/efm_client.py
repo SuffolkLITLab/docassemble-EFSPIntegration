@@ -18,7 +18,7 @@ from datetime import datetime
 __all__ = ['ApiResponse','ProxyConnection']
 
 class ApiResponse(DAObject):
-  def __init__(self, response_code, error_msg:str, data):
+  def __init__(self, response_code: int, error_msg:Optional[str], data):
     self.response_code = response_code
     self.error_msg = error_msg
     self.data = data
@@ -76,10 +76,10 @@ class ProxyConnection:
     self.active_token = None
     print(f"setting default jurisdiction to {default_jurisdiction}")
     self.default_jurisdiction = default_jurisdiction
-    self.proxy_client.headers = {
+    self.proxy_client.headers.update({
       'Content-type': 'application/json',
       'Accept': 'application/json',
-    }
+    })
     self.proxy_client.headers['X-API-KEY'] = api_key
     self.verbose = False
     self.authed_user_id = None
@@ -534,12 +534,16 @@ class ProxyConnection:
     return self._call_proxy(send)
 
   def reserve_court_date(self, court_id:str, doc_id:str,
-      range_after:datetime=None, range_before:datetime=None, estimated_duration=None):
+      range_after:Union[datetime, str]=None, range_before:Union[datetime, str]=None, estimated_duration=None):
     if range_after is not None and not isinstance(range_after, str):
-      range_after = range_after.isoformat()
+      range_after_str = range_after.isoformat()
+    else:
+      range_after_str = range_after or ''
     log(f'after: {range_after}')
     if range_before is not None and not isinstance(range_before, str):
-      range_before = range_before.isoformat()
+      range_before_str = range_before.isoformat()
+    else:
+      range_before_str = range_before or ''
     log(f'before: {range_before}')
     if estimated_duration is not None:
       estimated_duration = int(estimated_duration) * 60 * 60
@@ -611,7 +615,7 @@ class ProxyConnection:
     params = {
       'category_id': case_category,
       'type_id': case_type,
-      'initial': initial
+      'initial': str(initial)
     }
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types'), params=params)
     return self._call_proxy(send)

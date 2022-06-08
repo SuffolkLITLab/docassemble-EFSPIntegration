@@ -13,7 +13,8 @@ id: eFile Login
 question: |
   eFile IL Login Info
 subquestion: |
-  Please provide your eFile Illinois Login information. If you don't yet have a login, please make one [here](${ interview_url(i=user_info().package + ":unauthenticated_interview.yml", reset=1) }).
+  Provide your eFile Illinois Login information. If you don't yet have a login, you can create
+  <a href="${ interview_url(i="docassemble.EFSPIntegration:unauthenticated_interview.yml", reset=1) }" target="_blank">a new account here</a>.
 fields:
   - email/username: my_username
   - password: my_password
@@ -21,11 +22,6 @@ fields:
     hide if: user_forgot_password
   - I forgot my password: user_forgot_password
     datatype: yesno
-  #- Change my password: change_user_password
-  #  datatype: yesno
-  #  hide if: user_forgot_password
-  #  # The interview that includes this needs to provide change_password
-  #  # logic, including redirecting to login screen after password change
 ---
 code: |
   if showifdef('user_forgot_password'):
@@ -60,7 +56,7 @@ question: |
   % endif
 subquestion: |
   ${ debug_display(change_resp) }
-continue button field: changed_password_screen  
+continue button field: changed_password_screen
 ---
 id: failed changed password
 event: failed_changed_password_screen
@@ -137,6 +133,10 @@ event: login_failed_screen
 question: |
   Tyler Login failed
 subquestion: |
-  Please try again
+  % if int(tyler_login_resp.response_code) == 403:
+  Your login information was not correct. Go back and try again.
+  % else:
+  Something went wrong when logging you in. We will not be able to e-file your form.  
+  % endif
 buttons:
   - restart

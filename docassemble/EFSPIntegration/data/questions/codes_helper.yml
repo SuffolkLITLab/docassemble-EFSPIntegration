@@ -233,7 +233,7 @@ code: |
 ---
 code: |
   def matching_tuple_option(option:str, options):
-    return next([o for o in options if option in o[1].lower()],[None])[0]
+    return next(iter([o for o in options if option in o[1].lower()]),[None])[0]
 ---
 ############ Payments Stuff ############
 reconsider:

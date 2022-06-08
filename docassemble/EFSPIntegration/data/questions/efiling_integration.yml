@@ -109,7 +109,7 @@ subquestion: |
 
   % endif
 
-  ${ al_court_bundle.as_pdf() }  
+  ${ al_court_bundle.as_pdf() }
 
   % if ready_to_efile:
   Press below to deliver the form.
@@ -231,21 +231,34 @@ depends on:
 code: |  
   court_id = convert_court_to_id(trial_court)
 ---
-id: check efile possibility
-#reconsider: True
+only sets: efile_setup
 code: |
-  if court_id in available_efile_courts:
+  efile_setup = court_id in available_efile_courts
+---
+id: check efile possibility
+sets:
+  - can_check_efile
+code: |
+  if efile_setup:
     # Ask the user if they want to efile
     can_check_efile = user_wants_efile
   else:
     show_no_efile
     can_check_efile = False
 ---
+only sets:
+  - check_resp
+code: |
+  check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
+---
+needs:
+  - efile_author_mode
+  - can_check_efile
 id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
   if can_check_efile:
-    check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
+    check_resp 
     remaining_to_check = check_resp.data
     log('check_resp: ' + str(check_resp))
     if not check_resp.is_ok():
@@ -270,6 +283,7 @@ code: |
         fallback_user_choice
   else:
     ready_to_efile = False
+  globals().pop('check_resp', None)
 ---
 id: actually efile
 depends on:
