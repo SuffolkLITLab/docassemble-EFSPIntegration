@@ -409,7 +409,7 @@ subquestion: |
   % if case_was_found and found_case:
   ${ found_case.title } (${ found_case.tracking_id })
   % endif
-continue button field: display_found_case  
+continue button field: display_found_case
 ---
 template: filings_template
 subject: |

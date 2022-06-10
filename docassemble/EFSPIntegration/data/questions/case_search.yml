@@ -22,9 +22,11 @@ code: |
   can_file_non_indexed_case
   do_what_choice
   found_case
-  case_was_found = found_case is not None
-  if not case_was_found and can_file_non_indexed_case:
+  if found_case and do_what_choice == 'docket_lookup':
+    display_case
+  if found_case is None and can_file_non_indexed_case:
     non_indexed_docket_number
+  case_was_found = found_case is not None
 ---
 only sets:
   - found_case
@@ -62,7 +64,6 @@ code: |
     parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id, {})
     del docket_id_from_user
     del docket_case_response
-    display_case
 ---
 if: |
   do_what_choice == 'non_indexed_case'
@@ -217,7 +218,7 @@ code: |
   docket_case_response = proxy_conn.get_cases(court_id, docket_id=docket_id_from_user)
   cms_connection_issue = docket_case_response.response_code == 203
 ---
-needs:
+need:
   - found_cases
 depends on:
   - found_cases
@@ -229,7 +230,7 @@ subquestion: |
   The court's case management system isn't online. The case information might be out of date.
   % endif
 
-  We found len(found_cases) ${ noun_plural("case", found_cases) }:
+  We found ${ len(found_cases) } ${ noun_plural("case", found_cases) }:
   
   % for case in found_cases:
   * ${ case.title } (${ case.date })
@@ -254,7 +255,7 @@ content: |
   * CourtID: ${ case.court_id }
   * TrackingID: ${ case.tracking_id }
   * CaseCategory: ${ case.category }  
-  % endfor  
+  % endfor
 ---
 id: display case
 continue button field: display_case
