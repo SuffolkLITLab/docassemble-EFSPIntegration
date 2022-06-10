@@ -44,6 +44,24 @@ class MockPerson:
   def sms_number(self) -> str:
     return '1234567890'
 
+  def as_serializable(self) -> dict:
+    return {
+      'name': {
+        'first': self.name.first,
+        'middle': self.name.middle,
+        'last': self.name.last,
+      },
+      'address': {
+        'address': self.address.address,
+        'unit': self.address.unit,
+        'city': self.address.city,
+        'state': self.address.state,
+        'zip': self.address.zip,
+        'country': self.address.country
+      },
+      'email': self.email
+    }
+
 class TestClass:
   
   def __init__(self, proxy_conn, verbose:bool=True):
@@ -59,12 +77,12 @@ class TestClass:
   def test_hateos(self):
     base_url = self.proxy_conn.base_url
     base_send = lambda: self.proxy_conn.proxy_client.get(base_url) 
-    next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
+    next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, base_send)).data
     for url in next_level_urls.values():
       if 'authenticate' in url:
         continue
       send = lambda: self.proxy_conn.proxy_client.get(url) 
-      self.basic_assert(self.proxy_conn._call_proxy(send))
+      self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, send))
 
 
   def test_self_user(self):
@@ -109,7 +127,7 @@ class TestClass:
     new_contact.address.zip = '12345'
     new_contact.address.country = 'US'
     new_contact.phone_number = '9727133770'
-    new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, False, True, admin_copy='ella.doe@example.com'))
+    new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, is_public=False, is_in_master_list=True, admin_copy='ella.doe@example.com'))
     contact_id = new_c.data
     new_contact.name.middle = '"Lorde"'
     new_contact.email = 'different@example.com'
@@ -286,11 +304,11 @@ class TestClass:
     base_url = self.proxy_conn.base_url
     court = 'cook:cvd1'
     fees_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/fees', data=all_vars_str)
-    fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
+    fees_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, fees_send))
     check_send = lambda: self.proxy_conn.proxy_client.get(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/check', data=all_vars_str)
-    checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
+    checked_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, check_send))
     file_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filings', data=all_vars_str)
-    filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send)) 
+    filing_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, file_send)) 
 
     for filing_id in filing_resp.data:
       status_resp = self.basic_assert(self.proxy_conn.get_filing_status(court, filing_id))
@@ -305,6 +323,7 @@ def main(args):
   base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key, default_jurisdiction='illinois')
+  proxy_conn.set_verbose_logging(True)
   intentional_bad_resp = proxy_conn.authenticate_user()
   assert(intentional_bad_resp.response_code == 403)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 

@@ -1199,9 +1199,9 @@ need:
 code: |
   resp = proxy_conn.create_service_contact(
       new_service_contact,
-      new_service_contact.is_public,
-      new_service_contact.is_in_master_list,
-      new_service_contact.admin_copy if hasattr(new_service_contact, 'admin_copy') else None,
+      is_public=new_service_contact.is_public,
+      is_in_master_list=new_service_contact.is_in_master_list,
+      admin_copy=new_service_contact.admin_copy if hasattr(new_service_contact, 'admin_copy') else None,
     )
   del new_service_contact
   create_service_contact = True
