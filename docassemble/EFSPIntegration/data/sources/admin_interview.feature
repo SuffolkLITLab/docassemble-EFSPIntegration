@@ -10,7 +10,7 @@ Feature: The interviews run without erroring
   @ai1 @admin_interview @taps @admin @attorneys
   Scenario: admin_interview.yml Admin login
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
+    And the maximum seconds for each Step in this Scenario is 15
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -53,11 +53,11 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Firm-tab" tab
-    And I tap the "#get_firm" element and wait 5 seconds
+    And I tap the "#get_firm" element and wait 3 seconds
     Then I should see the phrase "Suffolk LIT Lab"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    And I tap the "#get_courts" element and wait 5 seconds
+    And I tap the "#get_courts" element and wait 3 seconds
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
     And I tap the "#get_court" element
@@ -72,7 +72,7 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    And I tap the "#get_courts" element and wait 5 seconds
+    And I tap the "#get_courts" element and wait 3 seconds
     Then I should see the phrase "cook:tr1"
     Then I should see the phrase "cook:dr5"
     And I tap to continue
