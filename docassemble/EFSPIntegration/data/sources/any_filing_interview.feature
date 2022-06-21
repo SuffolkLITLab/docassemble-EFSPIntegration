@@ -3,7 +3,7 @@ Feature: Make any type of filing
 
   Runs the `any_filing_interview.yml` to completion a few different ways
 
-  @any_filing_interview
+  @any_filing_interview @af1
   Scenario: any_filing_interview starts
     Given I start the interview at "any_filing_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
@@ -48,10 +48,10 @@ Feature: Make any type of filing
       | review_fees['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
-  @any_filing_interview @prose
+  @any_filing_interview @prose @af2
   Scenario: any_filing_interview can handle a pro-se user
     Given I start the interview at "any_filing_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 120
+    And the maximum seconds for each Step in this Scenario is 50
     And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
@@ -92,11 +92,11 @@ Feature: Make any type of filing
       | review_fees['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
-    @any_filing_interview @accessibility @full_accessible_run
+    @any_filing_interview @accessibility @full_accessible_run @af3
     Scenario: any_filing_interview is accessible
       Given I start the interview at "any_filing_interview.yml"
       And I check all pages for accessibility issues
-      And the maximum seconds for each Step in this Scenario is 120
+      And the maximum seconds for each Step in this Scenario is 100
       And I tap to continue
       And I set the variable "my_username" to secret "PROSE_EMAIL"
       And I set the variable "my_password" to secret "PROSE_PASSWORD"

@@ -7,10 +7,10 @@ Feature: The interviews run without erroring
 
   These tests are made to work with the ALKiln testing framework, an automated testing framework made under the Document Assembly Line Project.
 
-  @admin_interview  @taps @admin @attorneys
+  @ai1 @admin_interview @taps @admin @attorneys
   Scenario: admin_interview.yml Admin login
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
+    And the maximum seconds for each Step in this Scenario is 15
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -18,7 +18,7 @@ Feature: The interviews run without erroring
     And I tap the "#create_attorney" element
     Then I should see the phrase "Comment: Tyler validates the bar number" 
   
-  @admin_interview @taps @prose @service_contacts
+  @ai2 @admin_interview @taps @prose @service_contacts
   Scenario: admin_interview.yml Pro Se login 
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
@@ -28,7 +28,7 @@ Feature: The interviews run without erroring
     And I tap the "Tests-Service_contacts-tab" tab 
     Then I tap the "#attach_service_contact" element
 
-  @admin_interview @taps @firm @accessibility
+  @ai3 @admin_interview @taps @firm @accessibility
   Scenario: admin_interview.yml Get Firm
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
@@ -44,7 +44,7 @@ Feature: The interviews run without erroring
     And I tap the "#get_firm" element and wait 5 seconds
     Then I should see the phrase "Suffolk LIT Lab"
 
-  @admin_interview @taps @accessibility
+  @ai4 @admin_interview @taps @accessibility
   Scenario: admin_interview.yml is accessible
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
@@ -53,18 +53,18 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Firm-tab" tab
-    And I tap the "#get_firm" element and wait 5 seconds
+    And I tap the "#get_firm" element and wait 3 seconds
     Then I should see the phrase "Suffolk LIT Lab"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    And I tap the "#get_courts" element and wait 5 seconds
+    And I tap the "#get_courts" element and wait 3 seconds
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
     And I tap the "#get_court" element
     And I set the variable "trial_court" to "cook:dr5"
     And I tap to continue
 
-  @admin_interview @taps @admin @courts
+  @ai5 @admin_interview @taps @admin @courts
   Scenario: admin_interview.yml See court information
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
@@ -72,7 +72,7 @@ Feature: The interviews run without erroring
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
     And I tap the "Tests-Filings-tab" tab
-    And I tap the "#get_courts" element and wait 5 seconds
+    And I tap the "#get_courts" element and wait 3 seconds
     Then I should see the phrase "cook:tr1"
     Then I should see the phrase "cook:dr5"
     And I tap to continue
@@ -82,7 +82,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     Then I should see the phrase "name: Cook County - Domestic Relations - District 5 - Bridgeview"
 
-  @admin_interview @attach
+  @ai6 @admin_interview @attach
   Scenario: multiple-times through attach
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40
@@ -120,7 +120,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I see the phrase "Service Contact already attached to case."
 
-  @admin_interview @attach @prose
+  @ai7 @admin_interview @attach @prose
   Scenario: earlyish stop attach when no service contacts
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40

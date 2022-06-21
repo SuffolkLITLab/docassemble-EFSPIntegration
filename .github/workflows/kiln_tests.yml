@@ -1,0 +1,29 @@
+name: Use ALKiln testing framework v4 to run tests
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      tags:
+        required: False
+        description: 'Optional. Use a "tag expression" to specify which tagged tests to run'
+        default: ''
+
+env:
+  TYLER_EMAIL: ${{ secrets.TYLER_EMAIL }}
+  TYLER_PASSWORD: ${{ secrets.TYLER_PASSWORD }}
+  PROSE_EMAIL: ${{ secrets.PROSE_EMAIL }}
+  PROSE_PASSWORD: ${{ secrets.PROSE_PASSWORD }}
+
+jobs:
+  interview-testing:
+    runs-on: ubuntu-latest
+    name: Run interview tests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use ALKiln to run tests
+        uses: SuffolkLITLab/ALKiln@releases/v4
+        with:
+          SERVER_URL: "${{ secrets.SERVER_URL }}"
+          DOCASSEMBLE_DEVELOPER_API_KEY: "${{ secrets.DOCASSEMBLE_DEVELOPER_API_KEY }}"
+      - run: echo "Finished running ALKiln tests"

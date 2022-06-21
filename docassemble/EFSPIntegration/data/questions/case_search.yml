@@ -278,6 +278,7 @@ need:
   - court_id
   - somebody.name.first
   - found_cases
+  - filter_fn
 depends on:
   - get_cases_response
 id: get cleaned up results
@@ -291,6 +292,8 @@ code: |
         # Allows users to control what cases are shown as options
         if not filter_fn(new_case):
           found_cases.pop()
+      del new_case
+    del first_pass
     found_cases.gathered = True
     cms_connection_issue = get_cases_response.response_code == 203
     del get_cases_response

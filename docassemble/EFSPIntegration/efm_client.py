@@ -58,6 +58,11 @@ def _get_all_vars(bundle: ALDocumentBundle):
       'available_efile_courts', 'case_category_map']
   for var in vars_to_pop:
     all_vars_dict.pop(var, None)
+
+  for doc in all_vars_dict.get('al_court_bundle', {}).get('elements', []):
+    doc.pop('optional_service_options', None)
+    doc.pop('optional_service_map', None)
+    
   return json.dumps(all_vars_dict)
 
 class ProxyConnection:
