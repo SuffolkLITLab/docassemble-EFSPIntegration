@@ -6,7 +6,7 @@ on:
     inputs:
       tags:
         required: False
-        description: 'Optiona. Use a "tag expression" to specify which tagged tests to run'
+        description: 'Optional. Use a "tag expression" to specify which tagged tests to run'
         default: ''
 
 env:
