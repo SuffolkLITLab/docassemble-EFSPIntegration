@@ -251,7 +251,7 @@ only sets:
 code: |
   check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
 ---
-needs:
+need:
   - efile_author_mode
   - can_check_efile
 id: ready_to_efile

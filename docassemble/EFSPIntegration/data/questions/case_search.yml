@@ -147,6 +147,7 @@ fields:
 event: case_search_waiting_screen
 question: |
   <i class="fas fa-cog fa-spin"></i> Your search is in progress, please wait <i class="fas fa-cog fa-spin"></i>
+refresh: True
 ---
 depends on:
   - court_id
