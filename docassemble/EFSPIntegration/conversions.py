@@ -267,9 +267,13 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
   new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
 
-  new_case.case_details = proxy_conn.get_case(court_id, new_case.tracking_id).data
+  full_case_details = proxy_conn.get_case(court_id, new_case.tracking_id)
+  if not full_case_details.is_ok():
+    log(f"couldn't get full details for {court_id}-{ new_case.tracking_id}: {full_case_details}")
+  new_case.case_details_worked = (full_case_details.response_code, full_case_details.error_msg)
+  new_case.case_details = full_case_details.data
   # TODO: is the order of this array predictable? might it break if Tyler changes something?
-  new_case.case_type = new_case.case_details.get('value').get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
+  new_case.case_type = new_case.case_details.get('value', {}).get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))
