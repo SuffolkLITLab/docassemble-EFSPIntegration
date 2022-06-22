@@ -8,7 +8,7 @@ include:
   - login_qs.yml
 ---
 objects: 
-  - found_cases: DAList.using(object_type=DAObject, auto_gather=False)  
+  - bg_found_cases: DAList.using(object_type=DAObject, auto_gather=False)  
 ---
 objects:
   - somebody: ALIndividual
@@ -155,16 +155,37 @@ depends on:
 code: |
   case_search_task_status = background_action('case_search_task', 'refresh')
 ---
+need:
+  - court_id
+  - somebody.name.first
+  - bg_found_cases
+  - filter_fn
 event: case_search_task
 code: |
-  background_response_action('case_search_done', case_response = proxy_conn.get_cases(court_id, somebody, None))
+  bg_found_cases.clear()
+  bg_get_cases_response
+  if bg_get_cases_response.is_ok():
+    for entry in bg_get_cases_response.data:
+      new_case = bg_found_cases.appendObject()
+      parse_case_info(proxy_conn, new_case, entry, court_id, {})
+      # Allows users to control what cases are shown as options
+      if not filter_fn(new_case):
+        bg_found_cases.pop()
+    del new_case
+  bg_found_cases.gathered = True
+  del bg_get_cases_response
+  background_response_action('case_search_done', cms_conn_and_cases=(bg_cms_connection_issue, bg_found_cases))
+---
+code: |
+  bg_get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_id=None)
+  bg_cms_connection_issue = bg_get_cases_response.response_code == 203
 ---
 objects:
-  - get_cases_response: DAEmpty
+  - found_cases: DAEmpty
 ---
 event: case_search_done
 code: |
-  get_cases_response = action_argument('case_response')
+  cms_connection_issue, found_cases = action_argument('cms_conn_and_cases')
   background_response()
 ---
 id: docket id
@@ -275,30 +296,9 @@ subquestion: |
   * CaseCategory: ${ found_case.category }
   % endif
 ---
-need:
-  - court_id
-  - somebody.name.first
-  - found_cases
-  - filter_fn
-depends on:
-  - get_cases_response
-id: get cleaned up results
-code: |
-    found_cases.clear()
-    first_pass = get_cases_response # = proxy_conn.get_cases(court_id, person=somebody)
-    if first_pass.is_ok():
-      for entry in first_pass.data:
-        new_case = found_cases.appendObject()
-        parse_case_info(proxy_conn, new_case, entry, court_id, {})
-        # Allows users to control what cases are shown as options
-        if not filter_fn(new_case):
-          found_cases.pop()
-      del new_case
-    del first_pass
-    found_cases.gathered = True
-    cms_connection_issue = get_cases_response.response_code == 203
-    del get_cases_response
----
+comment: |
+  Meant to be overridden to allow authors to control what cases
+  are shown as options
 code: |
   def filter_fn(new_case):
     return True
