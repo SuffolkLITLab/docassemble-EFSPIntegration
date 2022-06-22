@@ -295,7 +295,7 @@ def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
               if party_id in new_case.party_to_attorneys:
                   new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
               else:
-                  new_case.party_to_attorneys[party_id] = attorney_tyler_id
+                  new_case.party_to_attorneys[party_id] = [attorney_tyler_id]
   new_case.participants.gathered = True
 
 def _payment_labels(acc):
