@@ -20,7 +20,7 @@ class TestConversions(unittest.TestCase):
   def test_parse_case_info(self):
     """Makes sure that participants of the case are parsed fully, needed """
     case = DAObject('case')
-    parse_case_info(self.proxy_conn, case, self.my_var, 'adams', {})
+    parse_case_info(self.proxy_conn, case, self.my_var, 'adams')
     self.assertEqual(len(case.participants), 2)
     for partip in case.participants:
       self.assertIsInstance(partip, ALIndividual)
@@ -64,7 +64,7 @@ class TestConversionIgnoreAttorneys(unittest.TestCase):
   def test_ignore_attorneys(self):
     """Attorneys are just stuck in the middle with normal case participants. You can't attach service contacts to them, so"""
     case = DAObject('case')
-    parse_case_info(self.proxy_conn, case, self.first_resp, 'peoria', {})
+    parse_case_info(self.proxy_conn, case, self.first_resp, 'peoria')
     self.assertEqual(len(case.attorney_ids), 2)
     self.assertTrue('e650827f-3a2b-4550-b76c-f7d22ed479ff' in case.attorney_ids)
     self.assertTrue('7ff43f9b-53ff-4e6d-9253-e393318549d0' in case.attorney_ids)

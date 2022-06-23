@@ -69,4 +69,4 @@ fields:
 only sets: trial_court_options
 code: |
   trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
-  trial_court_options = sorted([(court['code'], court['name']) for court in trial_court_resp.data or []], lambda c: c[1])
+  trial_court_options = sorted([(court['code'], court['name']) for court in trial_court_resp.data or []], key=lambda c: c[1])

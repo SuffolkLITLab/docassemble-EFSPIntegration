@@ -3,9 +3,8 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
-from docassemble.base.util import DADateTime, as_datetime, validation_error, log
+from docassemble.base.util import DAList, DAObject, DADateTime, as_datetime, validation_error, log
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
-from docassemble.base.core import DAList
 from docassemble.base.functions import get_config
 from .efm_client import ApiResponse
 
@@ -19,6 +18,7 @@ __all__ = [
   'tyler_timestamp_to_datetime',
   'validate_tyler_regex',
   'parse_case_info',
+  'fetch_case_info',
   'filter_payment_accounts',
   'payment_account_labels',
   'filing_id_and_label',
@@ -258,20 +258,38 @@ def parse_service_contacts(service_list):
     info.append((serv_id, display_name))
   return info
 
-def parse_case_info(proxy_conn, new_case, entry, court_id, roles:dict):
+def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
+    fetch:bool=True, roles:dict=None):
   new_case.details = entry
   new_case.court_id = court_id
-  new_case.attorney_ids = []
-  new_case.party_to_attorneys = {}
   new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
   new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
 
-  full_case_details = proxy_conn.get_case(court_id, new_case.tracking_id)
+  if fetch:
+    fetch_case_info(proxy_conn, new_case, roles)
+
+def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
+  """Fills in these attributes with the full case details:
+  * attorney_ids
+  * party_to_attorneys
+  * case_details_worked
+  * case_details
+  * case_type
+  * title
+  * date
+  * participants
+  """
+  if not roles:
+    roles = {}
+
+  full_case_details = proxy_conn.get_case(new_case.court_id, new_case.tracking_id)
   if not full_case_details.is_ok():
-    log(f"couldn't get full details for {court_id}-{ new_case.tracking_id}: {full_case_details}")
+    log(f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}: {full_case_details}")
+  new_case.attorney_ids = []
+  new_case.party_to_attorneys = {}
   new_case.case_details_worked = (full_case_details.response_code, full_case_details.error_msg)
-  new_case.case_details = full_case_details.data
+  new_case.case_details = full_case_details.data or {}
   # TODO: is the order of this array predictable? might it break if Tyler changes something?
   new_case.case_type = new_case.case_details.get('value', {}).get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])

@@ -63,14 +63,11 @@ code: |
     lead_contact.name.first
   
   if needs_all_info:
-    reconsider('missing_required_party_types')
-    if missing_required_party_types:
+    if any_missing_party_types(party_type_map, users, other_parties):
       party_review_screen
-  
-  if not needs_all_info:
-    contacts_to_attach.gather()
-  else:
     contacts_to_attach.gathered = True
+  else:
+    contacts_to_attach.gather()
 
   lead_doc.completed
   append_lead_doc
@@ -376,7 +373,7 @@ continue button field: party_review_screen
 question: |
   Review parties
 subquestion: |
-  % if missing_required_party_types:
+  % if any_missing_party_types(party_type_map, users, other_parties):
   ### Warning: you are missing a required party type!
   
   This case requires that you have at least one:
@@ -1064,10 +1061,6 @@ question: |
   Something went wrong
 subquestion: |
   Your selections aren't working. :/  Please try again.
----
-code: |
-  trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
-  trial_court_options = [(court['code'], court['name']) for court in trial_court_resp.data]
 ---
 code: |
   timing = 'Initial' if is_initial_filing else 'Subsequent'

@@ -267,10 +267,5 @@ code: |
 ---
 only sets: full_court_info
 code: |
-  full_court_resp = proxy_conn.get_court(court_id)
-  if full_court_resp.is_ok():
-    full_court_info = full_court_resp.data
-  else:
-    log(f"Couldn't get full court info for {court_id}")
-    full_court_info = {}
+  full_court_info = get_full_court_info(proxy_conn, court_id)
 ---
