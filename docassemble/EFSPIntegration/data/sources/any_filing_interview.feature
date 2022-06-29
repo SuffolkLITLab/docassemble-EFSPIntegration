@@ -7,6 +7,8 @@ Feature: Make any type of filing
   Scenario: any_filing_interview starts
     Given I start the interview at "any_filing_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
@@ -52,6 +54,8 @@ Feature: Make any type of filing
   Scenario: any_filing_interview can handle a pro-se user
     Given I start the interview at "any_filing_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
@@ -97,6 +101,8 @@ Feature: Make any type of filing
       Given I start the interview at "any_filing_interview.yml"
       And I check all pages for accessibility issues
       And the maximum seconds for each Step in this Scenario is 100
+      And I set the variable "jurisdiction_id" to "illinois"
+      And I tap to continue
       And I tap to continue
       And I set the variable "my_username" to secret "PROSE_EMAIL"
       And I set the variable "my_password" to secret "PROSE_PASSWORD"
