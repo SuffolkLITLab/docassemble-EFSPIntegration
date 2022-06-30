@@ -532,7 +532,7 @@ class ProxyConnection:
   #                                        data=all_vars)
   #  return self._call_proxy(send)
   
-  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle=None):
+  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
     all_vars = _get_all_vars(court_bundle)
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filing/fees'),
           data=all_vars)
