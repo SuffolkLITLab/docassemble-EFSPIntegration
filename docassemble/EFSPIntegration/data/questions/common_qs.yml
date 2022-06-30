@@ -32,7 +32,7 @@ fields:
   - Firm name: person_to_reg.firm_name
     show if:
       variable: reg_type
-      is: FIRM_ADMINISTRATOR  
+      is: FIRM_ADMINISTRATOR
   - First name: person_to_reg.name.first
   - Middle name: person_to_reg.name.middle
     required: False

@@ -1,5 +1,5 @@
 ---
-imports:
+modules:
   - .efm_client
   - .conversions
 ---
@@ -31,7 +31,10 @@ code: |
     ('FIRM_ADMINISTRATOR', 'Administrator of a new firm')
   ]
 ---
-question: | 
+mandatory: True
+id: main-unauth-page
+event: main_unauth_page
+question: |
   eFile${ state_name_to_code(jurisdiction_id) } User Management
 subquestion: |
   You aren't logged in, but you can take any of the below actions
@@ -46,11 +49,10 @@ subquestion: |
       label=elem[1]) }
 
   % endfor
-
-continue button field: all_done
 ---
+id: unauth-email
 question: |
-  Email
+  What is your account email?
 fields:
   - Email: my_email
 ---
@@ -65,16 +67,18 @@ code: |
   self_resend_activation = True
 ---
 code: |
-  resp = proxy_conn.register_user(person_to_reg, registration_type='INDIVIDUAL', password=new_password)
+  resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=showifdef('person_to_reg.firm_name', ''))
   del new_password
   register = True
 ---
+id: unauth-action-completed
 question: |
-  show resp:
+  Action completed
 subquestion: |
-  ${ conversions.pretty_display(resp) }
+  Response: ${ pretty_display(resp) }
 continue button field: show_resp
 ---
+id: unauth-register-done
 question: |
   % if resp.is_ok():
   Successfully registered
@@ -87,19 +91,15 @@ subquestion: |
   
   [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
 
-  % endif
-  % if not resp.is_ok():
-  ${ conversions.debug_display(resp) }
+  % else
+  ${ debug_display(resp) }
   % endif
 
 continue button field: register_status
 ---
+id: unauth-intro
 question: |
   This website will help you register as an e-filing user in ${ jurisdiction_id.title() }
 subquestion: |
   You will need to provide your email and create a password.
 continue button field: register_introduction
----
-mandatory: True
-code: |
-  all_done

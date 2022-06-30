@@ -819,7 +819,7 @@ continue button field: ask_for_search_dates
 ---
 code: |
   if reg_type == "FIRM_ADMINISTRATOR":
-    resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=person_to_reg.firm_name)    
+    resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=person_to_reg.firm_name)
   else:
     resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password)
   del new_password, reg_type

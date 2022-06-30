@@ -189,6 +189,7 @@ class ProxyConnection:
     If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password.
     If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
     """
+    registration_type = registration_type.upper()
     if hasattr(person, 'phone_number'):
       phone_number = person.phone_number
     elif hasattr(person, 'mobile_number'):
@@ -196,7 +197,7 @@ class ProxyConnection:
     else:
       phone_number = ''
     reg_obj = {
-          'registrationType': registration_type.upper(),
+          'registrationType': registration_type,
           'email': person.email,
           'firstName': person.name.first,
           'middleName': person.name.middle,
