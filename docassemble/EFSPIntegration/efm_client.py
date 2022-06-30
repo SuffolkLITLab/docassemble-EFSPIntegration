@@ -3,6 +3,7 @@ import re
 import json
 import logging
 import isodate
+import pycountry
 from datetime import datetime
 from typing import Optional, Union, List, Dict
 import http.client as http_client
@@ -15,9 +16,15 @@ from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
 from datetime import datetime
 
-__all__ = ['ApiResponse','ProxyConnection']
+__all__ = ['ApiResponse','ProxyConnection', 'state_name_to_code']
 
-class ApiResponse(DAObject):
+def state_name_to_code(state_name:str) -> str:
+  try:
+    return pycountry.subdivisions.lookup(state_name).code.split('-')[-1]
+  except LookupError as ex:
+    return state_name
+
+class ApiResponse:
   def __init__(self, response_code: int, error_msg:Optional[str], data):
     self.response_code = response_code
     self.error_msg = error_msg
@@ -496,12 +503,12 @@ class ProxyConnection:
     send = lambda: self.proxy_client.delete(self.full_url(f'filingreview/courts/{court_id}/filings/{filing_id}'))
     return self._call_proxy(send) 
 
-  def check_filing(self, court_id:str, court_bundle:ALDocumentBundle=None):
+  def check_filing(self, court_id:str, court_bundle:ALDocumentBundle):
     all_vars = _get_all_vars(court_bundle) 
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filing/check'), data=all_vars)
     return self._call_proxy(send)
 
-  def file_for_review(self, court_id:str, court_bundle:ALDocumentBundle=None):
+  def file_for_review(self, court_id:str, court_bundle:ALDocumentBundle):
     all_vars = _get_all_vars(court_bundle) 
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filings'),
           data=all_vars)
@@ -510,8 +517,8 @@ class ProxyConnection:
   def get_service_types(self, court_id:str, court_bundle:ALDocumentBundle=None):
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
-    if court_info.data.get('hasconditionalservicetypes'):
-      all_vars = _get_all_vars(court_bundle) 
+    if court_info.data.get('hasconditionalservicetypes') and court_bundle:
+      all_vars = _get_all_vars(court_bundle)
       send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filing/servicetypes'),
         data=all_vars)
       return self._call_proxy(send)
@@ -525,7 +532,7 @@ class ProxyConnection:
   #                                        data=all_vars)
   #  return self._call_proxy(send)
   
-  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle=None):
+  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
     all_vars = _get_all_vars(court_bundle)
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filing/fees'),
           data=all_vars)

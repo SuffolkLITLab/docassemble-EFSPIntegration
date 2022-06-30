@@ -1,8 +1,5 @@
 ---
 code: |
-  jurisdiction_id = 'illinois'
----
-code: |
   user_registration_choices = [
     ('INDIVIDUAL', 'Pro Se user'),
     ('FIRM_ADMINISTRATOR', 'Administrator of a new firm'),
@@ -49,7 +46,7 @@ fields:
   - City: person_to_reg.address.city
   - State: person_to_reg.address.state
     code: states_list()
-    default: IL
+    default: ${ state_name_to_code(jurisdiction_id) }
   - Zip: person_to_reg.address.zip
   - Country: person_to_reg.address.country
     code: countries_list()

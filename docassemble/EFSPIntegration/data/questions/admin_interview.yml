@@ -19,7 +19,10 @@ default screen parts:
 ---
 metadata:
   title: |
-    EFSP Admin Interface  
+    EFSP Admin Interface
+---
+code: |
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
 objects:
   - person_to_reg: ALIndividual
@@ -1423,8 +1426,14 @@ question: |
 subquestion: |
   ${ error_message }
 ---
-code: |
-  jurisdiction_id = 'illinois'
+id: which-jurisdiction
+question: |
+  Which jurisdiction?
+fields:
+  - no label: jurisdiction_id
+    choices:
+      - Illinois: 'illinois'
+      - Massachusetts: 'massachusetts'
 ---
 mandatory: True
 code: |

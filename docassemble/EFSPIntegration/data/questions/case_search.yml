@@ -154,8 +154,8 @@ code: |
 ---
 event: case_search_task
 code: |
-  background_response_action('case_search_done', cms_conn_and_cases=search_case_by_name(proxy_conn=proxy_conn,
-      var_name='found_cases', court_id=court_id, somebody=somebody, filter_fn=filter_fn))
+  background_response_action('case_search_done', cms_conn_and_cases=[*search_case_by_name(proxy_conn=proxy_conn,
+      var_name='found_cases', court_id=court_id, somebody=somebody, filter_fn=filter_fn)])
 ---
 objects:
   - found_cases: DAEmpty

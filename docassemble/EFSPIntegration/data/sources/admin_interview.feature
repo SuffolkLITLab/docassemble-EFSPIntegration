@@ -11,6 +11,8 @@ Feature: The interviews run without erroring
   Scenario: admin_interview.yml Admin login
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 15
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -22,6 +24,8 @@ Feature: The interviews run without erroring
   Scenario: admin_interview.yml Pro Se login 
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
@@ -33,6 +37,8 @@ Feature: The interviews run without erroring
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
     And I check all pages for accessibility issues
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -49,6 +55,8 @@ Feature: The interviews run without erroring
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
     And I check all pages for accessibility issues
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -68,6 +76,8 @@ Feature: The interviews run without erroring
   Scenario: admin_interview.yml See court information
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 20
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -86,6 +96,8 @@ Feature: The interviews run without erroring
   Scenario: multiple-times through attach
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
@@ -124,6 +136,8 @@ Feature: The interviews run without erroring
   Scenario: earlyish stop attach when no service contacts
     Given I start the interview at "admin_interview.yml"
     And the maximum seconds for each Step in this Scenario is 40
+    And I set the variable "jurisdiction_id" to "illinois"
+    And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue

@@ -15,8 +15,14 @@ include:
 code: |
   user_wants_efile = True # This interview is always for e-filing
 ---
-code: |
-  jurisdiction_id = 'illinois'
+id: which-jurisdiction
+question: |
+  Which jurisdiction?
+fields:
+  - no label: jurisdiction_id
+    choices:
+      - Illinois: 'illinois'
+      - Massachusetts: 'massachusetts'
 ---
 code: |
   user_registration_choices = [
@@ -428,7 +434,7 @@ id: make a filing
 question: |
   Make a Filing
 subquestion: |
-  Welcome! You can make any type of filing in an Illinois court, to a pre-existing or new case, in this interview.
+  Welcome! You can make any type of filing in an ${ jurisdiction_id.title() } court, to a pre-existing or new case, in this interview.
 continue button field: welcome
 ---
 id: return date
@@ -1114,7 +1120,4 @@ code: |
   if not needs_all_info:
     resp_data = proxy_conn.get_service_information(court_id, found_case.tracking_id).data
     attached_service_contacts = parse_service_contacts(resp_data)
----
-comment: |
-  service_information
 ---
