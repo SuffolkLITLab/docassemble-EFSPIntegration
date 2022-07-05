@@ -1,8 +1,10 @@
 from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 
+import json
+
 from docassemble.base.util import DAObject, DAList, log
-from docassemble.base.functions import serializable_dict
-from .conversions import parse_case_info, fetch_case_info
+from docassemble.base.functions import safe_json
+from .conversions import parse_case_info, fetch_case_info, transform_json_variables
 from docassemble.AssemblyLine.al_general import ALPeopleList
 
 class EFCaseSearch(DAObject):
@@ -27,8 +29,11 @@ def get_lookup_choices(can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
     lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})
   return lookup_choices
 
-def json_wrap(item):
-  return serializable_dict({'retval': item[0], 'retbal': item[1]})
+def json_wrap(item:Tuple):
+  return safe_json([*item])
+
+def json_unwrap(val):
+  return transform_json_variables(json.loads(val))
 
 def search_case_by_name(*, proxy_conn, var_name:str=None, 
     court_id:str, somebody, filter_fn:Callable[[Any], bool], roles=None) -> Tuple[bool, DAList]:

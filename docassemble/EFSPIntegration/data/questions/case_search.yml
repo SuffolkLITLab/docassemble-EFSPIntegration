@@ -38,9 +38,9 @@ generic object: EFCaseSearch
 code: |
   if x.case_search_task_status.ready():
     if not x.case_search_task_status.failed():
-      x.tmp_dump = x.case_search_task_status.get()
-      x.cms_connection_issue = transform_json_variables(x.tmp_dump).get('retval') or None
-      x.found_cases = transform_json_variables(x.tmp_dump).get('retbal') or DAEmpty(x.instanceName + '.found_cases')
+      x.tmp_dump = json_unwrap(x.case_search_task_status.get())
+      x.cms_connection_issue = x.tmp_dump[0] or None
+      x.found_cases = x.tmp_dump[1] or DAEmpty(x.instanceName + '.found_cases')
     else:
       log(x.case_search_task_status.result().error_message)
       log(str(x.case_search_task_status.result().error_trace))

@@ -91,7 +91,7 @@ subquestion: |
   
   [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
 
-  % else
+  % else:
   ${ debug_display(resp) }
   % endif
 

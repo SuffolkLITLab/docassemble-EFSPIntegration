@@ -507,7 +507,7 @@ fields:
   - Case category: user_chosen_case_category
     datatype: dropdown
     code: |
-      sorted(stay_category_options, key=lambda cat: cat[1])
+      sorted(tyler_category_options, key=lambda cat: cat[1])
 ---
 id: case type
 question: |

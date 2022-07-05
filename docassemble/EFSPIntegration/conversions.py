@@ -49,7 +49,7 @@ def transform_json_variables(obj):
         return obj
     if isinstance(obj, dict):
         if '_class' in obj and isinstance(obj['_class'], str) and 'instanceName' in obj and isinstance(obj['instanceName'], str) \
-          and obj['_class'].startswith('docassemble.base') and not illegal_variable_name(obj['_class']):
+          and (obj['_class'].startswith('docassemble.base.') or obj['_class'].startswith('docassemble.AssemblyLine.')) and not illegal_variable_name(obj['_class']):
             the_module = re.sub(r'\.[^\.]+$', '', obj['_class'])
             try:
                 importlib.import_module(the_module)
