@@ -75,7 +75,7 @@ template: debug_details
 subject: |
   ${ 'What went wrong?' if efile_resp.response_code != 200 else '' }
 content: |
-  % if efile_resp.response_code != 200
+  % if efile_resp.response_code != 200:
   Some additional information:
     
   % if defined('tyler_case_category') and defined('case_category_map'):
