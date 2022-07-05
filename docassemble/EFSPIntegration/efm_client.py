@@ -125,30 +125,30 @@ class ProxyConnection(EfspConnection):
     service_contact_dict = serialize_person(service_contact)
     return super().create_service_contact(service_contact_dict, is_public=is_public, is_in_master_list=is_in_master_list, admin_copy=admin_copy)
 
-  def check_filing(self, court_id:str, court_bundle:ALDocumentBundle):
-    all_vars = _get_all_vars(court_bundle)
+  def check_filing(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
+    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().check_filing(court_id, all_vars)
 
-  def file_for_review(self, court_id:str, court_bundle:ALDocumentBundle):
-    all_vars = _get_all_vars(court_bundle)
+  def file_for_review(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
+    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().file_for_review(court_id, all_vars)
 
-  def get_service_types(self, court_id:str, court_bundle:ALDocumentBundle=None):
+  def get_service_types(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]=None):
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
     if court_info.data.get('hasconditionalservicetypes') and court_bundle:
-      all_vars = _get_all_vars(court_bundle)
+      all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     else:
       all_vars = {}
     return super().get_service_types(court_id, all_vars=all_vars)
 
-  def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
-    all_vars = _get_all_vars(court_bundle)
+  def calculate_filing_fees(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
+    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().calculate_filing_fees(court_id, all_vars)
 
-  def get_return_date(self, court_id:str, req_return_date, court_bundle:ALDocumentBundle):
-    all_vars_obj = _get_all_vars(court_bundle)
-    return super().get_return_date(court_id, req_return_date, all_vars_obj)
+  def get_return_date(self, court_id:str, req_return_date, court_bundle:Union[ALDocumentBundle, dict]):
+    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    return super().get_return_date(court_id, req_return_date, all_vars)
 
   def get_cases(self, court_id:str, *, person:ALIndividual=None, docket_id:str=None):
     if person is None:

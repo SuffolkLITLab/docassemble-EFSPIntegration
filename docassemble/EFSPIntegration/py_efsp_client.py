@@ -182,7 +182,7 @@ class EfspConnection:
     Password rules are stored in the global court, id 1.
     """
     send = lambda: self.proxy_client.get(self.full_url("codes/courts/1/datafields/GlobalPassword"))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def is_valid_password(self, password:str) -> Optional[bool]:
     results = self.get_password_rules()
