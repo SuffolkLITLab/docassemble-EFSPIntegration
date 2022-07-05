@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from docassemble.base.util import Address, Person, Individual
+from docassemble.base.util import Address, Person, Individual, IndividualName, Address
 from docassemble.AssemblyLine.al_general import ALIndividual
 from ..efm_client import ProxyConnection, ApiResponse
 import sys
@@ -25,24 +25,23 @@ def get_proxy_server_ip():
     print("FAILED Can't find the docker image!")
     return None
 
-class MockPerson:
+class MockPerson(ALIndividual):
   def __init__(self):
     self.email = 'fakeemail@example.com'
+    self.instanceName = 'mock_person'
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
-    self.name = type('', (), {})()
+    self.name = IndividualName() 
     self.name.first = 'B'
     self.name.middle = 'S'
     self.name.last = 'W'
-    self.address = type('', (), {})()
+    self.address = Address()
     self.address.address = '123 Fakestreet Ave'
     self.address.unit = 'Apt 1'
     self.address.city = 'Boston'
     self.address.state = 'MA'
     self.address.zip = '12345'
     self.address.country = 'US'
-
-  def sms_number(self) -> str:
-    return '1234567890'
+    self.mobile_number = '1234567890'
 
 class TestClass:
   
@@ -109,7 +108,7 @@ class TestClass:
     new_contact.address.zip = '12345'
     new_contact.address.country = 'US'
     new_contact.phone_number = '9727133770'
-    new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, False, True, admin_copy='ella.doe@example.com'))
+    new_c = self.basic_assert(self.proxy_conn.create_service_contact(new_contact, is_public=False, is_in_master_list=True, admin_copy='ella.doe@example.com'))
     contact_id = new_c.data
     new_contact.name.middle = '"Lorde"'
     new_contact.email = 'different@example.com'
@@ -146,7 +145,6 @@ class TestClass:
     assert(firm.data['firmName'] == 'Suffolk LIT Lab')
     assert(firm.data['isIndividual'] == False)
     assert(firm.data['address']['addressLine1'] == '120 Tremont Street')
-
 
 
   def test_users(self):
@@ -305,6 +303,7 @@ def main(args):
   base_url = get_proxy_server_ip()
   api_key = os.getenv('PROXY_API_KEY')
   proxy_conn = ProxyConnection(url=base_url, api_key=api_key, default_jurisdiction='illinois')
+  proxy_conn.set_verbose_logging(True)
   intentional_bad_resp = proxy_conn.authenticate_user()
   assert(intentional_bad_resp.response_code == 403)
   resp = proxy_conn.authenticate_user(tyler_email=os.getenv('bryce_user_email'), 
@@ -316,14 +315,13 @@ def main(args):
   tc.test_firm()
   tc.test_service_contacts()
   tc.test_get_courts()
-  # TODO(brycew): waiting on Tyler ticket 
   tc.test_global_payment_accounts()
   tc.test_payment_accounts()
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
   tc.test_codes()
-    # TODO(brycew): needs a more up to date JSON from any filing interiview
+  # TODO(brycew): needs a more up to date JSON from any filing interiview
   #tc.test_filings()
 
 if __name__ == '__main__':
