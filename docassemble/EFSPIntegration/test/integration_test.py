@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from docassemble.base.util import Address, Person, Individual
+from docassemble.base.util import Address, Person, Individual, IndividualName, Address
 from docassemble.AssemblyLine.al_general import ALIndividual
 from ..efm_client import ProxyConnection, ApiResponse
 import sys
@@ -25,42 +25,23 @@ def get_proxy_server_ip():
     print("FAILED Can't find the docker image!")
     return None
 
-class MockPerson:
+class MockPerson(ALIndividual):
   def __init__(self):
     self.email = 'fakeemail@example.com'
+    self.instanceName = 'mock_person'
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
-    self.name = type('', (), {})()
+    self.name = IndividualName() 
     self.name.first = 'B'
     self.name.middle = 'S'
     self.name.last = 'W'
-    self.address = type('', (), {})()
+    self.address = Address()
     self.address.address = '123 Fakestreet Ave'
     self.address.unit = 'Apt 1'
     self.address.city = 'Boston'
     self.address.state = 'MA'
     self.address.zip = '12345'
     self.address.country = 'US'
-
-  def sms_number(self) -> str:
-    return '1234567890'
-
-  def as_serializable(self) -> dict:
-    return {
-      'name': {
-        'first': self.name.first,
-        'middle': self.name.middle,
-        'last': self.name.last,
-      },
-      'address': {
-        'address': self.address.address,
-        'unit': self.address.unit,
-        'city': self.address.city,
-        'state': self.address.state,
-        'zip': self.address.zip,
-        'country': self.address.country
-      },
-      'email': self.email
-    }
+    self.mobile_number = '1234567890'
 
 class TestClass:
   
@@ -77,12 +58,12 @@ class TestClass:
   def test_hateos(self):
     base_url = self.proxy_conn.base_url
     base_send = lambda: self.proxy_conn.proxy_client.get(base_url) 
-    next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, base_send)).data
+    next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
     for url in next_level_urls.values():
       if 'authenticate' in url:
         continue
       send = lambda: self.proxy_conn.proxy_client.get(url) 
-      self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, send))
+      self.basic_assert(self.proxy_conn._call_proxy(send))
 
 
   def test_self_user(self):
@@ -164,7 +145,6 @@ class TestClass:
     assert(firm.data['firmName'] == 'Suffolk LIT Lab')
     assert(firm.data['isIndividual'] == False)
     assert(firm.data['address']['addressLine1'] == '120 Tremont Street')
-
 
 
   def test_users(self):
@@ -304,11 +284,11 @@ class TestClass:
     base_url = self.proxy_conn.base_url
     court = 'cook:cvd1'
     fees_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/fees', data=all_vars_str)
-    fees_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, fees_send))
+    fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
     check_send = lambda: self.proxy_conn.proxy_client.get(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filing/check', data=all_vars_str)
-    checked_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, check_send))
+    checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
     file_send = lambda: self.proxy_conn.proxy_client.post(base_url + f'filingreview/jurisdictions/illinois/courts/{court}/filings', data=all_vars_str)
-    filing_resp = self.basic_assert(self.proxy_conn._call_proxy(self.proxy_conn, file_send)) 
+    filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send)) 
 
     for filing_id in filing_resp.data:
       status_resp = self.basic_assert(self.proxy_conn.get_filing_status(court, filing_id))
@@ -335,14 +315,13 @@ def main(args):
   tc.test_firm()
   tc.test_service_contacts()
   tc.test_get_courts()
-  # TODO(brycew): waiting on Tyler ticket 
   tc.test_global_payment_accounts()
   tc.test_payment_accounts()
   tc.test_attorneys()
   tc.test_court_record()
   tc.test_users()
   tc.test_codes()
-    # TODO(brycew): needs a more up to date JSON from any filing interiview
+  # TODO(brycew): needs a more up to date JSON from any filing interiview
   #tc.test_filings()
 
 if __name__ == '__main__':

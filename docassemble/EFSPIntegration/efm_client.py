@@ -67,18 +67,18 @@ class ProxyConnection(EfspConnection):
 
     self.credentials_code_block = credentials_code_block
 
-    def internal_call_proxy(conn, send_func) -> ApiResponse:
-      try:
-        resp = send_func()
-        if resp.status_code == 401 and conn.credentials_code_block:
-          reconsider(conn.credentials_code_block)
-      except requests.ConnectionError as ex:
-        return _user_visible_resp(f'Could not connect to the Proxy server at {conn.base_url}: {ex}')
-      except requests.exceptions.MissingSchema as ex:
-        return _user_visible_resp(f'Url {conn.base_url} is not valid: {ex}')
-      return _user_visible_resp(resp)
+    super().__init__(url=url, api_key=api_key, default_jurisdiction=default_jurisdiction)
 
-    super().__init__(url=url, api_key=api_key, default_jurisdiction=default_jurisdiction, call_proxy=internal_call_proxy)
+  def _call_proxy(self, send_func) -> ApiResponse:
+    try:
+      resp = send_func()
+      if resp.status_code == 401 and self.credentials_code_block:
+        reconsider(self.credentials_code_block)
+    except requests.ConnectionError as ex:
+      return _user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
+    except requests.exceptions.MissingSchema as ex:
+      return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    return _user_visible_resp(resp)
 
   def authenticate_user(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None, *, jurisdiction:str=None):
     """
@@ -105,7 +105,7 @@ class ProxyConnection(EfspConnection):
     If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password.
     If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
     """
-    if isinstance(person, Individual):
+    if isinstance(person, Individual) or isinstance(person, ALIndividual):
       person = person.as_serializable()
     return super().register_user(person, registration_type, password=password, firm_name_or_id=firm_name_or_id)
 

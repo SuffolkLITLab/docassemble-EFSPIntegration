@@ -44,19 +44,10 @@ def _user_visible_resp(resp) -> ApiResponse:
   except:
     return ApiResponse(resp.status_code, resp.text, None)
 
-def _call_proxy(conn, send_func) -> ApiResponse:
-  try:
-    resp = send_func()
-  except requests.ConnectionError as ex:
-    return _user_visible_resp(f'Could not connect to the Proxy server at {conn.base_url}: {ex}')
-  except requests.exceptions.MissingSchema as ex:
-    return _user_visible_resp(f'Url {conn.base_url} is not valid: {ex}')
-  return _user_visible_resp(resp)
 
 class EfspConnection:
   def __init__(self, *, url:str, api_key:str,
-      default_jurisdiction:str=None,
-      call_proxy=None):
+      default_jurisdiction:str=None):
     """
     Params:
       url (str)
@@ -65,10 +56,7 @@ class EfspConnection:
     """
     if not url.endswith('/'):
       url = url + '/'
-    if call_proxy is None:
-      call_proxy = _call_proxy
     
-    self._call_proxy = call_proxy
     self.base_url = url
     self.api_key = api_key
     self.proxy_client = requests.Session()
@@ -82,6 +70,15 @@ class EfspConnection:
     self.proxy_client.headers['X-API-KEY'] = api_key
     self.verbose = False
     self.authed_user_id = None
+
+  def _call_proxy(self, send_func) -> ApiResponse:
+    try:
+      resp = send_func()
+    except requests.ConnectionError as ex:
+      return _user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
+    except requests.exceptions.MissingSchema as ex:
+      return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    return _user_visible_resp(resp)
 
   @staticmethod
   def verbose_logging(turn_on: bool):
@@ -178,7 +175,7 @@ class EfspConnection:
       reg_obj['password'] = password
 
     send = lambda: self.proxy_client.put(self.full_url("adminusers/users"), data=json.dumps(reg_obj))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_password_rules(self) -> ApiResponse:
     """
@@ -204,7 +201,7 @@ class EfspConnection:
 
   def get_user_list(self):
     send = lambda: self.proxy_client.get(self.full_url('adminusers/users'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_users(self):
     return self.get_user_list()
@@ -214,78 +211,78 @@ class EfspConnection:
       send = lambda: self.proxy_client.get(self.full_url('adminusers/user'))
     else:
       send = lambda: self.proxy_client.get(self.full_url(f'adminusers/users/{id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_user_roles(self, id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'adminusers/users/{id}/roles'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def add_user_roles(self, id:str, roles:List[dict]):
     send = lambda: self.proxy_client.post(self.full_url(f'adminusers/users/{id}/roles'),
       data=json.dumps(roles))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_user_roles(self, id:str, roles:List[dict]):
     send = lambda: self.proxy_client.delete(self.full_url(f'adminusers/users/{id}/roles'),
         data=json.dumps(roles))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def change_password(self, id:str, email:str, new_password:str):
     send = lambda: self.proxy_client.post(self.full_url(f'adminusers/users/{id}/password'),
         data=json.dumps({'email': email, 'newPassword': new_password}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def self_change_password(self, current_password:str, new_password:str):
     send = lambda: self.proxy_client.post(self.full_url('adminusers/user/password'),
         data=json.dumps({'currentPassword': current_password, 'newPassword': new_password}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def self_resend_activation_email(self, email: str):
     send = lambda: self.proxy_client.post(self.full_url('adminusers/user/resend-activation-email'),
         data=email)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def resend_activation_email(self, id:str):
     send = lambda: self.proxy_client.post(self.full_url(f'adminusers/users/{id}/resend-activation-email'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_notification_preferences(self, notif_preferences:List[dict]):
     send = lambda: self.proxy_client.patch(self.full_url(f'adminusers/user/notification-preferences'),
         data=json.dumps(notif_preferences))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_notification_preferences(self):
     send = lambda: self.proxy_client.get(self.full_url('adminusers/user/notification-preferences'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_notification_options(self):
     """AKA NotificationPreferencesList"""
     send = lambda: self.proxy_client.get(self.full_url('adminusers/notification-options'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def self_update_user(self, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.full_url('adminusers/user'), data=json.dumps(updated_user))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_user(self, id:str, email:str=None, first_name:str=None, middle_name:str=None, last_name:str=None):
     updated_user = {'email': email, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}
     send = lambda: self.proxy_client.patch(self.full_url(f'adminusers/users/{id}'), data=json.dumps(updated_user))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_user(self, id:str):
     send = lambda: self.proxy_client.delete(self.full_url(f'adminusers/users/{id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # TODO(brycew): not tested
   def reset_user_password(self, email:str):
     send = lambda: self.proxy_client.post(self.full_url('adminusers/user/password/reset'), data=email)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Managing a Firm
   def get_firm(self):
     send = lambda: self.proxy_client.get(self.full_url('firmattorneyservice/firm'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_firm(self, firm:dict): 
     """
@@ -297,36 +294,36 @@ class EfspConnection:
     * email
     """
     send = lambda: self.proxy_client.patch(self.full_url('firmattorneyservice/firm'), data=json.dumps(firm))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Managing Attorneys
   def get_attorney_list(self):
     send = lambda: self.proxy_client.get(self.full_url('firmattorneyservice/attorneys'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_attorney(self, attorney_id):
     send = lambda: self.proxy_client.get(self.full_url(f'firmattorneyservice/attorneys/{attorney_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_attorney(self, attorney_id, bar_number:str=None,
       first_name:str=None, middle_name:str=None, last_name:str=None):
     send = lambda: self.proxy_client.patch(self.full_url(f'firmattorneyservice/attorneys/{attorney_id}'),
         data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def create_attorney(self, bar_number:str, first_name:str, middle_name:str=None, last_name:str=None):
     send = lambda: self.proxy_client.post(self.full_url('firmattorneyservice/attorneys'), 
         data=json.dumps({'barNumber': bar_number, 'firstName': first_name, 'middleName': middle_name, 'lastName': last_name}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_attorney(self, attorney_id):
     send = lambda: self.proxy_client.delete(self.full_url(f'firmattorneyservice/attorneys/{attorney_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Managing Payment Accounts
   def get_payment_account_type_list(self):
     send = lambda: self.proxy_client.get(self.full_url('payments/types'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_payment_account_list(self, court_id:Optional[str]=None):
     if not court_id:
@@ -334,54 +331,54 @@ class EfspConnection:
     else:
       params = {'court_id': court_id}
       send = lambda: self.proxy_client.get(self.full_url('payments/payment-accounts'), params=params)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_payment_account(self, payment_account_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'payments/payment-accounts/{payment_account_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_payment_account(self, payment_account_id:str, account_name:str=None, active:bool=True):
     send = lambda: self.proxy_client.patch(self.full_url(f'payments/payment-accounts/{payment_account_id}'), 
         data=json.dumps({'account_name': account_name, 'active': active}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_payment_account(self, payment_account_id:str):
     send = lambda: self.proxy_client.delete(self.full_url(f'payments/payment-accounts/{payment_account_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Both types of accounts
   def create_waiver_account(self, account_name:str, is_global:bool):
     url = self.full_url('payments/global-accounts' if is_global else 'payments/payment-accounts')
     send = lambda: self.proxy_client.post(url, data=account_name)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Global Payment Accounts
   def get_global_payment_account_list(self):
     send = lambda: self.proxy_client.get(self.full_url('payments/global-accounts'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_global_payment_account(self, global_payment_account_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'payments/global-accounts/{global_payment_account_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_global_payment_account(self, global_payment_account_id:str, account_name:str=None, active:bool=True):
     send = lambda: self.proxy_client.patch(self.full_url(f'payments/global-accounts/{global_payment_account_id}'),
         data=json.dumps({'account_name': account_name, 'active': active}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_global_payment_account(self, global_payment_account_id:str):
     send = lambda: self.proxy_client.delete(self.full_url(f'payments/global-accounts/{global_payment_account_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Managing Service Contacts
   # Service contacts are part of the `firm` hierarchy
   def get_service_contact_list(self):
     send = lambda: self.proxy_client.get(self.full_url(f'firmattorneyservice/service-contacts'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_service_contact(self, service_contact_id):
     send = lambda: self.proxy_client.get(self.full_url(f'firmattorneyservice/service-contacts/{service_contact_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def update_service_contact(self, service_contact_id:str, service_contact:dict, *, is_public:bool=None, is_in_master_list:bool=None, admin_copy:str=None):
     service_contact_dict = deepcopy(service_contact) 
@@ -390,7 +387,7 @@ class EfspConnection:
     service_contact_dict['administrativeCopy'] = admin_copy
     send = lambda: self.proxy_client.patch(self.full_url(f'firmattorneyservice/service-contacts/{service_contact_id}'),
         data=json.dumps(service_contact_dict))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def create_service_contact(self, service_contact:dict, *, is_public:bool, is_in_master_list:bool, admin_copy:str=None):
     service_contact_dict = deepcopy(service_contact)
@@ -399,36 +396,36 @@ class EfspConnection:
     service_contact_dict['administrativeCopy'] = admin_copy
     send = lambda: self.proxy_client.post(self.full_url('firmattorneyservice/service-contacts'), 
         data=json.dumps(service_contact_dict))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def remove_service_contact(self, service_contact_id):
     send = lambda: self.proxy_client.delete(self.full_url(f'firmattorneyservice/service-contacts/{service_contact_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_public_service_contacts(self, first_name:str=None, middle_name:str=None, last_name:str=None, email:str=None):
     send = lambda: self.proxy_client.get(self.full_url(f'firmattorneyservice/service-contacts/public'),
         data=json.dumps({'firstName': first_name, 'middleName': middle_name, 'lastName': last_name, 'email': email}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   # Using Service Contacts
   def attach_service_contact(self, service_contact_id:str, case_id:str, case_party_id:str=None):
     send = lambda: self.proxy_client.put(self.full_url(f'firmattorneyservice/service-contacts/{service_contact_id}/cases'),
         data=json.dumps({'caseId': case_id, 'casepartyId': case_party_id}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def detach_service_contact(self, service_contact_id:str, case_id:str, case_party_id:str=None):
     url = self.full_url(f'firmattorneyservice/service-contacts/{service_contact_id}/cases/{case_id}')
     send = lambda: self.proxy_client.delete(url, params={'case_party_id': case_party_id})
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_attached_cases(self, court_id:str, service_contact_id:str):
     url = self.full_url(f'cases/courts/{court_id}/service-contacts/{service_contact_id}/cases')
     send = lambda: self.proxy_client.get(url)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_public_list(self):
     send = lambda: self.proxy_client.get(self.full_url('firmattorneyservice/service-contacts/public'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_courts(self, fileable_only:bool=False, with_names:bool=False):
     params = {
@@ -436,15 +433,15 @@ class EfspConnection:
       'with_names': with_names
     }
     send = lambda: self.proxy_client.get(self.full_url('codes/courts'), params=params)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_court(self, court_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/codes'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_court_list(self):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_filing_list(self, court_id:str, user_id:str=None, start_date:datetime=None, end_date:datetime=None):
     params = {
@@ -453,31 +450,31 @@ class EfspConnection:
       "end_date": end_date.strftime("%y-%m-%d") if end_date else None
     }
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filings'), params=params)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_filing(self, court_id:str, filing_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filings/{filing_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_policy(self, court_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/policy'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_filing_status(self, court_id:str, filing_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filings/{filing_id}/status'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def cancel_filing_status(self, court_id:str, filing_id:str):
     send = lambda: self.proxy_client.delete(self.full_url(f'filingreview/courts/{court_id}/filings/{filing_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def check_filing(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filing/check'), data=all_vars)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def file_for_review(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filings'), data=all_vars)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_service_types(self, court_id:str, all_vars:dict=None):
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
@@ -485,19 +482,19 @@ class EfspConnection:
     if court_info.data.get('hasconditionalservicetypes') and all_vars:
       send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filing/servicetypes'),
         data=all_vars)
-      return self._call_proxy(self, send)
+      return self._call_proxy(send)
     else:
       return self.get_service_type_codes(court_id)
       
   def calculate_filing_fees(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filing/fees'),
           data=all_vars)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_return_date(self, court_id:str, req_return_date, all_vars_obj:dict): 
     all_vars_obj['return_date'] = req_return_date.isoformat()
     send = lambda: self.proxy_client.post(self.full_url(f'scheduling/courts/{court_id}/return_date'), data=json.dumps(all_vars_obj))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def reserve_court_date(self, court_id:str, doc_id:str,
       range_after:Union[datetime, str]=None, range_before:Union[datetime, str]=None, estimated_duration=None):
@@ -515,7 +512,7 @@ class EfspConnection:
       estimated_duration = int(estimated_duration) * 60 * 60
     send = lambda: self.proxy_client.post(self.full_url(f'scheduling/courts/{court_id}/reserve_date'),
         data=json.dumps({'doc_id': doc_id, 'estimated_duration': estimated_duration, 'range_after' : range_after, 'range_before': range_before}))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_cases_raw(self, court_id:str, *, person_name:dict=None, business_name:str=None, docket_id:str=None) -> ApiResponse:
     """
@@ -534,29 +531,29 @@ class EfspConnection:
           'last_name': person_name.get('last') if person_name is not None else None,
           'business_name': business_name,
           'docket_id': docket_id})
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_case(self, court_id:str, case_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'cases/courts/{court_id}/cases/{case_id}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_document(self, court_id:str, case_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'cases/courts/{court_id}/cases/{case_id}/documents'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_service_attach_case_list(self, court_id:str, service_contact_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'cases/courts/{court_id}/service-contacts/{service_contact_id}/cases'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_service_information(self, court_id:str, case_tracking_id:str):
     send = lambda: self.proxy_client.get(
         self.full_url(f'cases/courts/{court_id}/cases/{case_tracking_id}/service-information'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_service_information_history(self, court_id:str, case_tracking_id:str):
     send = lambda: self.proxy_client.get(
         self.full_url(f'cases/courts/{court_id}/cases/{case_tracking_id}/service-information-history'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_case_categories(self, court_id:str, fileable_only:bool=False, timing:str=None):
     params = {
@@ -564,7 +561,7 @@ class EfspConnection:
       "timing": timing 
     }
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/categories'), params=params) 
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_case_types(self, court_id:str, case_category:str, timing:str=None):
     params = {
@@ -572,11 +569,11 @@ class EfspConnection:
       'timing': timing
     }
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/case_types'), params=params) 
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_case_subtypes(self, court_id:str, case_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/case_types/{case_type}/case_subtypes'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_filing_types(self, court_id:str, case_category:str, case_type:str, initial:bool):
     params = {
@@ -585,43 +582,43 @@ class EfspConnection:
       'initial': str(initial)
     }
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types'), params=params)
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_service_type_codes(self, court_id:str): 
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/service_types'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_party_types(self, court_id:str, case_type_id:Optional[str]):
     if case_type_id:
       send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/case_types/{case_type_id}/party_types'))
     else:
       send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/party_types'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_document_types(self, court_id:str, filing_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/document_types'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_motion_types(self, court_id:str, filing_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/motion_types'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_filing_components(self, court_id:str, filing_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/filing_components'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_optional_services(self, court_id:str, filing_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/filing_types/{filing_type}/optional_services'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
   
   def get_cross_references(self, court_id:str, case_type:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/casetypes/{case_type}/cross_references'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_datafield(self, court_id:str, field_name:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/datafields/{field_name}'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
 
   def get_disclaimers(self, court_id:str):
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/disclaimer_requirements'))
-    return self._call_proxy(self, send)
+    return self._call_proxy(send)
