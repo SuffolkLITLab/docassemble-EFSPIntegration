@@ -471,15 +471,15 @@ class EfspConnection:
     send = lambda: self.proxy_client.delete(self.full_url(f'filingreview/courts/{court_id}/filings/{filing_id}'))
     return self._call_proxy(self, send)
 
-  def check_filing(self, court_id:str, all_vars=None): 
+  def check_filing(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filing/check'), data=all_vars)
     return self._call_proxy(self, send)
 
-  def file_for_review(self, court_id:str, all_vars=None): 
+  def file_for_review(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filings'), data=all_vars)
     return self._call_proxy(self, send)
 
-  def get_service_types(self, court_id:str, all_vars=None):
+  def get_service_types(self, court_id:str, all_vars:dict=None):
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
     if court_info.data.get('hasconditionalservicetypes') and all_vars:
@@ -489,7 +489,7 @@ class EfspConnection:
     else:
       return self.get_service_type_codes(court_id)
       
-  def calculate_filing_fees(self, court_id:str, all_vars=None): 
+  def calculate_filing_fees(self, court_id:str, all_vars:dict):
     send = lambda: self.proxy_client.post(self.full_url(f'filingreview/courts/{court_id}/filing/fees'),
           data=all_vars)
     return self._call_proxy(self, send)

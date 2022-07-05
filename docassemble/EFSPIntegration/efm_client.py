@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
-import re
 import json
-import logging
-import isodate
 import pycountry
-from datetime import datetime
-from typing import Optional, Union, List, Dict
-import http.client as http_client
+from typing import Union, Dict
 
-from urllib.parse import urlencode
 import requests
 from docassemble.base.functions import all_variables, get_config
 from docassemble.base.util import DAObject, log, Person, Individual, DADateTime, as_datetime, reconsider
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
-from datetime import datetime
 from .py_efsp_client import ApiResponse, EfspConnection, _user_visible_resp
 
 __all__ = ['ApiResponse','ProxyConnection', 'state_name_to_code']
@@ -148,14 +141,13 @@ class ProxyConnection(EfspConnection):
     else:
       all_vars = {}
     return super().get_service_types(court_id, all_vars=all_vars)
-      
+
   def calculate_filing_fees(self, court_id:str, court_bundle:ALDocumentBundle):
     all_vars = _get_all_vars(court_bundle)
     return super().calculate_filing_fees(court_id, all_vars)
 
   def get_return_date(self, court_id:str, req_return_date, court_bundle:ALDocumentBundle):
-    _give_data_url(court_bundle)
-    all_vars_obj = all_variables()
+    all_vars_obj = _get_all_vars(court_bundle)
     return super().get_return_date(court_id, req_return_date, all_vars_obj)
 
   def get_cases(self, court_id:str, *, person:ALIndividual=None, docket_id:str=None):
