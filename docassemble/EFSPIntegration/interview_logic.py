@@ -33,7 +33,7 @@ def json_wrap(item:Tuple):
   return safe_json([*item])
 
 def json_unwrap(val):
-  return transform_json_variables(json.loads(val))
+  return transform_json_variables(val)
 
 def search_case_by_name(*, proxy_conn, var_name:str=None, 
     court_id:str, somebody, filter_fn:Callable[[Any], bool], roles=None) -> Tuple[bool, DAList]:
