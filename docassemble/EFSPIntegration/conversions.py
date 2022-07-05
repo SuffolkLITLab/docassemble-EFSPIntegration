@@ -3,10 +3,13 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
-from docassemble.base.util import DAList, DAObject, DADateTime, as_datetime, validation_error, log
+import docassemble.base.util
+from docassemble.base.util import DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
-from docassemble.base.functions import get_config
+from docassemble.base.functions import get_config, illegal_variable_name, TypeType
 from .efm_client import ApiResponse
+import importlib
+import dateutil.parser
 
 __all__ = [
   'convert_court_to_id',
@@ -22,8 +25,71 @@ __all__ = [
   'filter_payment_accounts',
   'payment_account_labels',
   'filing_id_and_label',
-  'get_tyler_roles'
+  'get_tyler_roles',
+  'transform_json_variables', 
 ]
+
+TypeType = type(type(None))
+
+def transform_json_variables(obj):
+    """A copy of docassemble's function in server.py (L25538). Can removed 
+    if https://github.com/jhpyle/docassemble/pull/541 is merged"""
+    if isinstance(obj, str):
+        if re.search(r'^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]', obj):
+            try:
+                return as_datetime(dateutil.parser.parse(obj))
+            except:
+                pass
+        elif re.search(r'^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]', obj):
+            try:
+                return datetime.time.fromisoformat(obj)
+            except:
+                pass
+        return obj
+    if isinstance(obj, (bool, int, float)):
+        return obj
+    if isinstance(obj, dict):
+        if '_class' in obj and obj['_class'] == 'type' and 'name' in obj and isinstance(obj['name'], str) and obj['name'].startswith('docassemble.') and not illegal_variable_name(obj['name']):
+            if '.' in obj['name']:
+                the_module = re.sub(r'\.[^\.]+$', '', obj['name'])
+            else:
+                the_module = None
+            try:
+                if the_module:
+                    importlib.import_module(the_module)
+                new_obj = eval(obj['name'])
+                if not isinstance(new_obj, TypeType):
+                    raise Exception("name is not a class")
+                return new_obj
+            except Exception as err:
+                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
+                return None
+        if '_class' in obj and isinstance(obj['_class'], str) and 'instanceName' in obj and isinstance(obj['instanceName'], str) \
+          and (obj['_class'].startswith('docassemble.base.') or obj['_class'].startswith('docassemble.AssemblyLine.')) and not illegal_variable_name(obj['_class']):
+            the_module = re.sub(r'\.[^\.]+$', '', obj['_class'])
+            try:
+                importlib.import_module(the_module)
+                the_class = eval(obj['_class'])
+                if not isinstance(the_class, TypeType):
+                    raise Exception("_class was not a class")
+                new_obj = the_class(obj['instanceName'])
+                for key, val in obj.items():
+                    if key == '_class':
+                        continue
+                    setattr(new_obj, key, transform_json_variables(val))
+                return new_obj
+            except Exception as err:
+                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
+                return None
+        new_dict = {}
+        for key, val in obj.items():
+            new_dict[transform_json_variables(key)] = transform_json_variables(val)
+        return new_dict
+    if isinstance(obj, list):
+        return [transform_json_variables(val) for val in obj]
+    if isinstance(obj, set):
+        return set(transform_json_variables(val) for val in obj)
+    return obj
 
 def convert_court_to_id(trial_court) -> str:
   if isinstance(trial_court, str):
@@ -260,6 +326,8 @@ def parse_service_contacts(service_list):
 
 def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
     fetch:bool=True, roles:dict=None):
+  if not roles:
+    roles = {}
   new_case.details = entry
   new_case.court_id = court_id
   new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
@@ -292,6 +360,7 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   new_case.case_details = full_case_details.data or {}
   # TODO: is the order of this array predictable? might it break if Tyler changes something?
   new_case.case_type = new_case.case_details.get('value', {}).get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
+  new_case.tyler_case_type = new_case.case_type
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))

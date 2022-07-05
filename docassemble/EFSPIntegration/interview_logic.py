@@ -1,8 +1,19 @@
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
+
+import json
 
 from docassemble.base.util import DAObject, DAList, log
-from .conversions import parse_case_info, fetch_case_info
+from docassemble.base.functions import safe_json
+from .conversions import parse_case_info, fetch_case_info, transform_json_variables
 from docassemble.AssemblyLine.al_general import ALPeopleList
+
+class EFCaseSearch(DAObject):
+  court_id:str
+  can_file_non_indexed_case: bool
+  do_what_choice: str
+  found_case: DAObject
+  case_was_found: bool
+
 
 def num_case_choices() -> int:
   """The number of cases that someone should have to choose between if there are too many.
@@ -18,8 +29,14 @@ def get_lookup_choices(can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
     lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})
   return lookup_choices
 
+def json_wrap(item:Tuple):
+  return safe_json([*item])
+
+def json_unwrap(val):
+  return transform_json_variables(val)
+
 def search_case_by_name(*, proxy_conn, var_name:str=None, 
-    court_id:str, somebody, filter_fn:Callable[[Any], bool]) -> Tuple[bool, DAList]:
+    court_id:str, somebody, filter_fn:Callable[[Any], bool], roles=None) -> Tuple[bool, DAList]:
   """Searches for cases by party name. If there are more than 10 cases found, we don't
     add all of the detailed information about the case, just for the first few cases"""
   if not var_name:
@@ -33,7 +50,7 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
     for idx, entry in enumerate(reversed(get_cases_response.data)):
       new_case = found_cases.appendObject()
       should_fetch = idx < num_case_choices()
-      parse_case_info(proxy_conn, new_case, entry, court_id, fetch=should_fetch, roles={})
+      parse_case_info(proxy_conn, new_case, entry, court_id, fetch=should_fetch, roles=roles)
       # Allows users to control what cases are shown as options
       if not filter_fn(new_case):
         found_cases.pop()
@@ -75,3 +92,32 @@ def get_full_court_info(proxy_conn, court_id:str) -> Dict:
   else:
     log(f"Couldn't get full court info for {court_id}")
     return {}
+
+def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], default:str) -> Tuple[List[Any], Optional[str]]:
+  """Given a list of filter functions from most specific to least specific,
+  (if true, use that code)
+  filters a total list of codes"""
+  codes_tmp: List[Any] = []
+  for filter_fn in filters:
+    if codes_tmp:
+      break
+    if isinstance(filter_fn, str):
+      match_this = filter_fn
+      filter_fn = lambda opt: opt[1].lower() == match_this.lower()
+    codes_tmp = [opt for opt in options if filter_fn(opt)]
+  if not codes_tmp:
+    for filter_st in filters:
+      if codes_tmp:
+        break
+      if isinstance(filter_st, str):
+        contain_this = filter_st
+        filter_fn = lambda opt: contain_this.lower() in opt[1].lower()
+        codes_tmp = [opt for opt in options if filter_fn(opt)]
+
+  codes = sorted(codes_tmp, key=lambda option: option[1])
+  if len(codes) == 1:
+    return codes, codes[0][0]
+  elif len(codes) == 0:
+    return codes, default
+  else:
+    return codes, None

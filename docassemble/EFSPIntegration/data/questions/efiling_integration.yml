@@ -68,11 +68,11 @@ help:
   content: |
     Some additional information:
     
-    % if defined('case_category') and defined('case_category_map'):
-    * Case category: ${ case_category } ${ case_category_map.get(case_category) }
+    % if defined('tyler_case_category') and defined('case_category_map'):
+    * Case category: ${ tyler_case_category } ${ case_category_map.get(tyler_case_category) }
     % endif
-    % if defined('case_type') and defined('case_type_map'):
-    * Case type: ${ case_type } ${ case_type_map.get(case_type) }
+    % if defined('tyler_case_type') and defined('case_type_map'):
+    * Case type: ${ tyler_case_type } ${ case_type_map.get(tyler_case_type) }
     % endif
     % if defined('al_court_bundle[0].tyler_filing_type'):
     * Lead document type: ${ al_court_bundle[0].tyler_filing_type }
@@ -123,6 +123,7 @@ comment: |
   ${ action_button_html(url_ask([{'recompute': ['efile']}]),
      label='E-file') }
 ---
+id: something wrong when submitting
 question: |
   Something went wrong when submitting
 subquestion: |
@@ -144,6 +145,7 @@ fields:
   - Do you want to efile?: user_wants_efile
     datatype: yesnoradio
 ---
+id: you-will-not-be-able-to-efile
 question: |
   You will *not* be able to efile this document
 subquestion: |
@@ -152,6 +154,7 @@ subquestion: |
   However, you are still be able to continue and download a completed form.
 continue button field: show_no_efile
 ---
+id: missing-fields
 question: |
   Missing fields
 subquestion: |
@@ -194,7 +197,7 @@ subquestion: |
 
   % endif
 
-continue button field: show_remaining
+event: show_remaining
 ---
 objects:
   - follow_up_vars: DADict
@@ -344,6 +347,7 @@ id: separate efile
 code: |
   efile_resp = proxy_conn.file_for_review(court_id, al_court_bundle)
 ---
+id: which-court-date
 question: |
   Which court date would you like ?
 fields:
@@ -388,6 +392,7 @@ subquestion: |
   ${ pretty_display(submitted_court_reserve_resp.data) }
 continue button field: show_court_reserve_resp
 ---
+id: missing-field-redo
 generic object: DAObject
 question: |
   Missing Field: ${ x[i].name }

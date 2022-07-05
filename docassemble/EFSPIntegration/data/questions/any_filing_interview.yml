@@ -31,29 +31,32 @@ code: |
     ('FIRM_ADMIN_NEW_MEMBER', 'New member of current firm')
   ]
 ---
+objects:
+  - case_search: EFCaseSearch.using(court_id=court_id)
+---
 mandatory: True
 code: |
   welcome
   tyler_login 
   trial_court
   can_check_efile
-  if not is_initial_filing and not case_was_found and not can_file_non_indexed_case:
+  if not is_initial_filing and not case_search.case_was_found and not case_search.can_file_non_indexed_case:
     failed_case_search
 
   if is_nonindexed_filing:
-      docket_number = non_indexed_docket_number
+      docket_number = case_search.non_indexed_docket_number
   if needs_all_info:
-    tyler_case_category = case_category_map.get(case_category,{}).get('code')
-    tyler_case_type = case_type_map.get(case_type,{}).get('code')
+    tyler_case_category = case_category_map.get(user_chosen_case_category,{}).get('code')
+    tyler_case_type = user_case_type
     if case_subtype_options:
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('code')
     tyler_filing_attorney
     user_ask_role
     user_started_case
   else:
-    if case_was_found:
+    if case_search.case_was_found:
       load_existing_case_defaults
-      previous_case_id = found_case.tracking_id 
+      previous_case_id = case_search.found_case.tracking_id 
       user_started_case
       is_adding_new_parties
 
@@ -62,6 +65,8 @@ code: |
   existing_parties_new_atts.gather(complete_attribute='attorney_ids')
   attorney_ids
   party_to_attorneys
+  if not needs_all_info:
+    target_case = case_search
   all_case_parties
   if needs_all_info or showifdef('users[0].is_form_filler', False):
     lead_contact = users[0]
@@ -269,64 +274,6 @@ code: |
   else:
     al_form_type = 'existing_case'
 ---
-id: review_fees
-question: |
-  Review filing fees
-subquestion: |
-  Your payment account will be charged the following fees:
-  
-  % if has_fees:
-  ${ fees_table }
-  
-  **Total: ${ currency(fee_total(fees_resp)) }**
-  % else:
-  There are no fees associated with this filing.
-  % endif  
-fields:
-  - no label: review_fees
-    datatype: checkboxes
-    choices:
-      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
-    minlength: 1
-    validation messages:
-      minlength: |
-        You must agree to pay the fees listed above.
----
-id: bad fees
-event: bad_fees
-question: |
-  Something went wrong
-subquestion: |
-  Sorry, something went wrong when trying to figure out what fees you might have to pay.
- 
-  More details: ${ debug_display(fees_resp) }
----
-depends on:
-  - fees_resp
-code: |
-  has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
----
-code: |
-  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
-  if not fees_resp.is_ok():
-    log(f'fees not ok! {fees_resp}')
----
-depends on:
-  - fees_resp
-table: fees_table
-rows: |
-  [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
-columns:
-  - Reason: |
-      row_item.get('allowanceChargeReason',{}).get('value')
-  - Amount: |
-      currency(row_item.get('amount',{}).get('value',0))
----
-code: |
-  def fee_total(my_resp):
-    if my_resp.data:
-      return my_resp.data.get('feesCalculationAmount',{}).get('value')
----
 generic object: ALIndividual
 code: |
   str(x.name)
@@ -473,20 +420,20 @@ code: |
   is_initial_filing = filing_interview_initial_or_existing == 'initial_document'
 ---
 code: |
-  is_nonindexed_filing = not is_initial_filing and (not case_was_found and can_file_non_indexed_case)
+  is_nonindexed_filing = not is_initial_filing and (not case_search.case_was_found and case_search.can_file_non_indexed_case)
 ---
 code: |
   needs_all_info = is_initial_filing or is_nonindexed_filing
 ---
 code: |
-  selected_existing_case = found_case
+  selected_existing_case = case_search.found_case
 ---
 code: |
   if selected_existing_case:
     if selected_existing_case.category:
-      case_category = selected_existing_case.category
+      tyler_case_category = selected_existing_case.category
     if selected_existing_case.case_type:
-      case_type = selected_existing_case.case_type
+      tyler_case_type = selected_existing_case.case_type
     # TODO(brycew): get party info from existing case to select filing parties 
     existing_case_parties = None
   load_existing_case_defaults = True
@@ -526,7 +473,7 @@ fields:
   - To party: existing_parties_new_atts[i].existing_party
     datatype: select
     code: |
-      [(part.tyler_id, str(part.name)) for part in found_case.participants if part.tyler_id not in [ext_part.existing_party for ext_part in existing_parties_new_atts if defined('ext_part.existing_party')]]
+      [(part.tyler_id, str(part.name)) for part in case_search.found_case.participants if part.tyler_id not in [ext_part.existing_party for ext_part in existing_parties_new_atts if defined('ext_part.existing_party')]]
   - Attorneys: existing_parties_new_atts[i].attorney_adding_opts
     datatype: multiselect
     code: |
@@ -553,20 +500,23 @@ fields:
     code: |
       trial_court_options
 ---
-id: case category
+id: user chosen case category
 question: |
-  Case Category
+  What category is this case?
 fields:
-  - Case Category: case_category
+  - Case category: user_chosen_case_category
     datatype: dropdown
     code: |
-      sorted(case_category_options,key=lambda cat: cat[1])
+      sorted(tyler_category_options, key=lambda cat: cat[1])
+---
+code: |
+  tyler_category_options = case_category_options
 ---
 id: case type
 question: |
   Case Type
 fields:
-  - Case Type: case_type
+  - Case Type: user_case_type
     datatype: dropdown
     code: |
       sorted(case_type_options,key=lambda cat: cat[1])
@@ -643,31 +593,6 @@ question:  |
 fields:
   - code: |
       users[0].name_fields(person_or_business='unknown' if not users[0].is_form_filler else 'ALIndividual', show_suffix=False)
----
-question: |
-  Are you this party?
-subquestion: |
-  Your information in the E-file system will be used
-fields:
-  - You are this party: users[0].is_form_filler
-    datatype: yesnoradio
----
-code: |
-  if i > 0:
-    users[i].is_form_filler = False
----
-code: |
-  # Can only get the attorney list for firm users, which can't be form fillers
-  if proxy_conn.get_attorney_list().is_ok():
-    users[0].is_form_filler = False
----
-code: |
-  if users[0].is_form_filler:
-    tyler_info = proxy_conn.get_user()
-    users[0].name.first = tyler_info.data.get('firstName')
-    users[0].name.middle = tyler_info.data.get('middleName', '')
-    users[0].name.last = tyler_info.data.get('lastName', '')
-    users[0].email = tyler_info.data.get('email')
 ---
 sets:
   - users[i].name.first
@@ -750,10 +675,10 @@ fields:
 code: |
   if is_initial_filing or users[0].is_form_filler:
     if showifdef('user_ask_role') == 'plaintiff':
-      plantiff = matching_tuple_option('plaintiff', party_type_options)
+      plaintiff = matching_tuple_option('plaintiff', party_type_options)
       petitioner = matching_tuple_option('petitioner', party_type_options)
-      if plantiff:
-        users[0].party_type_code = plantiff
+      if plaintiff:
+        users[0].party_type_code = plaintiff
       elif petitioner: 
         users[0].party_type_code = petitioner 
     else:
@@ -783,50 +708,6 @@ fields:
     code: |
       party_type_options if is_nonindexed_filing else party_type_new_options
     default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
----
-# TODO(brycew): Need to force required filing types too
-code: |
-  def any_required(fc_opts, fc_map):
-    new_list = list(filter(lambda ff: fc_map.get(ff, {}).get('required'), fc_opts))
-    if new_list:
-      return True
-    else:
-      return False
-  def only_required_if_any(fc_opts, fc_map):
-    new_list = list(filter(lambda ff: fc_map.get(ff, {}).get('required'), fc_opts))
-    if new_list:
-      return new_list
-    else:
-      return fc_opts
----
-id: disclaimers
-question: |
-  Disclaimers
-subquestion: |
-  % if not disclaimers:
-  No Disclaimers!
-  % endif
-fields:
-  - no label: acknowledge_disclaimers
-    datatype: checkboxes
-    choices:
-      - I certify that I have read and followed the instructions below: user_agrees_to_disclaimers
-    minlength: 1
-    show if:
-      code: |
-        len(disclaimers)
-    validation messages:
-      minlength: |
-        You must acknowledge the disclaimers in order to continue
-        with your filing.
-under: |
-  % if disclaimers:
-  %for dis in disclaimers: 
-  
-  * ${ dis.get('requirementText') }
-  % endfor
-  % endif
-continue button field: show_disclaimers
 ---
 generic object: ALDocument
 id: reference number
@@ -941,7 +822,7 @@ code: |
   while not contacts_to_attach[i].contact_id:
     del contacts_to_attach[i].contact_id
     contacts_to_attach[i].contact_id
-  resp = proxy_conn.attach_service_contact(contacts_to_attach[i].contact_id, case_id=found_case.tracking_id)
+  resp = proxy_conn.attach_service_contact(contacts_to_attach[i].contact_id, case_id=case_search.found_case.tracking_id)
   log(f'attempted attaching {contacts_to_attach[i].contact_id}: {resp}')
   del resp
   contacts_to_attach[i].complete = True
@@ -990,13 +871,13 @@ fields:
     default: False
     show if:
       code: |
-        attached_service_contacts and (sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) + sum([1 for pty in (found_case.participants if defined('found_case.participants') else [])])) > 0
+        attached_service_contacts and (sum([u.is_new for u in users]) + sum([u.is_new for u in other_parties]) + sum([1 for pty in (case_search.found_case.participants if defined('case_search.found_case.participants') else [])])) > 0
   - Which party is this contact for?: service_contacts[i].party_association
     datatype: radio
     required: False
     show if: service_contacts[i].attach_service_contact_to_party
     code: |
-      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (found_case.participants if defined('found_case.participants') else [])]
+      [{user.instanceName: str(user)} for user in users if user.is_new] + [{pty.instanceName: str(pty)} for pty in other_parties if pty.is_new] + [{part.tyler_id: str(part.name)} for part in (case_search.found_case.participants if defined('case_search.found_case.participants') else [])]
 continue button label: ${'Continue' if attached_service_contacts else 'Try again'}
 ---
 id: existing service contacts
@@ -1076,12 +957,12 @@ code: |
 ---
 code: |
   timing = 'Initial' if is_initial_filing else 'Subsequent'
-  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, case_category, timing=timing).data)
+  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, tyler_case_category, timing=timing).data)
   if not case_type_options:
     go_back_screen
 ---
 code: |
-  case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, case_type).data)
+  case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, tyler_case_type).data)
 ---
 code: |
   tyler_filing_attorney_options, tyler_filing_attorney_map = choices_and_map(proxy_conn.get_attorney_list().data, 
@@ -1095,22 +976,8 @@ code: |
   filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
 ---
 code: |
-  disclaimers = proxy_conn.get_disclaimers(court_id).data
----
-code: |
-  party_type_options, party_type_map = \
-    choices_and_map(proxy_conn.get_party_types(court_id, case_type).data)
-  party_type_new_options = [p_type for p_type in party_type_options] 
-  # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries 
-  # if party_type_map[p_type[0]].get('isAvailableForNewParties')]
----
-generic object: ALDocument
-code: |
-  x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
----
-code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
-  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, case_type).data, backing='code')
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, tyler_case_type).data, backing='code')
 ---
 code: |
   service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
@@ -1118,6 +985,6 @@ code: |
 code: |
   attached_service_contacts = []
   if not needs_all_info:
-    resp_data = proxy_conn.get_service_information(court_id, found_case.tracking_id).data
+    resp_data = proxy_conn.get_service_information(court_id, case_search.found_case.tracking_id).data
     attached_service_contacts = parse_service_contacts(resp_data)
 ---

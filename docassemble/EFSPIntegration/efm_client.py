@@ -26,6 +26,7 @@ def state_name_to_code(state_name:str) -> str:
 
 class ApiResponse:
   def __init__(self, response_code: int, error_msg:Optional[str], data):
+    self.instanceName = 'not_real'
     self.response_code = response_code
     self.error_msg = error_msg
     self.data = data
@@ -62,7 +63,8 @@ def _get_all_vars(bundle: ALDocumentBundle):
   all_vars_dict = all_variables()
   vars_to_pop = ['trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
       'filing_type_options', 'filing_type_map', 'party_type_options',
-      'available_efile_courts', 'case_category_map']
+      'available_efile_courts', 'case_category_map', 'full_court_info', 'tyler_login_resp', 'case_type_map', 'all_courts', 
+      'al_user_bundle', 'court_emails', 'party_type_map']
   for var in vars_to_pop:
     all_vars_dict.pop(var, None)
 
@@ -564,7 +566,7 @@ class ProxyConnection:
         data=json.dumps({'doc_id': doc_id, 'estimated_duration': estimated_duration, 'range_after' : range_after, 'range_before': range_before}))
     return self._call_proxy(send)
   
-  def get_cases(self, court_id:str, person:ALIndividual=None, docket_id:str=None):
+  def get_cases(self, court_id:str, person:ALIndividual=None, docket_id:str=None) -> ApiResponse:
     if person is None:
       return self._get_cases(court_id, docket_id=docket_id)
     if person.person_type == 'business':
@@ -637,8 +639,11 @@ class ProxyConnection:
     send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/service_types'))
     return self._call_proxy(send)
   
-  def get_party_types(self, court_id:str, case_type_id:str):
-    send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/case_types/{case_type_id}/party_types'))
+  def get_party_types(self, court_id:str, case_type_id:Optional[str]):
+    if case_type_id:
+      send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/case_types/{case_type_id}/party_types'))
+    else:
+      send = lambda: self.proxy_client.get(self.full_url(f'codes/courts/{court_id}/party_types'))
     return self._call_proxy(send)
   
   def get_document_types(self, court_id:str, filing_type:str):
