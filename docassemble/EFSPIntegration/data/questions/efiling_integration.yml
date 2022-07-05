@@ -2,6 +2,7 @@
 modules:
   - .efm_client
   - .conversions
+  - docassemble.ALToolbox.misc
 ---
 include:
   - common_qs.yml
@@ -43,6 +44,7 @@ validation code: |
       (not showifdef('users[0].other_contact_method'))):
     validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
 ---
+id: submitted form
 question: |
   % if efile_resp.response_code == 200:
   Your form was submitted!
@@ -53,37 +55,44 @@ subquestion: |
   % if efile_resp.response_code == 200:
   You should receive a confirmation email within 10-15 minutes, and
   you should receive an update from the ${ trial_court } clerk on your filing 
-  within 2 weeks.
+  within 48 hours.
   
   We recommend you continue down below to download the form for your own records.
+  Click **Back to download screen** to get a copy of your forms and instructions.
+
   % endif
   
-  Below is a copy of the document that you uploaded:
+  Here are the forms that you submitted:
   
   ${ al_court_bundle.as_pdf() }
 
-help:
-  label: |
-    ${ 'What went wrong?' if efile_resp.response_code != 200 else 'Details' }
-  content: |
-    Some additional information:
-    
-    % if defined('tyler_case_category') and defined('case_category_map'):
-    * Case category: ${ tyler_case_category } ${ case_category_map.get(tyler_case_category) }
-    % endif
-    % if defined('tyler_case_type') and defined('case_type_map'):
-    * Case type: ${ tyler_case_type } ${ case_type_map.get(tyler_case_type) }
-    % endif
-    % if defined('al_court_bundle[0].tyler_filing_type'):
-    * Lead document type: ${ al_court_bundle[0].tyler_filing_type }
-    % endif
-    % if defined('al_court_bundle[0].document_type'):
-    * Document security: ${ al_court_bundle[0].document_type }
-    % endif
+  ${ collapse_template(debug_details) }
 
-    ${ efile_resp }
 continue button field: show_resp
 continue button label: Back to download screen
+---
+template: debug_details
+subject: |
+  ${ 'What went wrong?' if efile_resp.response_code != 200 else '' }
+content: |
+  % if efile_resp.response_code != 200
+  Some additional information:
+    
+  % if defined('tyler_case_category') and defined('case_category_map'):
+  * Case category: ${ tyler_case_category } ${ case_category_map.get(tyler_case_category) }
+  % endif
+  % if defined('tyler_case_type') and defined('case_type_map'):
+  * Case type: ${ tyler_case_type } ${ case_type_map.get(tyler_case_type) }
+  % endif
+  % if defined('al_court_bundle[0].tyler_filing_type'):
+  * Lead document type: ${ al_court_bundle[0].tyler_filing_type }
+  % endif
+  % if defined('al_court_bundle[0].document_type'):
+  * Document security: ${ al_court_bundle[0].document_type }
+  % endif
+
+  ${ efile_resp }
+  % endif
 ---
 id: ready to efile
 question: |
@@ -91,17 +100,17 @@ question: |
 subquestion: |
   
   % if ready_to_efile:
-  Below is your ${comma_and_list(al_court_bundle.get_titles())} document with the 
-  cover page that we will deliver to ${trial_court}.
+  Below is your ${comma_and_list(al_court_bundle.get_titles())} ${ noun_plural('form', al_count_bundle.get_titles()) } 
+  that we will deliver to the ${trial_court} clerk.
 
   We will deliver it securely. Please allow up to 15 minutes for the filing to
-  arrive. We will email with a confirmation that it was delivered, and some additional
-  information that you should hang on to.
+  arrive. We will email with a confirmation that it was delivered and additional
+  information about what's next.
   
-  Click "Back" if you need to make any changes.  
-  Click "Send to court" to deliver it.
+  Click **Back** if you need to make any changes.  
+  Click **Send to court** to deliver it.
   
-  Here is what the clerk at ${trial_court} will get:
+  Here is what the ${trial_court} clerk will get:
   % else:
 
   We ran into some technical problems and there was a problem delivering this to the ${trial_court}.
@@ -112,10 +121,10 @@ subquestion: |
   ${ al_court_bundle.as_pdf() }
 
   % if ready_to_efile:
-  Press below to deliver the form.
+  Your forms are not e-filed until you press **Send to court** below. 
   % endif
 continue button field: efile_user_reviewed
-continue button label: Send to court
+continue button label: ":file-export: Send to court"
 ---
 comment: |
   To integrate with other interviews, go to the last page, and add the below:
@@ -131,6 +140,7 @@ subquestion: |
   You can continue to a page that will let you download your form.
 continue button field: fallback_user_choice
 ---
+id: user-wants-efile
 question: |
   Do you want to efile this document directly with the court?
 subquestion: |
@@ -299,7 +309,7 @@ code: |
     efile_resp
     show_resp
     # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
-    if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana':
+    if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana' and submitted_court_reserve_resp.is_ok():
       show_court_reserve_resp
     efile = True
   else:
