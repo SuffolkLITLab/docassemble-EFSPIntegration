@@ -17,8 +17,8 @@ Feature: Make any type of filing
       | var | value | trigger |
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
-      | do_what_choice | docket_lookup | |
-      | docket_id_from_user | 22-AD-00005 | |
+      | x.do_what_choice | docket_lookup | case_search.do_what_choice |
+      | x.docket_id_from_user | 22-AD-00005 | case_search.docket_id_from_user |
       | user_ask_role | defendant | |
       | is_adding_new_parties | False | |
       | other_parties.there_are_any | False | |
@@ -64,8 +64,8 @@ Feature: Make any type of filing
       | var | value | trigger |
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
-      | do_what_choice | docket_lookup | |
-      | docket_id_from_user | 22-AD-00005 | |
+      | x.do_what_choice | docket_lookup | case_search.do_what_choice |
+      | x.docket_id_from_user | 22-AD-00005 | case_search.docket_id_from_user |
       | user_ask_role | defendant | |
       | is_adding_new_parties | False | |
       | other_parties.there_are_any | False | |
@@ -111,14 +111,14 @@ Feature: Make any type of filing
       And I tap to continue
       And I set the variable "filing_interview_initial_or_existing" to "existing_case"
       And I tap to continue
-      And I set the variable "do_what_choice" to "party_search"
+      And I set the variable "x.do_what_choice" to "party_search"
       And I tap to continue
-      And I set the variable "somebody.person_type" to "ALIndividual"
-      And I set the variable "somebody.name.first" to "John"
-      And I set the variable "somebody.name.last" to "Brown"
+      And I set the variable "case_search.somebody.person_type" to "ALIndividual"
+      And I set the variable "case_search.somebody.name.first" to "John"
+      And I set the variable "case_search.somebody.name.last" to "Brown"
       And I tap to continue
       And I wait 30 seconds
-      And I set the variable "case_choice" to "found_cases[1]"
+      And I set the variable "x.case_choice" to "case_search.found_cases[1]"
       And I tap to continue
       And I set the variable "user_ask_role" to "defendant"
       And I tap to continue

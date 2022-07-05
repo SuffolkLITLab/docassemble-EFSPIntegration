@@ -8,119 +8,142 @@ modules:
 include:
   - login_qs.yml
 ---
-objects: 
-  - bg_found_cases: DAList.using(object_type=DAObject, auto_gather=False)  
----
+generic object: EFCaseSearch
 objects:
-  - somebody: ALIndividual
+  - x.somebody: ALIndividual
+---
+generic object: EFCaseSearch
+objects:
+  - x.found_cases: DAList.using(gathered=True)
 ---
 id: interview order
+generic object: EFCaseSearch
 comment: |
-  Main API of this YAML file. You should only depend on variables declared in this block. 
+  Main API of this YAML file. You should only depend on variables declared in this block.
+  To account for being able to search for multiple different cases in different courts,
+  all of these attributes are in a `EFCaseSearch` object.
 need:
-  - court_id
+  - x.court_id
 code: |
-  can_file_non_indexed_case
-  do_what_choice
-  found_case
-  if found_case and do_what_choice == 'docket_lookup':
-    display_case
-  if found_case is None and can_file_non_indexed_case:
-    non_indexed_docket_number
-  case_was_found = found_case is not None
+  x.can_file_non_indexed_case
+  x.do_what_choice
+  x.found_case
+  if x.found_case and x.do_what_choice == 'docket_lookup':
+    x.display_case
+  if x.found_case is None and x.can_file_non_indexed_case:
+    x.non_indexed_docket_number
+  x.case_was_found = x.found_case is not None
+---
+generic object: EFCaseSearch
+code: |
+  if x.case_search_task_status.ready():
+    if not x.case_search_task_status.failed():
+      x.tmp_dump = x.case_search_task_status.get()
+      x.cms_connection_issue = transform_json_variables(x.tmp_dump).get('retval') or None
+      x.found_cases = transform_json_variables(x.tmp_dump).get('retbal') or DAEmpty(x.instanceName + '.found_cases')
+    else:
+      log(x.case_search_task_status.result().error_message)
+      log(str(x.case_search_task_status.result().error_trace))
+      log(str(x.case_search_task_status.result().variables))
+      x.cms_connection_issue = False
+      x.found_cases = DAEmpty(x.instanceName + '.found_cases')
 ---
 only sets:
-  - found_case
+  - x.found_case
+generic object: EFCaseSearch
 if: |
-  do_what_choice == 'party_search'
+  x.do_what_choice == 'party_search'
 code: |
-  somebody.name.first
-  if not case_search_task_status.ready():
-    case_search_waiting_screen
+  x.somebody.name.first
+  if not x.case_search_task_status.ready():
+    x.case_search_waiting_screen
   else:
-    if found_cases.gathered and not found_cases: 
-      warn_no_results
-      found_case = None
+    x.cms_connection_issue
+    x.found_cases
+    if x.found_cases.gathered and x.found_cases:
+      x.found_case = x.case_choice
     else:
-      found_case = case_choice
-  del case_search_task_status
-  del somebody
-  globals().pop('found_cases', None)
-  globals().pop('case_choice', None)
+      x.warn_no_results
+      x.found_case = None
+  undefine('x.somebody', 'x.case_search_task_status',
+      'x.case_choice', 'x.found_cases')
 ---
 depends on:
-  - docket_id_from_user
+  - x.docket_id_from_user
+generic object: EFCaseSearch
 if: |
-  do_what_choice == 'docket_lookup'
+  x.do_what_choice == 'docket_lookup'
 code: |
-  docket_id_from_user
-  docket_case_response
-  if not docket_case_response.is_ok() or len(docket_case_response.data) == 0:
-    del docket_id_from_user
-    del docket_case_response
-    warn_no_results
-    found_case = None
+  x.docket_id_from_user
+  x.docket_case_response
+  if not x.docket_case_response.is_ok() or len(x.docket_case_response.data) == 0:
+    x.warn_no_results
+    x.found_case = None
   else:
-    court_id
-    found_case = DAObject('found_case')
-    parse_case_info(proxy_conn, found_case, docket_case_response.data[0], court_id)
-    del docket_id_from_user
-    del docket_case_response
+    x.court_id
+    x.found_case = DAObject(x.instanceName + '.found_case')
+    parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=all_party_type_map)
+  undefine('x.docket_id_from_user', 'x.docket_case_response')
 ---
 only sets:
-  - found_case
+  - x.found_case
+generic object: EFCaseSearch
 if: |
-  do_what_choice == 'non_indexed_case'
+  x.do_what_choice == 'non_indexed_case'
 code: |
-  if can_file_non_indexed_case:
-    non_indexed_docket_number
-    found_case = None 
+  if x.can_file_non_indexed_case:
+    x.non_indexed_docket_number
+    x.found_case = None 
   else:
-    no_non_indexed_cases
-    found_case = None
+    x.no_non_indexed_cases
+    x.found_case = None
 ---
 only sets:
-  - can_file_non_indexed_case
+  - x.can_file_non_indexed_case
+generic object: EFCaseSearch
 code: |
-  court_code_results = proxy_conn.get_court(court_id).data
-  if court_code_results:
-    can_file_non_indexed_case = court_code_results.get('allowfilingintononindexedcase', False)
+  x.court_code_results = proxy_conn.get_court(x.court_id).data
+  if x.court_code_results:
+    x.can_file_non_indexed_case = x.court_code_results.get('allowfilingintononindexedcase', False)
   else:
-    can_file_non_indexed_case = False
+    x.can_file_non_indexed_case = False
 ---
+generic object: EFCaseSearch
 id: no non-indexed cases
 question: |
-  ${ court_id} does not allow filing into non-indexed cases
-continue button field: no_non_indexed_cases
+  ${ x.court_id} does not allow filing into non-indexed cases
+continue button field: x.no_non_indexed_cases
 ---
+generic object: EFCaseSearch
 id: no cases found
 question: |
   No cases found
 subquestion: |
-  % if cms_connection_issue:
+  % if x.cms_connection_issue:
   The court's case management system isn't online, and the case you are searching for might exist.
   % endif
 
-  % if can_file_non_indexed_case:
+  % if x.can_file_non_indexed_case:
   You can either continue to file into a non-indexed case or hit "${ word('back') }" to 
   try a new search.
   % else:
-  Unfortunately, ${ court_id } does not allow filing into non-indexed cases.
+  Unfortunately, ${ x.court_id } does not allow filing into non-indexed cases.
   % endif
-continue button field: warn_no_results
+continue button field: x.warn_no_results
 ---
+generic object: EFCaseSearch
 id: case lookup
 question: |
   Case lookup
 subquestion: |
-  % if can_file_non_indexed_case:
+  % if x.can_file_non_indexed_case:
   ${ collapse_template(explain_case_search_choices_template) }
   % endif
 fields:
-  - no label: do_what_choice
+  - no label: x.do_what_choice
     datatype: radio
     code: |
-      get_lookup_choices(can_file_non_indexed_case)
+      get_lookup_choices(x.can_file_non_indexed_case)
 ---
 template: explain_case_search_choices_template
 subject: |
@@ -132,7 +155,8 @@ content: |
   a clerk can match your filing to the case.
 ---
 sets:
-  - somebody.name.first
+  - x.somebody.name.first
+generic object: EFCaseSearch
 id: party name
 question: |
   Party name to find
@@ -140,136 +164,142 @@ subquestion: |
   Enter the name of a party involved in the case
 fields:
   code: |
-    somebody.name_fields(person_or_business='unknown')
+    x.somebody.name_fields(person_or_business='unknown')
 ---
-event: case_search_waiting_screen
+generic object: EFCaseSearch
+event: x.case_search_waiting_screen
 question: |
   <i class="fas fa-cog fa-spin"></i> Your search is in progress, please wait <i class="fas fa-cog fa-spin"></i>
 reload: True
 ---
 need:
-  - court_id
+  - x.court_id
+  - x.party_type_map
+generic object: EFCaseSearch
 code: |
-  case_search_task_status = background_action('case_search_task', 'refresh')
+  x.case_search_task_status = background_action('case_search_task', 'refresh', my_x=x)
 ---
 event: case_search_task
 code: |
-  background_response_action('case_search_done', cms_conn_and_cases=[*search_case_by_name(proxy_conn=proxy_conn,
-      var_name='found_cases', court_id=court_id, somebody=somebody, filter_fn=filter_fn)])
+  my_x = action_argument('my_x')
+  background_response(json_wrap(search_case_by_name(proxy_conn=proxy_conn,
+      var_name=my_x.instanceName + '.found_cases', court_id=my_x.court_id,
+      somebody=my_x.somebody, filter_fn=filter_fn, roles=my_x.party_type_map)))
 ---
-objects:
-  - found_cases: DAEmpty
----
-event: case_search_done
+generic object: EFCaseSearch
 code: |
-  globals().pop('start_case_idx', None)
-  globals().pop('end_case_idx', None)
-  cms_connection_issue, found_cases = action_argument('cms_conn_and_cases')
-  background_response()
+  x.party_type_map = all_party_type_map
 ---
 id: docket id
+generic object: EFCaseSearch
 question: |
   Case number
 subquestion: |
-  % if 'cook' in court_id:
-  ${ collapse_template(case_number_format_cook_county_template) }
-  % else:
   ${ collapse_template(case_number_format_template) }
-  % endif
 
 fields:
-  - Case number: docket_id_from_user
+  - Case number: x.docket_id_from_user
 ---
 id: ask non-indexed docket number
+generic object: EFCaseSearch
 question: |
   Case number
 subquestion: |
   Enter the case number for the non-indexed case
 
-  % if 'cook' in court_id:
-  ${ collapse_template(case_number_format_cook_county_template) }
-  % else:
   ${ collapse_template(case_number_format_template) }
-  % endif
   
 fields:
-  - Case number: non_indexed_docket_number
+  - Case number: x.non_indexed_docket_number
 # TODO: input validation is not possible--no required format for
 # case number in Illinois
 ---
+template: case_number_format_template
+subject: ""
+content: ""
+---
+if: |
+ jurisdiction_id == 'illinois'
 template: case_number_format_template
 subject: |
   How to enter your case number (Except Cook County)
 content: |
   [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
 ---
-template: case_number_format_cook_county_template
+if: |
+  jurisdiction_id == 'illinois' and 'cook' in x.court_id
+template: case_number_format_template
 subject: |
   How to enter your case number (Chicago/Cook County only)
 content: |
   [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
 ---
 if: |
-  do_what_choice == 'docket_lookup'
+  x.do_what_choice == 'docket_lookup'
+generic object: EFCaseSearch
 comment: |
   Long acting action
 need:
   - proxy_conn.authed_user_id
 depends on:
-  - docket_id_from_user
+  - x.docket_id_from_user
 code: |
-  docket_case_response = proxy_conn.get_cases(court_id, docket_id=docket_id_from_user)
-  cms_connection_issue = docket_case_response.response_code == 203
+  x.docket_case_response = proxy_conn.get_cases(x.court_id, docket_id=x.docket_id_from_user)
+  x.cms_connection_issue = x.docket_case_response.response_code == 203
 ---
 need:
-  - found_cases
+  - x.found_cases
 depends on:
-  - found_cases
-id: results for case search 
+  - x.found_cases
+id: results for case search
+generic object: EFCaseSearch
 question: |
   Case Search Results
 subquestion: |
-  % if cms_connection_issue:
+  % if x.cms_connection_issue:
   The court's case management system isn't online. The case information might be out of date.
   % endif
 
-  We found ${ len(found_cases) } ${ noun_plural("case", found_cases) }
-  % if len(found_cases) > num_case_choices():
-  . Here are ${ start_case_idx + 1 } to ${ end_case_idx }
+  We found ${ len(x.found_cases) } ${ noun_plural("case", x.found_cases) }
+  % if len(x.found_cases) > num_case_choices():
+  . Here are ${ x.start_case_idx + 1 } to ${ x.end_case_idx }
   % endif
   :
 
-  ${ action_button_html(url_action('shift_cases_window', direction='prev'), label='Prev') if start_case_idx > 0 else '' }
-  ${ action_button_html(url_action('shift_cases_window', direction='next'), label='Next') if end_case_idx < len(found_cases) else ''}
+  ${ action_button_html(url_action('x.shift_cases_window', direction='prev'), label='Prev') if x.start_case_idx > 0 else '' }
+  ${ action_button_html(url_action('x.shift_cases_window', direction='next'), label='Next') if x.end_case_idx < len(x.found_cases) else ''}
   
-  % for case in found_cases[start_case_idx:end_case_idx]:
+  % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   * ${ case.title } (${ case.date })
   % endfor
 
-  ${ collapse_template(case_results_template) }
+  ${ collapse_template(x.case_results_template) }
 
 fields:
-  - Which case?: case_choice
+  - Which case?: x.case_choice
     datatype: object 
     object labeler: |
       lambda case: f"{getattr(case, 'docket_id', '')} {getattr(case, 'title', '')} ({getattr(case, 'date', '')})"
     choices:
-      - found_cases[start_case_idx:end_case_idx]
+      - x.found_cases[x.start_case_idx:x.end_case_idx]
 ---
-event: shift_cases_window
+generic object: EFCaseSearch
+event: x.shift_cases_window
 code: |
-  start_case_idx, end_case_idx = shift_case_select_window(proxy_conn, found_cases,
-    direction=action_argument('direction'), start_idx=start_case_idx, end_idx=end_case_idx)
+  x.start_case_idx, x.end_case_idx = shift_case_select_window(proxy_conn, x.found_cases,
+    direction=action_argument('direction'), start_idx=x.start_case_idx, end_idx=x.end_case_idx)
 ---
+generic object: EFCaseSearch
 code: |
-  start_case_idx = 0
-  end_case_idx = min(len(found_cases), num_case_choices())
+  x.start_case_idx = 0
+  x.end_case_idx = min(len(x.found_cases), num_case_choices())
 ---
-template: case_results_template
+template: x.case_results_template
+generic object: EFCaseSearch
 subject: |
   View case data
 content: |
-  % for case in found_cases[start_case_idx:end_case_idx]:
+  % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   #### ${ case.title } (${ case.date })
   * DocketID: ${ case.docket_id }
   * CourtID: ${ case.court_id }
@@ -277,19 +307,20 @@ content: |
   % endfor
 ---
 id: display case
-continue button field: display_case
+generic object: EFCaseSearch
+continue button field: x.display_case
 question: |
   Your case was found
 subquestion: |
-  % if cms_connection_issue:
+  % if x.cms_connection_issue:
   The court's case management system isn't online. The case information might be out of date.
   % endif
   
-  % if found_case:
-  #### ${ found_case.title} (${ found_case.date })
-  * DocketID: ${ found_case.docket_id }
-  * CourtID: ${ found_case.court_id }
-  * CaseCategory: ${ found_case.category }
+  % if x.found_case:
+  #### ${ x.found_case.title} (${ x.found_case.date })
+  * DocketID: ${ x.found_case.docket_id }
+  * CourtID: ${ x.found_case.court_id }
+  * CaseCategory: ${ x.found_case.category }
   % endif
 ---
 comment: |
@@ -298,3 +329,85 @@ comment: |
 code: |
   def filter_fn(new_case):
     return True
+---
+#########################################
+## Populating Case Parties based on the case search
+#########################################
+---
+need:
+  - users
+  - is_user_party
+  - is_other_party
+  - other_parties
+  - target_case.found_case
+code: |
+  if not target_case.self_in_case:
+    users.appendObject()
+    users[0].is_new = True
+    to_add_participants = target_case.found_case.participants
+  else:
+    target_case.self_partip_choice.is_new = False
+    # Change where DA thinks this obj came from, so it says "you", and not "NAME"
+    users.append(target_case.self_partip_choice.copy_deep('users[0]'))
+    to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
+
+  for partip in to_add_participants:
+    partip.is_new = False
+    if is_user_party(partip):
+      users.append(partip.copy_deep(f'users[{len(users.elements)}]'))
+    elif is_other_party(partip):
+      other_parties.append(partip.copy_deep(f'other_parties[{len(other_parties.elements)}]'))
+    else:
+      log(f'partip: ${partip} has weird role: ${partip.party_type}')
+  add_existing_users = True
+---
+comment: |
+  TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
+only sets:
+  - is_user_party
+  - is_other_party
+code: |
+  def is_defendant_party(p):
+    return p.party_type == '20641' or \
+        (p.party_type_name is not None and 'defendant' in p.party_type_name.lower())
+  
+  def is_plaintiff_party(p):
+    return p.party_type == '20646' or \
+        (p.party_type_name is not None and 'plaintiff' in p.party_type_name.lower())
+  
+  if user_ask_role == 'plaintiff':
+    is_user_party = is_plaintiff_party
+    is_other_party = is_defendant_party
+  else:
+    is_user_party = is_defendant_party
+    is_other_party = is_plaintiff_party
+---
+generic object: EFCaseSearch
+question: |
+  % if len(x.maybe_user_partips) == 1:
+  We found this participant in the existing case
+  % else:
+  We found these participants in the existing case
+  % endif
+subquestion: |
+  % if len(x.maybe_user_partips) == 1:
+  Are you ${ x.maybe_user_partips[0] }?
+  % elif len(x.maybe_user_partips) > 1:
+  % for partip in x.maybe_user_partips:
+  * ${ partip }
+  % endfor
+  
+  Are you any of the above participants?
+  % endif
+fields:
+  - no label: x.self_in_case
+    datatype: yesnomaybe
+  - I am: x.self_partip_choice
+    datatype: object_radio
+    choices: |
+      x.maybe_user_partips
+    show if: x.self_in_case
+---
+generic object: EFCaseSearch
+code: |
+  x.maybe_user_partips = [partip for partip in x.found_case.participants if is_user_party(partip)]

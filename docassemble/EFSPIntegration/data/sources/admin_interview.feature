@@ -105,9 +105,9 @@ Feature: The interviews run without erroring
     And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
-    And I set the variable "do_what_choice" to "docket_lookup"
+    And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue
@@ -120,9 +120,9 @@ Feature: The interviews run without erroring
     And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
-    And I set the variable "do_what_choice" to "docket_lookup"
+    And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue
@@ -145,9 +145,9 @@ Feature: The interviews run without erroring
     And I tap the "#attach_service_contact" element
     And I set the variable "trial_court" to "peoria"
     And I tap to continue
-    And I set the variable "do_what_choice" to "docket_lookup"
+    And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue

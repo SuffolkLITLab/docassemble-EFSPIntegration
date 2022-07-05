@@ -35,6 +35,12 @@ objects:
   - new_service_contact: ALIndividual
   - updated_service_contact: ALIndividual
 ---
+objects:
+  - case_search: EFCaseSearch
+---
+code: |
+  case_search.court_id = court_id
+---
 code: |
   user_admin_list = [
     ('get_user', 'Get User'),
@@ -277,18 +283,10 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'do_what_choice',
-      'trial_court',
-      'court_id',
-      'can_file_non_indexed_case',
-      'display_case',
-      'case_search_task_status',
-      'case_search_waiting_screen',
-      'warn_no_results',
-      'case_was_found',
-      'found_case',
+      'case_search',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found', 'attach_service_contact', 'show_resp']}]),
+    {'recompute': ['case_search', 'case_search.case_was_found', 'attach_service_contact', 'show_resp']}]),
     label='Attach service contact', id_tag='attach_service_contact') }
 
   ${ action_button_html(url_ask(
@@ -356,61 +354,49 @@ content: |
 
   ${ action_button_html(url_ask(
     [{'undefine': [
-      'do_what_choice',
       'trial_court',
       'court_id',
-      'case_search_task_status',
-      'case_search_waiting_screen',
-      'warn_no_results',
-      'found_case',
+      'case_search',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found', 'display_case', 'display_found_case']}]),
+    {'recompute': ['case_search', 'case_search.case_was_found', 'case_search.display_case', 'display_found_case']}]),
     label="Find a case", id_tag="find_a_case") }
 
   ${ action_button_html(url_ask(
     [{'undefine': [
-      'do_what_choice',
+      'case_search',
       'trail_court',
       'court_id', 
-      'case_search_task_status',
-      'case_search_waiting_screen',
-      'warn_no_results',
-      'found_case',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found', 'get_service_information', 'show_resp']}]),
+    {'recompute': ['case_search', 'case_search.case_was_found', 'get_service_information', 'show_resp']}]),
     label="Get case service information", id_tag="get_case_service_info") }
     
   ${ action_button_html(url_ask(
     [{'undefine': [
-      'do_what_choice',
+      'case_search',
       'trial_court',
       'court_id',
-      'case_search_task_status',
-      'case_search_waiting_screen',
-      'warn_no_results',
-      'found_case',
       'get_case_response',
     ]},
-    {'recompute': ['case_was_found', 'get_service_information_history', 'show_resp']}]),
+    {'recompute': ['case_search', 'case_search.case_was_found', 'get_service_information_history', 'show_resp']}]),
     label="Get case service history", id_tag="get_case_service_info_history") }
     
 ---
 id: display case admin interview
 question: |
-  % if case_was_found:
+  % if case_search.case_was_found:
   Your case
   % else:
   No case found
   % endif
 subquestion: |
-  % if cms_connection_issue:
+  % if case_search.cms_connection_issue:
   The court’s case management system isn’t online. The case information might be out of date.
   % endif
   
-  % if case_was_found and found_case:
-  ${ found_case.title } (${ found_case.tracking_id })
+  % if case_search.case_was_found and case_search.found_case:
+  ${ case_search.found_case.title } (${ case_search.found_case.tracking_id })
   % endif
 continue button field: display_found_case
 ---
@@ -707,7 +693,7 @@ code: |
   resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
   globals().pop('new_account_name', None)
   globals().pop('new_account_is_global', None)
-  show_resp
+  reconsider('show_resp')
   new_payment_account = True 
 ---
 if: |
@@ -866,7 +852,10 @@ code: |
     updated_attorney.default_middle = ''
     updated_attorney.default_last = ''
     updated_attorney.default_bar_number = ''
-
+---
+code: |
+  all_party_type_options, all_party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, None).data)
 ---
 code: |
   resp = proxy_conn.update_user(user_id, 
@@ -1310,14 +1299,14 @@ fields:
       all_case_parties  
 ---  
 code: |
-  all_case_parties = [(party.tyler_id, str(party.name)) for party in found_case.participants]
+  all_case_parties = [(party.tyler_id, str(party.name)) for party in case_search.found_case.participants]
 ---
 code: |
   if not service_contact_id:
     error_message = "You don't have any service contacts you can add." 
     show_error_event
-  if case_was_found:
-    resp = proxy_conn.attach_service_contact(service_contact_id, found_case.tracking_id, case_party_id)
+  if case_search.case_was_found:
+    resp = proxy_conn.attach_service_contact(service_contact_id, case_search.found_case.tracking_id, case_party_id)
     globals().pop('all_case_parties', None)
     globals().pop('service_contact_id', None)
     globals().pop('case_party_id', None)
@@ -1342,8 +1331,8 @@ code: |
   detach_service_contact = True
 ---
 code: |
-  if case_was_found:
-    resp = proxy_conn.get_service_information_history(court_id, found_case.tracking_id)
+  if case_search.case_was_found:
+    resp = proxy_conn.get_service_information_history(case_search.court_id, case_search.found_case.tracking_id)
     globals().pop('trial_court', None)
     globals().pop('court_id', None)
     get_service_information_history = True
@@ -1352,8 +1341,8 @@ code: |
     get_service_information_history = False
 ---
 code: |
-  if case_was_found:
-    resp = proxy_conn.get_service_information(court_id, found_case.tracking_id)
+  if case_search.case_was_found:
+    resp = proxy_conn.get_service_information(case_search.court_id, case_search.found_case.tracking_id)
     globals().pop('trial_court', None)
     globals().pop('court_id', None)
     get_service_information = True
