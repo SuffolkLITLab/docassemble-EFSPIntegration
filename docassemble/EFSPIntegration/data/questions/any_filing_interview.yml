@@ -32,10 +32,7 @@ code: |
   ]
 ---
 objects:
-  - case_search: EFCaseSearch
----
-code: |
-  case_search.court_id = court_id
+  - case_search: EFCaseSearch.using(court_id=court_id)
 ---
 mandatory: True
 code: |

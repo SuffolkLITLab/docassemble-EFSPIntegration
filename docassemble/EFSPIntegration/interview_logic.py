@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 
 from docassemble.base.util import DAObject, DAList, log
 from docassemble.base.functions import serializable_dict
@@ -88,12 +88,11 @@ def get_full_court_info(proxy_conn, court_id:str) -> Dict:
     log(f"Couldn't get full court info for {court_id}")
     return {}
 
-def filter_codes(options, filters, default:str):
+def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], default:str) -> Tuple[List[Any], Optional[str]]:
   """Given a list of filter functions from most specific to least specific,
   (if true, use that code)
   filters a total list of codes"""
-  codes_tmp = []
-  strs = all([isinstance(fs, str) for fs in filters]) 
+  codes_tmp: List[Any] = []
   for filter_fn in filters:
     if codes_tmp:
       break
@@ -101,12 +100,14 @@ def filter_codes(options, filters, default:str):
       match_this = filter_fn
       filter_fn = lambda opt: opt[1].lower() == match_this.lower()
     codes_tmp = [opt for opt in options if filter_fn(opt)]
-  if not codes_tmp and strs:
+  if not codes_tmp:
     for filter_st in filters:
       if codes_tmp:
         break
-      filter_fn = lambda opt: filter_st.lower() in opt[1].lower()
-      codes_tmp = [opt for opt in options if filter_fn(opt)]
+      if isinstance(filter_st, str):
+        contain_this = filter_st
+        filter_fn = lambda opt: contain_this.lower() in opt[1].lower()
+        codes_tmp = [opt for opt in options if filter_fn(opt)]
 
   codes = sorted(codes_tmp, key=lambda option: option[1])
   if len(codes) == 1:

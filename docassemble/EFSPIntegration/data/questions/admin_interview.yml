@@ -365,7 +365,7 @@ content: |
   ${ action_button_html(url_ask(
     [{'undefine': [
       'case_search',
-      'trail_court',
+      'trial_court',
       'court_id', 
       'get_case_response',
     ]},
