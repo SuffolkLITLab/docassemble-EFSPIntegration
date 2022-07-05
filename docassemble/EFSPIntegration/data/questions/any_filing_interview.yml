@@ -509,6 +509,9 @@ fields:
     code: |
       sorted(tyler_category_options, key=lambda cat: cat[1])
 ---
+code: |
+  tyler_category_options = case_category_options
+---
 id: case type
 question: |
   Case Type

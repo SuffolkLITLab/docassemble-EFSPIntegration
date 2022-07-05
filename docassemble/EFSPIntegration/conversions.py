@@ -3,6 +3,7 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
+import docassemble.base.util
 from docassemble.base.util import DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.functions import get_config, illegal_variable_name, TypeType
@@ -48,6 +49,21 @@ def transform_json_variables(obj):
     if isinstance(obj, (bool, int, float)):
         return obj
     if isinstance(obj, dict):
+        if '_class' in obj and obj['_class'] == 'type' and 'name' in obj and isinstance(obj['name'], str) and obj['name'].startswith('docassemble.') and not illegal_variable_name(obj['name']):
+            if '.' in obj['name']:
+                the_module = re.sub(r'\.[^\.]+$', '', obj['name'])
+            else:
+                the_module = None
+            try:
+                if the_module:
+                    importlib.import_module(the_module)
+                new_obj = eval(obj['name'])
+                if not isinstance(new_obj, TypeType):
+                    raise Exception("name is not a class")
+                return new_obj
+            except Exception as err:
+                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
+                return None
         if '_class' in obj and isinstance(obj['_class'], str) and 'instanceName' in obj and isinstance(obj['instanceName'], str) \
           and (obj['_class'].startswith('docassemble.base.') or obj['_class'].startswith('docassemble.AssemblyLine.')) and not illegal_variable_name(obj['_class']):
             the_module = re.sub(r'\.[^\.]+$', '', obj['_class'])
