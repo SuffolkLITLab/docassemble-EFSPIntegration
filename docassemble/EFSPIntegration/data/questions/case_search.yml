@@ -135,13 +135,13 @@ continue button field: x.warn_no_results
 generic object: EFCaseSearch
 id: case lookup
 question: |
-  Case lookup
+  Find your case
 subquestion: |
   % if x.can_file_non_indexed_case:
   ${ collapse_template(explain_case_search_choices_template) }
   % endif
 fields:
-  - no label: x.do_what_choice
+  - How do you want to find your case?: x.do_what_choice
     datatype: radio
     code: |
       get_lookup_choices(x.can_file_non_indexed_case)
@@ -160,7 +160,7 @@ sets:
 generic object: EFCaseSearch
 id: party name
 question: |
-  Party name to find
+  Party name
 subquestion: |
   Enter the name of a party involved in the case
 fields:
@@ -169,8 +169,9 @@ fields:
 ---
 generic object: EFCaseSearch
 event: x.case_search_waiting_screen
+id: case-search-wait
 question: |
-  <i class="fas fa-cog fa-spin"></i> Your search is in progress, please wait <i class="fas fa-cog fa-spin"></i>
+  <i class="fas fa-cog fa-spin"></i> Your search is in progress. Please wait. <i class="fas fa-cog fa-spin"></i>
 reload: True
 ---
 need:
@@ -225,7 +226,9 @@ template: case_number_format_template
 subject: |
   How to enter your case number (Except Cook County)
 content: |
-  [See information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
+  Case numbers are usually in the following format: "YYYYxx###": where "YYYY" is the 4 digit year,
+  "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
+  [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
 ---
 if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
@@ -277,12 +280,17 @@ subquestion: |
   ${ collapse_template(x.case_results_template) }
 
 fields:
-  - Which case?: x.case_choice
+  - ${ x.case_choice_label }: x.case_choice
     datatype: object 
     object labeler: |
       lambda case: f"{getattr(case, 'docket_id', '')} {getattr(case, 'title', '')} ({getattr(case, 'date', '')})"
     choices:
       - x.found_cases[x.start_case_idx:x.end_case_idx]
+---
+generic object: EFCaseSearch
+template: x.case_choice_label
+content: |
+  Which case?
 ---
 generic object: EFCaseSearch
 event: x.shift_cases_window

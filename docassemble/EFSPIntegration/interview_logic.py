@@ -22,8 +22,8 @@ def num_case_choices() -> int:
 
 def get_lookup_choices(can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
   lookup_choices = [
-    {'party_search': 'Find a case by party name'},
-    {'docket_lookup': 'Find a case by case number'},
+    {'party_search': 'party name'},
+    {'docket_lookup': 'case number'},
   ]
   if can_file_non_indexed_case:
     lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})
