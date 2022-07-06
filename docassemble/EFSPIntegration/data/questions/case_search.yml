@@ -280,7 +280,7 @@ subquestion: |
   ${ collapse_template(x.case_results_template) }
 
 fields:
-  - ${ x.case_choice_label }?: x.case_choice
+  - ${ x.case_choice_label }: x.case_choice
     datatype: object 
     object labeler: |
       lambda case: f"{getattr(case, 'docket_id', '')} {getattr(case, 'title', '')} ({getattr(case, 'date', '')})"

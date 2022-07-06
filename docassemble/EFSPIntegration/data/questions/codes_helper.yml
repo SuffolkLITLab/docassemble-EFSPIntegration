@@ -265,6 +265,9 @@ fields:
       tyler_payment_account_options
 ---
 code: |
+  default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
+---
+code: |
   allowable_card_types = full_court_info.get('allowablecardtypes', [])
   res = proxy_conn.get_payment_account_list().data
   if res:

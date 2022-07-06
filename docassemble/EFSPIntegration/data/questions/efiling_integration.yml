@@ -100,7 +100,7 @@ question: |
 subquestion: |
   
   % if ready_to_efile:
-  Below is your ${comma_and_list(al_court_bundle.get_titles())} ${ noun_plural('form', al_count_bundle.get_titles()) } 
+  Below is your ${comma_and_list(al_court_bundle.get_titles())} ${ noun_plural('form', al_court_bundle.get_titles()) } 
   that we will deliver to the ${trial_court} clerk.
 
   We will deliver it securely. Please allow up to 15 minutes for the filing to
