@@ -233,7 +233,12 @@ id: get available_efile_courts
 code: |
   resp = proxy_conn.authenticate_user()  # Uses default config keys
   if resp.response_code == 200:
-    available_efile_courts = sorted(proxy_conn.get_court_list().data)
+    court_list = proxy_conn.get_court_list()
+    if court_list.is_ok():
+      available_efile_courts = sorted(proxy_conn.get_court_list().data or [])
+    else:
+      log(f"Couldn't get courts from proxy server? {court_list}")
+      available_efile_courts = []
   else:
     log(f"Couldn't login to the proxy server! {resp}")
     available_efile_courts = []
