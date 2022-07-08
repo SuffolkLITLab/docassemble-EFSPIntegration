@@ -33,6 +33,7 @@ code: |
 ---
 objects:
   - case_search: EFCaseSearch.using(court_id=court_id)
+  - lower_court_case: DAObject
 ---
 mandatory: True
 code: |
@@ -88,9 +89,16 @@ code: |
   service_contacts.gather()
   cross_references.gather()
   al_court_bundle.as_pdf()
-  
+
   if needs_all_info:
     lead_contact.email
+
+  if case_type_map[tyler_case_type]['ecfcasetype'] == 'AppellateCase':
+    lower_court_case
+    lower_court_case.docket_number
+    lower_court_case.judge
+    lower_court_case.title
+    trial_court.name
   
   if full_court_info.get('allowreturndate'):
     return_date
@@ -105,13 +113,13 @@ code: |
     if needs_all_info:
       lead_contact.email
     #TODO(qs): if not a waiver account...
+    all_required_screens_shown
     ready_to_efile
     if fees_resp.is_ok():
       review_fees
     else:
       bad_fees
 
-  show_disclaimers
   efile
   summary_page
 ---
@@ -276,29 +284,10 @@ code: |
 ---
 generic object: ALIndividual
 code: |
-  str(x.name)
-  x.party_type = party_type_map.get(x.party_type_code).get('code')
   x.is_new = True
-  x.complete = True
 ---
 code: |
-  users[i].is_form_filler
-  str(users[i].name)
-  users[i].party_type = party_type_map.get(users[i].party_type_code).get('code')
-  users[i].attorney_ids
   users[i].is_new = True
-  users[i].complete = True
----
-code: |
-  no_missing_required_party_types_temp = True
-  for p_type in party_type_map.values():
-    if p_type.get('isrequired'):
-      no_missing_required_party_types_temp &= (
-        any(filter(lambda p: p.party_type_code == p_type.get('code'), users)) or
-        any(filter(lambda p: p.party_type_code == p_type.get('code'), other_parties))
-        )
-  missing_required_party_types = not no_missing_required_party_types_temp
-  del no_missing_required_party_types_temp
 ---
 generic object: ALPeopleList
 table: x.review_type_table
@@ -307,9 +296,9 @@ columns:
   - Name: |
       row_item.name.full()
   - Type: |
-      party_type_map.get(row_item.party_type_code,{}).get('name')
+      party_type_map.get(row_item.party_type,{}).get('name')
 edit:
-  - party_type_code  
+  - party_type
 ---
 sets:
   - lead_contact.name.first
@@ -667,7 +656,7 @@ generic object: ALIndividual
 question: |
   Party type of ${ x }?
 fields:
-  - Party Type: x.party_type_code
+  - Party Type: x.party_type
     input type: radio
     code: |
       party_type_options if is_nonindexed_filing else party_type_new_options
@@ -678,22 +667,22 @@ code: |
       plaintiff = matching_tuple_option('plaintiff', party_type_options)
       petitioner = matching_tuple_option('petitioner', party_type_options)
       if plaintiff:
-        users[0].party_type_code = plaintiff
-      elif petitioner: 
-        users[0].party_type_code = petitioner 
+        users[0].party_type = plaintiff
+      elif petitioner:
+        users[0].party_type = petitioner
     else:
       defendant = matching_tuple_option('defendant', party_type_options)
       respond = matching_tuple_option('respondent', party_type_options)
       if defendant:
-        users[0].party_type_code = defendant
+        users[0].party_type = defendant
       elif respond:
-        users[0].party_type_code = respond    
+        users[0].party_type = respond
 ---
 id: party type of users
 question: |
   Party type of ${ users[i] }?
 fields:
-  - Party Type: users[i].party_type_code
+  - Party Type: users[i].party_type
     input type: radio
     code: |
       party_type_options if is_nonindexed_filing else party_type_new_options
@@ -703,7 +692,7 @@ id: party type of other parties
 question: |
   Party type of ${ other_parties[i] }?
 fields:
-  - Party Type: other_parties[i].party_type_code
+  - Party Type: other_parties[i].party_type
     input type: radio
     code: |
       party_type_options if is_nonindexed_filing else party_type_new_options
@@ -808,6 +797,15 @@ subquestion: |
   
   You will have a chance to review fees at the end of this form.
 continue button field: explain_user_paying  
+---
+id: lower case docket number
+question: Lower Court Case Information
+subquestion: |
+  Since you are filing an appellate case, we need some information about your lower court case.
+fields:
+  - What was the docket number?: lower_court_case.docket_number
+  - What was the Judge's name?: lower_court_case.judge
+  - What was the title of your case?: lower_court_case.title
 ---
 code: |
   service_contacts[i].contact_id

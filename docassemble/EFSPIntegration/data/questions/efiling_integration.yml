@@ -269,6 +269,16 @@ only sets:
 code: |
   check_resp = proxy_conn.check_filing(court_id, al_court_bundle)
 ---
+only sets: all_required_screens_shown
+id: all required screens shown to user
+code: |
+  users[0].is_form_filler
+  tyler_case_category
+  tyler_case_type
+  cross_references.gather()
+  show_any_disclaimers
+  all_required_screens_shown = True
+---
 need:
   - efile_author_mode
   - can_check_efile
@@ -276,7 +286,7 @@ id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
   if can_check_efile:
-    check_resp 
+    check_resp
     remaining_to_check = check_resp.data
     log('check_resp: ' + str(check_resp))
     if not check_resp.is_ok():

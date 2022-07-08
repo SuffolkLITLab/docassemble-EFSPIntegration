@@ -66,8 +66,8 @@ code: |
     else:
       x.warn_no_results
       x.found_case = None
-  undefine('x.somebody', 'x.case_search_task_status',
-      'x.case_choice', 'x.found_cases')
+  # undefine('x.somebody', 'x.case_search_task_status',
+  #     'x.case_choice', 'x.found_cases')
 ---
 depends on:
   - x.docket_id_from_user
@@ -84,7 +84,7 @@ code: |
     x.court_id
     x.found_case = DAObject(x.instanceName + '.found_case')
     parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=all_party_type_map)
-  undefine('x.docket_id_from_user', 'x.docket_case_response')
+  # undefine('x.docket_id_from_user', 'x.docket_case_response')
 ---
 only sets:
   - x.found_case
@@ -171,7 +171,9 @@ generic object: EFCaseSearch
 event: x.case_search_waiting_screen
 id: case-search-wait
 question: |
-  <i class="fas fa-cog fa-spin"></i> Your search is in progress. Please wait. <i class="fas fa-cog fa-spin"></i>
+  <i class="fas fa-cog fa-spin"></i> Your search is in progress. <i class="fas fa-cog fa-spin"></i>
+subquestion: |
+  Please wait.
 reload: True
 ---
 need:
@@ -311,8 +313,8 @@ content: |
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   #### ${ case.title } (${ case.date })
   * DocketID: ${ case.docket_id }
-  * CourtID: ${ case.court_id }
-  * CaseCategory: ${ case.category }
+  * CourtID: ${ trial_court_map.get(case.court_id, {}).get('name', case.court_id) }
+  * CaseCategory: ${ case_category_map.get(case.category, {}).get('name', case.category) }
   % endfor
 ---
 id: display case
@@ -328,8 +330,8 @@ subquestion: |
   % if x.found_case:
   #### ${ x.found_case.title} (${ x.found_case.date })
   * DocketID: ${ x.found_case.docket_id }
-  * CourtID: ${ x.found_case.court_id }
-  * CaseCategory: ${ x.found_case.category }
+  * CourtID: ${ trial_court_map.get(case.court_id, {}).get('name', case.court_id) }
+  * CaseCategory: ${ case_category_map.get(case.category, {}).get('name', case.category) }
   % endif
 ---
 comment: |

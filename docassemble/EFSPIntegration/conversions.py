@@ -367,7 +367,11 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   new_case.participants = DAList(new_case.instanceName + '.participants',
       object_type=ALIndividual, auto_gather=False)
   for aug in new_case.case_details.get('value', {}).get('rest', []):
+    if 'AppellateCaseOriginalCase' in aug.get('declaredType'):
+      new_case.lower_docket_number = aug.get('value', {}).get('caseDocketID')
+      new_case.lower_case_title = aug.get('value', {}).get('caseTitleText')
     if aug.get('declaredType') == 'tyler.ecf.extensions.common.CaseAugmentationType':
+      new_case.lower_judge = aug.get('value', {}).get('lowerCourtJudgeText')
       participant_xml = aug.get('value', {}).get('caseParticipant', [])
       for participant in participant_xml:
         if not _is_attorney(participant):

@@ -29,8 +29,8 @@ Feature: Make any type of filing
       | x.filing_type | 145445 | lead_doc.filing_type |
       | x.filing_description | example description | lead_doc.filing_type |
       | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
-      | x.document_type_code | 7688 | lead_doc.document_type_code |
-      | x.filing_component_code | 332 | lead_doc.filing_component_code |
+      | x.document_type | 7688 | lead_doc.document_type |
+      | x.filing_component | 332 | lead_doc.filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
       | contacts_to_attach.there_are_any | False | |
@@ -76,8 +76,8 @@ Feature: Make any type of filing
       | x.filing_type | 145445 | lead_doc.filing_type |
       | x.filing_description | example description | lead_doc.filing_type |
       | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
-      | x.document_type_code | 7688 | lead_doc.document_type_code |
-      | x.filing_component_code | 332 | lead_doc.filing_component_code |
+      | x.document_type | 7688 | lead_doc.document_type |
+      | x.filing_component | 332 | lead_doc.filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
       | service_contacts.there_are_any | True | |
@@ -137,8 +137,8 @@ Feature: Make any type of filing
         | x.filing_type | 142263 | lead_doc.filing_type |
         | x.filing_description | example description | lead_doc.filing_type |
         | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
-        | x.document_type_code | 5766 | lead_doc.document_type_code |
-        | x.filing_component_code | 332 | lead_doc.filing_component_code |
+        | x.document_type | 5766 | lead_doc.document_type |
+        | x.filing_component | 332 | lead_doc.filing_component |
         | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
         | x.existing_parties_payment_dict['350e3cb1-616b-493a-96a0-fca7492dd29b'] | True | lead_doc.existing_parties_payment_dict |
         | service_contacts.there_are_any | False | |

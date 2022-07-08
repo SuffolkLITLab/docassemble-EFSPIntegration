@@ -26,8 +26,9 @@ code: |
     x.filing_component
     x.filing_parties
     x.filing_action
+    x.has_courtesy_copies
     x.optional_services.gather(complete_attribute='complete')
-    x.as_pdf()
+    x.as_pdf('preview')
   x.completed =True
 ---
 generic object: ALDocumentBundle
@@ -42,21 +43,14 @@ code: |
     x.filing_component
     x.filing_parties
     x.filing_action
+    x.has_courtesy_copies
     x.optional_services.gather(complete_attribute='complete')
-    x.as_pdf()
+    x.as_pdf('preview')
   x.completed =True
 ---
 generic object: DAObject
 code: |
   x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('code')
----
-generic object: DAObject
-code: |
-  x.document_type = x.document_type_map.get(x.document_type_code,{}).get('code')
----
-generic object: DAObject
-code: |
-  x.filing_component = x.filing_component_map.get(x.filing_component_code,{}).get('code')
 ---
 generic object: DAObject
 id: eserve
@@ -129,7 +123,7 @@ subquestion: |
   If a judge has ordered that this case is sealed, select
   "Confidential". You should also attach a copy of the judge's order.
 fields:
-  - Document type: x.document_type_code
+  - Document type: x.document_type
     input type: radio
     code: |
       x.document_type_options
@@ -142,7 +136,7 @@ if: |
 question: |
   Filing Component
 fields:
-  - Filing Component: x.filing_component_code
+  - Filing Component: x.filing_component
     datatype: dropdown
     code: |
       x.filing_component_options
@@ -151,7 +145,7 @@ generic object: DAObject
 if: |
   exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 code: |
-  x.filing_component_code = next(iter(x.filing_component_options))[0]
+  x.filing_component = next(iter(x.filing_component_options))[0]
 ---
 generic object: DAObject
 id: motion_type
@@ -234,17 +228,6 @@ code: |
 code: |
   all_party_type_options, all_party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, None).data)
----
-code: |
-  def exactly_one_required_filing_component(fc_opts, fc_map) -> bool:
-    if len(fc_opts) > 1 or len(fc_opts) == 0:
-      return False
-    filing_component_code = next(iter(fc_opts))[0]
-    return fc_map.get(filing_component_code,{}).get('required')
----
-code: |
-  def matching_tuple_option(option:str, options):
-    return next(iter([o for o in options if option in o[1].lower()]),[None])[0]
 ---
 ############ Payments Stuff ############
 reconsider:
@@ -338,10 +321,34 @@ columns:
   - Amount: |
       currency(row_item.get('amount',{}).get('value',0))
 ---
+#############################
+## party lists
+generic object: ALIndividual
+id: user chosen party type
+question: |
+  What is the party type of ${ x }?
+fields:
+  - Filing type: x.user_chosen_party_type
+    datatype: dropdown
+    code: |
+      x.party_type_options
+---
+generic object: ALIndividual
 code: |
-  def fee_total(my_resp):
-    if my_resp.data:
-      return my_resp.data.get('feesCalculationAmount',{}).get('value')
+  str(x.name)
+  x.party_type
+  x.is_new
+  x.complete = True
+---
+code: |
+  users[i].is_form_filler
+  str(users[i].name)
+  if i == 0:
+    users[i].email
+  users[i].party_type
+  users[i].attorney_ids
+  users[i].is_new
+  users[i].complete = True
 ---
 #############################
 ## is_form_filler
@@ -404,3 +411,9 @@ continue button field: show_disclaimers
 ---
 code: |
   disclaimers = proxy_conn.get_disclaimers(court_id).data
+---
+only sets: show_any_disclaimers
+code: |
+  if disclaimers:
+    show_disclaimers
+  show_any_disclaimers = True

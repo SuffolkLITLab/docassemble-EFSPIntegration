@@ -73,16 +73,30 @@ def shift_case_select_window(proxy_conn, found_cases:DAList, *,
   return start_idx, end_idx
 
 def any_missing_party_types(party_type_map:dict, users:ALPeopleList, other_parties:ALPeopleList):
-  no_missing_required_party_types_temp = True
+  no_missing_required_party_types = True
   def user_has_party_code(p, req_type):
-    return hasattr(p, 'party_type_code') and p.party_type_code == req_type.get('code')
+    return hasattr(p, 'party_type') and p.party_type == req_type.get('code')
   for p_type in party_type_map.values():
     if p_type.get('isrequired'):
-      no_missing_required_party_types_temp &= (
+      no_missing_required_party_types &= (
         any(filter(lambda p: user_has_party_code(p, p_type), users)) or
         any(filter(lambda p: user_has_party_code(p, p_type), other_parties))
         )
-  return not no_missing_required_party_types_temp
+  return not no_missing_required_party_types
+
+def exactly_one_required_filing_component(fc_opts, fc_map) -> bool:
+  if len(fc_opts) > 1 or len(fc_opts) == 0:
+    return False
+  fc_code = next(iter(fc_opts))[0]
+  return fc_map.get(fc_code,{}).get('required')
+
+def matching_tuple_option(option:str, options):
+  return next(iter([o for o in options if option in o[1].lower()]),[None])[0]
+
+def fee_total(fee_resp) -> str:
+  if fee_resp.data:
+    return fee_resp.data.get('feesCalculationAmount',{}).get('value', 'N/A')
+  return 'N/A'
 
 def get_full_court_info(proxy_conn, court_id:str) -> Dict:
   """Gets all of the information about the court from the id"""

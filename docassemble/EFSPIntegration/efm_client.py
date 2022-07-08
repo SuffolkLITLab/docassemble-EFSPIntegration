@@ -18,7 +18,7 @@ def state_name_to_code(state_name:str) -> str:
   except LookupError as ex:
     return state_name
 
-def _give_data_url(bundle: ALDocumentBundle):
+def _give_data_url(bundle: ALDocumentBundle, key:str='final'):
   """Prepares the filing documents by setting a semi-permanent enabled and a data url
   The document bundle can either consist of documents or other document bundles. But each top element will
   sent to Tyler as a separate filing document, and needs to have the necessary attributes set (tyler_filing_id, etc)
@@ -26,12 +26,20 @@ def _give_data_url(bundle: ALDocumentBundle):
   if bundle is None:
     return
   for doc in bundle:
-    doc.proxy_enabled = doc.always_enabled or doc.enabled
+    doc.proxy_enabled = doc.is_enabled()
     if doc.proxy_enabled:
-      doc.data_url = doc.as_pdf().url_for(external=True, temporary=True)
-      doc.page_count = doc.as_pdf().num_pages()
-    if hasattr(doc, 'enabled'):
-      del doc.enabled
+      # TODO(brycew): hacky, but should work for now. Make getting all enabled_docs an actual API on ALDocuments
+      if isinstance(doc, ALDocumentBundle):
+        attachments = doc.enabled_documents()
+        for attachment in attachments:
+          attachment.proxy_enabled = attachment.is_enabled()
+          attachment_pdf = attachment.as_pdf(key)
+          attachment.data_url = attachment_pdf.url_for(external=True, temporary=True)
+          attachment.page_court = attachment_pdf.num_pages()
+      else:
+        doc_pdf = doc.as_pdf(key)
+        doc.data_url = doc_pdf.url_for(external=True, temporary=True)
+        doc.page_count = doc_pdf.num_pages()
 
 def _get_all_vars(bundle: ALDocumentBundle):
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
