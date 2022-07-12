@@ -162,7 +162,7 @@ id: party name
 question: |
   Party name
 subquestion: |
-  Enter the name of a party involved in the case
+  Enter the name of a party involved in the case.
 fields:
   code: |
     x.somebody.name_fields(person_or_business='unknown')
@@ -171,7 +171,7 @@ generic object: EFCaseSearch
 event: x.case_search_waiting_screen
 id: case-search-wait
 question: |
-  <i class="fas fa-cog fa-spin"></i> Your search is in progress. <i class="fas fa-cog fa-spin"></i>
+  <i class="fas fa-cog fa-spin"></i> Your search is in progress <i class="fas fa-cog fa-spin"></i>
 subquestion: |
   Please wait.
 reload: True
@@ -230,7 +230,7 @@ subject: |
 content: |
   Case numbers are usually in the following format: "YYYYxx###": where "YYYY" is the 4 digit year,
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
-  [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-)
+  [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-).
 ---
 if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
@@ -238,7 +238,7 @@ template: case_number_format_template
 subject: |
   How to enter your case number (Chicago/Cook County only)
 content: |
-  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county)
+  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county).
 ---
 if: |
   x.do_what_choice == 'docket_lookup'
@@ -260,7 +260,7 @@ depends on:
 id: results for case search
 generic object: EFCaseSearch
 question: |
-  Case Search Results
+  Case search results
 subquestion: |
   % if x.cms_connection_issue:
   The court's case management system isn't online. The case information might be out of date.

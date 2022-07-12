@@ -1,7 +1,5 @@
 from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 
-import json
-
 from docassemble.base.util import DAObject, DAList, log
 from docassemble.base.functions import safe_json
 from .conversions import parse_case_info, fetch_case_info, transform_json_variables
@@ -14,7 +12,6 @@ class EFCaseSearch(DAObject):
   found_case: DAObject
   case_was_found: bool
 
-
 def num_case_choices() -> int:
   """The number of cases that someone should have to choose between if there are too many.
   Mostly to limit the amount of up-front waiting someone will have to do."""
@@ -22,8 +19,8 @@ def num_case_choices() -> int:
 
 def get_lookup_choices(can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
   lookup_choices = [
-    {'party_search': 'party name'},
-    {'docket_lookup': 'case number'},
+    {'party_search': 'Party name'},
+    {'docket_lookup': 'Case number'},
   ]
   if can_file_non_indexed_case:
     lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})

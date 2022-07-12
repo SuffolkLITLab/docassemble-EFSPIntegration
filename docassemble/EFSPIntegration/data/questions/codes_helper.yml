@@ -29,7 +29,7 @@ code: |
     x.has_courtesy_copies
     x.optional_services.gather(complete_attribute='complete')
     x.as_pdf('preview')
-  x.completed =True
+  x.completed = True
 ---
 generic object: ALDocumentBundle
 code: |

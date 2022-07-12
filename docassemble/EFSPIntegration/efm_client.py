@@ -45,15 +45,23 @@ def _get_all_vars(bundle: ALDocumentBundle):
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
   _give_data_url(bundle)
   all_vars_dict = all_variables()
-  vars_to_pop = ['trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
-      'filing_type_options', 'filing_type_map', 'party_type_options',
-      'available_efile_courts', 'case_category_map', 'full_court_info', 'tyler_login_resp', 'case_type_map', 'all_courts', 
-      'al_user_bundle', 'court_emails', 'party_type_map']
+  vars_to_pop = [
+    'trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
+    'multi_user', 'url_args', 'nav', 'allow_cron', 'speak_text',
+    'filing_type_options', 'filing_type_map', 'party_type_options',
+    'available_efile_courts', 'case_category_map', 'full_court_info', 'tyler_login_resp', 
+    'case_type_map', 'all_courts', 
+    'al_user_bundle', 'court_emails', 'party_type_map', 'case_search', 'subdoc',
+  ]
   for var in vars_to_pop:
     all_vars_dict.pop(var, None)
 
   for doc in all_vars_dict.get('al_court_bundle', {}).get('elements', []):
     doc.pop('optional_service_options', None)
+    doc.pop('document_type_options', None)
+    doc.pop('document_type_map', None)
+    doc.pop('filing_component_map', None)
+    doc.pop('filing_component_options', None)
     doc.pop('optional_service_map', None)
     
   return json.dumps(all_vars_dict)

@@ -96,7 +96,7 @@ content: |
 ---
 id: ready to efile
 question: |
-  Final Review With Cover Page
+  Final review before e-filing
 subquestion: |
   
   % if ready_to_efile:
@@ -104,10 +104,10 @@ subquestion: |
   that we will deliver to the ${trial_court} clerk.
 
   We will deliver it securely. Please allow up to 15 minutes for the filing to
-  arrive. We will email with a confirmation that it was delivered and additional
+  arrive. We will email you a confirmation that it was delivered and additional
   information about what's next.
   
-  Click **Back** if you need to make any changes.  
+  Click **Back** if you need to make any changes.
   Click **Send to court** to deliver it.
   
   Here is what the ${trial_court} clerk will get:
@@ -121,7 +121,7 @@ subquestion: |
   ${ al_court_bundle.as_pdf() }
 
   % if ready_to_efile:
-  Your forms are not e-filed until you press **Send to court** below. 
+  Your forms are not e-filed until you press **Send to court** below.
   % endif
 continue button field: efile_user_reviewed
 continue button label: ":file-export: Send to court"
