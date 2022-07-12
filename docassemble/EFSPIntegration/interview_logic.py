@@ -132,7 +132,7 @@ def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], def
   if len(codes) == 1:
     return codes, codes[0][0]
   elif len(codes) == 0:
-    return codes, default
+    return options, default
   else:
     return codes, None
 
