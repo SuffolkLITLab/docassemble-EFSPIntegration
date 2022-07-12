@@ -42,6 +42,7 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
   get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_id=None)
   cms_connection_issue = get_cases_response.response_code == 203
   if get_cases_response.is_ok():
+    found_cases.resp_ok = True
     # Reversed because cases tend to be returned oldest to newest from Tyler,
     # and people aren't likely to be looking for cases from pre-2000
     for idx, entry in enumerate(reversed(get_cases_response.data)):
@@ -51,6 +52,8 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
       # Allows users to control what cases are shown as options
       if not filter_fn(new_case):
         found_cases.pop()
+  else:
+    found_cases.resp_ok = False
   found_cases.gathered = True
   return cms_connection_issue, found_cases
 

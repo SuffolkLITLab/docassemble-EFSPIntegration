@@ -124,6 +124,10 @@ subquestion: |
   The court's case management system isn't online, and the case you are searching for might exist.
   % endif
 
+  % if not x.found_cases.resp_ok:
+  Something went wrong with the e-filing system when searching for cases.
+  % endif
+
   % if x.can_file_non_indexed_case:
   You can either continue to file into a non-indexed case or hit "${ word('back') }" to 
   try a new search.
