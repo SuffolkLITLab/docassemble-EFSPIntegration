@@ -92,12 +92,18 @@ def transform_json_variables(obj):
     return obj
 
 def convert_court_to_id(trial_court) -> str:
-  if isinstance(trial_court, str):
-    return trial_court
+  if hasattr(trial_court, 'tyler_court_code'):
+    return trial_court.tyler_court_code
+  if hasattr(trial_court, 'tyler_code'):
+    return trial_court.tyler_code
+  # The probably not right inputs
+  if hasattr(trial_court, 'name'):
+    return str(trial_court.name).lower()
   if isinstance(trial_court, dict):
     return trial_court['code']
-  # TODO(brycew): not sure what input this would be
-  return str(trial_court.name)
+  if isinstance(trial_court, str):
+    return trial_court.lower()
+  return trial_court
 
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:
   """Takes the responses from the 'codes' service and make a DA ready list of choices and a map back

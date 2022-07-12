@@ -312,10 +312,13 @@ subject: |
 content: |
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   #### ${ case.title } (${ case.date })
-  * DocketID: ${ case.docket_id }
-  * CourtID: ${ trial_court_map.get(case.court_id, {}).get('name', case.court_id) }
-  * CaseCategory: ${ case_category_map.get(case.category, {}).get('name', case.category) }
+  * Docket ID: ${ case.docket_id }
+  * Court ID: ${ case.court_id }
+  * Case Category: ${ case_category_map.get(case.category, {}).get('name', case.category) }
   % endfor
+comment: |
+  Can't use this code for court ID without causing an infinite loop? Unclear why
+  * Court ID: ${ trial_court_map.get(case.court_id, {}).get('name', case.court_id) }
 ---
 id: display case
 generic object: EFCaseSearch
@@ -330,8 +333,8 @@ subquestion: |
   % if x.found_case:
   #### ${ x.found_case.title} (${ x.found_case.date })
   * DocketID: ${ x.found_case.docket_id }
-  * CourtID: ${ trial_court_map.get(case.court_id, {}).get('name', case.court_id) }
-  * CaseCategory: ${ case_category_map.get(case.category, {}).get('name', case.category) }
+  * Court ID: ${ x.found_case.court_id }
+  * CaseCategory: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
 ---
 comment: |
