@@ -84,8 +84,8 @@ content: |
   % if defined('tyler_case_type') and defined('case_type_map'):
   * Case type: ${ tyler_case_type } ${ case_type_map.get(tyler_case_type) }
   % endif
-  % if defined('al_court_bundle[0].tyler_filing_type'):
-  * Lead document type: ${ al_court_bundle[0].tyler_filing_type }
+  % if defined('al_court_bundle[0].filing_type'):
+  * Lead document type: ${ al_court_bundle[0].filing_type }
   % endif
   % if defined('al_court_bundle[0].document_type'):
   * Document security: ${ al_court_bundle[0].document_type }

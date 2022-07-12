@@ -37,7 +37,7 @@ code: |
 code: |
   main_document.document_type = '5766'
   main_document.filing_component = '332'
-  main_document.tyler_filing_type = '29730'
+  main_document.filing_type = '29730'
   main_document.filing_parties = ['users[0]']
   main_document.filing_action = 'efile'
   main_document.completed = True

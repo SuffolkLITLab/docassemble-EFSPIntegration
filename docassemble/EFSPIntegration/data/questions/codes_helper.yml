@@ -7,12 +7,15 @@ comment: |
   treat ALDocuments and ALDocumentBundles the same: we just call as_pdf().
   From the Tyler perspective, authors should be able to declare at what level the ALDocument
   or ALDocumentBundles are going to be combined and sent to Tyler, and at that level, we need
-  to define all of the below attributes (tyler_filing_type, etc.)
+  to define all of the below attributes (filing_type, etc.)
 
   For simplicity, the generic objects below will mostly be DAObjects, to catch both ALDocumentBundles
   and ALDocuments. However, it would be best to eventually in AssemblyLine core to make sure both
   classes multiple-inherit from a dummy object, Pdfizable (TODO(brycew): make a better name), so there
   can be a more specific object to make generic
+---
+objects:
+  - cross_references: DADict.using(there_are_any=len(cross_ref_types))
 ---
 generic object: ALDocument
 code: |
@@ -20,7 +23,6 @@ code: |
     x.filing_type
     x.filing_description
     x.reference_number
-    x.tyler_filing_type
     x.document_type
     x.motion_type
     x.filing_component
@@ -37,7 +39,6 @@ code: |
     x.filing_type
     x.filing_description
     x.reference_number
-    x.tyler_filing_type
     x.document_type
     x.motion_type
     x.filing_component
@@ -103,9 +104,7 @@ code: |
 ---
 generic object: DAObject
 code: |
-  raw_components = proxy_conn.get_filing_components(court_id, x.filing_type)
-  x.filing_component_options, x.filing_component_map = choices_and_map(raw_components.data)
-  del raw_components
+  x.filing_component_options, x.filing_component_map = choices_and_map(proxy_conn.get_filing_components(court_id, x.filing_type).data)
 ---
 generic object: DAObject
 code: |
@@ -134,7 +133,7 @@ id: filing component
 if: |
   not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 question: |
-  Filing Component
+  Filing component
 fields:
   - Filing Component: x.filing_component
     datatype: dropdown
@@ -228,6 +227,19 @@ code: |
 code: |
   all_party_type_options, all_party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, None).data)
+---
+code: |
+  court_policy = proxy_conn.get_policy(court_id).data or {}
+---
+code: |
+  filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
+---
+code: |
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, tyler_case_type).data, backing='code')
+---
+code: |
+  service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
 ---
 ############ Payments Stuff ############
 reconsider:

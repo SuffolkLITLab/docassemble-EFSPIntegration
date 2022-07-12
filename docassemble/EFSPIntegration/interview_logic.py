@@ -132,3 +132,15 @@ def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], def
     return codes, default
   else:
     return codes, None
+
+def case_labeler(case):
+  docket_id = ''
+  if hasattr(case, 'docket_id'):
+    docket_id = case.docket_id
+  title = ''
+  if hasattr(case, 'title'):
+    title = case.title
+  date = ''
+  if hasattr(case, 'date'):
+    date = case.date
+  return f"{docket_id} {title} ({date})"
