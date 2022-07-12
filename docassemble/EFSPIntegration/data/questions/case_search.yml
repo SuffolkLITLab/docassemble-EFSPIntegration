@@ -259,8 +259,6 @@ code: |
 ---
 need:
   - x.found_cases
-depends on:
-  - x.found_cases
 id: results for case search
 generic object: EFCaseSearch
 question: |
@@ -358,6 +356,7 @@ need:
   - is_other_party
   - other_parties
   - target_case.found_case
+only sets: add_existing_users
 code: |
   if not target_case.self_in_case:
     users.appendObject()
@@ -401,22 +400,25 @@ code: |
     is_other_party = is_plaintiff_party
 ---
 generic object: EFCaseSearch
+if: len(x.maybe_user_partips) == 1
 question: |
-  % if len(x.maybe_user_partips) == 1:
   We found this participant in the existing case
-  % else:
-  We found these participants in the existing case
-  % endif
 subquestion: |
-  % if len(x.maybe_user_partips) == 1:
   Are you ${ x.maybe_user_partips[0] }?
-  % elif len(x.maybe_user_partips) > 1:
+fields:
+  - no label: x.self_in_case
+    datatype: yesnomaybe
+---
+generic object: EFCaseSearch
+if: len(x.maybe_user_partips) > 1
+question: |
+  We found these participants in the existing case
+
   % for partip in x.maybe_user_partips:
   * ${ partip }
   % endfor
   
   Are you any of the above participants?
-  % endif
 fields:
   - no label: x.self_in_case
     datatype: yesnomaybe
@@ -429,3 +431,9 @@ fields:
 generic object: EFCaseSearch
 code: |
   x.maybe_user_partips = [partip for partip in x.found_case.participants if is_user_party(partip)]
+---
+generic object: EFCaseSearch
+if: len(x.maybe_user_partips) == 1
+code: |
+  if x.self_in_case:
+    x.self_partip_choice = x.maybe_user_partips[0]

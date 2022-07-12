@@ -37,21 +37,29 @@ generic object: ALDocumentBundle
 code: |
   if x.enabled:
     x.filing_type
+    x.filing_component_options
+    x.document_type_options
+    if len(x.enabled_documents()) > 1 and len(x.filing_component_options) == 1 and not x.filing_component_map[x.filing_component_options[0][0]]['allowmultiple']:
+      x.filing_component
+      x.document_type
+    else:
+      for subdoc in x.enabled_documents():
+        subdoc.filing_type = x.filing_type
+        subdoc.filing_component_options = x.filing_component_options
+        subdoc.filing_component_map = x.filing_component_map
+        subdoc.filing_component
+        subdoc.document_type_options = x.document_type_options
+        subdoc.document_type_map = x.document_type_map
+        subdoc.document_type
     x.filing_description
     x.reference_number
-    x.document_type
     x.motion_type
-    x.filing_component
     x.filing_parties
     x.filing_action
     x.has_courtesy_copies
     x.optional_services.gather(complete_attribute='complete')
     x.as_pdf('preview')
-  x.completed =True
----
-generic object: DAObject
-code: |
-  x.tyler_filing_type = filing_type_map.get(x.filing_type,{}).get('code')
+  x.completed = True
 ---
 generic object: DAObject
 id: eserve
@@ -129,22 +137,33 @@ fields:
     default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
 ---
 generic object: DAObject
-id: filing component
-if: |
-  not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
-question: |
-  Filing component
-fields:
-  - Filing Component: x.filing_component
-    datatype: dropdown
-    code: |
-      x.filing_component_options
----
-generic object: DAObject
 if: |
   exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 code: |
   x.filing_component = next(iter(x.filing_component_options))[0]
+---
+generic object: DAObject 
+if: |
+  not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
+need:
+  - x.filing_component_default
+  - x.filing_component_filters
+code: |
+  x.filtered_filing_component_options, x.filing_component = \
+      filter_codes(x.filing_component_options, x.filing_component_filters, x.filing_component_default)
+  if x.filing_component is None:
+    del x.filing_component
+    x.filing_component = x.user_chosen_filing_component
+---
+generic object: DAObject
+id: filing component
+question: |
+  Filing component
+fields:
+  - Filing Component: x.user_chosen_filing_component
+    datatype: dropdown
+    code: |
+      x.filtered_filing_component_options
 ---
 generic object: DAObject
 id: motion_type
@@ -196,6 +215,24 @@ code: |
 ---
 code: |
   filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, tyler_case_category, tyler_case_type, is_initial_filing).data)
+---
+id: user chosen case category
+question: |
+  What category is this case?
+fields:
+  - Case category: user_chosen_case_category
+    datatype: dropdown
+    code: |
+      sorted(tyler_case_category_filtered_options, key=lambda cat: cat[1])
+---
+id: case type
+question: |
+  Case Type
+fields:
+  - Case Type: user_case_type
+    datatype: dropdown
+    code: |
+      sorted(case_type_options,key=lambda cat: cat[1])
 ---
 code: |
   if needs_all_info or any([u.is_new for u in users]):
@@ -343,7 +380,15 @@ fields:
   - Filing type: x.user_chosen_party_type
     datatype: dropdown
     code: |
-      x.party_type_options
+      x.party_type_filtered_options
+---
+generic object: ALIndividual
+code: |
+  x.party_type_filtered_options, x.party_type = filter_codes(
+    party_type_options, x.party_type_filters, x.party_type_default)
+  if x.party_type is None:
+    del x.party_type
+    x.party_type = x.user_chosen_party_type
 ---
 generic object: ALIndividual
 code: |
@@ -385,10 +430,15 @@ need: proxy_conn
 if: users[0].is_form_filler
 code: |
   tyler_info = proxy_conn.get_user()
+  users[0].email = tyler_info.data.get('email')
+---
+need: proxy_conn
+if: users[0].is_form_filler
+code: |
+  tyler_info = proxy_conn.get_user()
   users[0].name.first = tyler_info.data.get('firstName')
   users[0].name.middle = tyler_info.data.get('middleName', '')
   users[0].name.last = tyler_info.data.get('lastName', '')
-  users[0].email = tyler_info.data.get('email')
 ---
 ########################
 ## disclaimer
@@ -429,3 +479,26 @@ code: |
   if disclaimers:
     show_disclaimers
   show_any_disclaimers = True
+---
+id: user chosen casetype
+question: |
+  What case type is this case?
+fields:
+  - Case type: user_chosen_case_type
+    datatype: dropdown
+    code: |
+      tyler_case_filtered_options
+---
+code: |
+  tyler_case_category_filtered_options, tyler_case_category = filter_codes(case_category_options,
+      tyler_case_category_filters, tyler_case_category_default)
+  if tyler_case_category is None:
+    del tyler_case_category
+    tyler_case_category = user_chosen_case_category
+---
+code: |
+  tyler_case_filtered_options, tyler_case_type = filter_codes(case_type_options,
+    tyler_case_type_filters, tyler_case_type_default)
+  if tyler_case_type is None:
+    del tyler_case_type
+    tyler_case_type = user_chosen_case_type

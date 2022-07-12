@@ -485,27 +485,6 @@ fields:
     code: |
       trial_court_options
 ---
-id: user chosen case category
-question: |
-  What category is this case?
-fields:
-  - Case category: user_chosen_case_category
-    datatype: dropdown
-    code: |
-      sorted(tyler_category_options, key=lambda cat: cat[1])
----
-code: |
-  tyler_category_options = case_category_options
----
-id: case type
-question: |
-  Case Type
-fields:
-  - Case Type: user_case_type
-    datatype: dropdown
-    code: |
-      sorted(case_type_options,key=lambda cat: cat[1])
----
 id: case subtype
 question: |
   Case Subtype
@@ -655,7 +634,7 @@ fields:
   - Party Type: x.party_type
     input type: radio
     code: |
-      party_type_options if is_nonindexed_filing else party_type_new_options
+      x.party_type_options if is_nonindexed_filing else x.party_type_new_options
 ---
 code: |
   if is_initial_filing or users[0].is_form_filler:
@@ -681,7 +660,7 @@ fields:
   - Party Type: users[i].party_type
     input type: radio
     code: |
-      party_type_options if is_nonindexed_filing else party_type_new_options
+      users[i].party_type_options if is_nonindexed_filing else users[i].party_type_new_options
     default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
 ---
 id: party type of other parties
@@ -691,7 +670,7 @@ fields:
   - Party Type: other_parties[i].party_type
     input type: radio
     code: |
-      party_type_options if is_nonindexed_filing else party_type_new_options
+      other_parties[i].party_type_options if is_nonindexed_filing else other_parties[i].party_type_new_options
     default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
 ---
 generic object: ALDocument
