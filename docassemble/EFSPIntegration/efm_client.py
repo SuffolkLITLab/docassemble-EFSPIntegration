@@ -28,8 +28,9 @@ def _give_data_url(bundle: ALDocumentBundle, key:str='final'):
   for doc in bundle:
     doc.proxy_enabled = doc.is_enabled()
     if doc.proxy_enabled:
-      # TODO(brycew): hacky, but should work for now. Make getting all enabled_docs an actual API on ALDocuments
-      if isinstance(doc, ALDocumentBundle):
+      # TODO(brycew): another hack: forcing the main doc to be it when filing components don't allow attachments
+      if not (hasattr(doc, 'tyler_merge_attachments') and doc.tyler_merge_attachments) and isinstance(doc, ALDocumentBundle):
+        # TODO(brycew): hacky, but should work for now. Make getting all enabled_docs an actual API on ALDocuments
         attachments = doc.enabled_documents()
         for attachment in attachments:
           attachment.proxy_enabled = attachment.is_enabled()

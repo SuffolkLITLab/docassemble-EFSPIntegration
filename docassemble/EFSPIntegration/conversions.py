@@ -397,6 +397,12 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
                   new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
               else:
                   new_case.party_to_attorneys[party_id] = [attorney_tyler_id]
+              #for participant in new_case.participants.elements:
+              #  if participant.tyler_id == party_id:
+              #    if hasattr(participant, 'attorney_ids'):
+              #      participant.attorney_ids.append(attorney_tyler_id)
+              #    else:
+              #      participant.attorney_ids = [attorney_tyler_id]
   new_case.participants.gathered = True
 
 def _payment_labels(acc):

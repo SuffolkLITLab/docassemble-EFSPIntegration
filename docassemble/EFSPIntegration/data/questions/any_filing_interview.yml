@@ -35,10 +35,16 @@ objects:
   - case_search: EFCaseSearch.using(court_id=court_id)
   - lower_court_case: DAObject
 ---
+code: |
+  tyler_case_category_filters = []
+  tyler_case_category_default = None
+  tyler_case_type_filters = []
+  tyler_case_type_default = None
+---
 mandatory: True
 code: |
   welcome
-  tyler_login 
+  tyler_login
   trial_court
   can_check_efile
   if not is_initial_filing and not case_search.case_was_found and not case_search.can_file_non_indexed_case:
@@ -47,8 +53,12 @@ code: |
   if is_nonindexed_filing:
       docket_number = case_search.non_indexed_docket_number
   if needs_all_info:
+    if not case_category_options:
+      go_back_screen
     tyler_case_category = case_category_map.get(user_chosen_case_category,{}).get('code')
-    tyler_case_type = user_case_type
+    if not case_type_options:
+      go_back_screen
+    tyler_case_type = user_chosen_case_type
     if case_subtype_options:
       tyler_case_subtype = case_subtype_map.get(case_subtype).get('code')
     tyler_filing_attorney
@@ -56,12 +66,13 @@ code: |
     user_started_case
   else:
     if case_search.case_was_found:
+      target_case = case_search
       load_existing_case_defaults
-      previous_case_id = case_search.found_case.tracking_id 
+      previous_case_id = case_search.found_case.tracking_id
       user_started_case
-      is_adding_new_parties
+      add_existing_users
 
-  users.gather()
+  users.gather(complete_attribute='complete')
   other_parties.gather()
   existing_parties_new_atts.gather(complete_attribute='attorney_ids')
   attorney_ids
@@ -93,7 +104,7 @@ code: |
   if needs_all_info:
     lead_contact.email
 
-  if case_type_map[tyler_case_type]['ecfcasetype'] == 'AppellateCase':
+  if case_category_map[tyler_case_category]['ecfcasetype'] == 'AppellateCase':
     lower_court_case
     lower_court_case.docket_number
     lower_court_case.judge
@@ -134,7 +145,7 @@ objects:
   - lead_contact: ALIndividual
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=needs_all_info or is_adding_new_parties, complete_attribute='complete')
+  - users: ALPeopleList.using(complete_attribute='complete')
   - other_parties: ALPeopleList.using(complete_attribute='complete') # NOTE that there can be filing types with no opposing party, such as adoption
 ---
 objects:
@@ -260,7 +271,7 @@ columns:
   - ${ al_exhibit_total_pages_label }: |
       row_item.pages.num_pages()
 edit:
-  - rearrange_pages  
+  - rearrange_pages
 ---
 objects:
   - contacts_to_attach: DAList.using(object_type=DAObject, complete_attribute='complete')
@@ -338,29 +349,6 @@ code: |
   else:
     return_date_obj = None
     return_date = ''
----
-generic object: ALDocument
-code: |
-  x.filing_description
-  x.reference_number
-  x.filing_type 
-  x.document_type
-  x.motion_type
-  x.filing_component
-  # Needed specifically for ALExhibitDocuments, not the default
-  if x.exhibits.has_exhibits:
-    x.as_pdf()
-  x.filing_parties
-  x.filing_action
-  x.optional_services.gather(complete_attribute='complete')  
-  x.completed =True
----
-id: Additional parties
-question: |
-  Are you adding any additional parties to this filing?
-fields:
-  - no label: is_adding_new_parties
-    datatype: yesnoradio
 ---
 id: make a filing
 question: |
@@ -464,15 +452,15 @@ fields:
     code: |
       tyler_filing_attorney_options
 ---
-generic object: DAObject
+generic object: ALIndividual
 code: |
   x.attorney_ids = x.attorney_adding_opts.true_values()
 ---
 code: |
-  attorney_ids = functools.reduce(lambda new_list, exst: exst.attorney_ids + new_list, users, [])
+  attorney_ids = functools.reduce(lambda new_list, exst: (exst.attorney_ids if hasattr(exst, 'attorney_ids') else []) + new_list, users, [])
   for exst_user in existing_parties_new_atts:
-    attorney_ids.extend(exst_user.attorney_ids) 
-  party_to_attorneys = {y.instanceName: y.attorney_ids for y in users}
+    attorney_ids.extend(exst_user.attorney_ids)
+  party_to_attorneys = {y.instanceName: y.attorney_ids for y in users if hasattr(y, 'attorney_ids')}
   for y in existing_parties_new_atts:
     party_to_attorneys[y.existing_party] = y.attorney_ids
 ---
@@ -634,7 +622,7 @@ fields:
   - Party Type: x.party_type
     input type: radio
     code: |
-      x.party_type_options if is_nonindexed_filing else x.party_type_new_options
+      party_type_options if is_nonindexed_filing else party_type_new_options
 ---
 code: |
   if is_initial_filing or users[0].is_form_filler:
@@ -653,15 +641,10 @@ code: |
       elif respond:
         users[0].party_type = respond
 ---
-id: party type of users
-question: |
-  Party type of ${ users[i] }?
-fields:
-  - Party Type: users[i].party_type
-    input type: radio
-    code: |
-      users[i].party_type_options if is_nonindexed_filing else users[i].party_type_new_options
-    default: ${ matching_tuple_option('plaintiff', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('defendant', party_type_options) }
+generic object: ALIndividual
+code: |
+  x.party_type_default = None
+  x.party_type_filters = ['plaintiff'] if showifdef('user_ask_role') == 'plaintiff' else ['defendant']
 ---
 id: party type of other parties
 question: |
@@ -670,7 +653,7 @@ fields:
   - Party Type: other_parties[i].party_type
     input type: radio
     code: |
-      other_parties[i].party_type_options if is_nonindexed_filing else other_parties[i].party_type_new_options
+      party_type_options if is_nonindexed_filing else party_type_new_options
     default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
 ---
 generic object: ALDocument
@@ -923,18 +906,6 @@ subquestion: |
   Your selections aren't working. :/  Please try again.
 ---
 code: |
-  timing = 'Initial' if is_initial_filing else 'Subsequent'
-  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=True, timing=timing).data) 
-  if not case_category_options:
-    go_back_screen
----
-code: |
-  timing = 'Initial' if is_initial_filing else 'Subsequent'
-  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, tyler_case_category, timing=timing).data)
-  if not case_type_options:
-    go_back_screen
----
-code: |
   case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, tyler_case_type).data)
 ---
 code: |
@@ -948,3 +919,7 @@ code: |
     resp_data = proxy_conn.get_service_information(court_id, case_search.found_case.tracking_id).data
     attached_service_contacts = parse_service_contacts(resp_data)
 ---
+generic object: DAObject
+code: |
+  x.filing_component_default = None
+  x.filing_component_filters = []

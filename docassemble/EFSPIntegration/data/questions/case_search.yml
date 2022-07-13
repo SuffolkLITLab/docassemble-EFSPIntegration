@@ -378,11 +378,6 @@ code: |
       log(f'partip: ${partip} has weird role: ${partip.party_type}')
   add_existing_users = True
 ---
-comment: |
-  TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
-only sets:
-  - is_user_party
-  - is_other_party
 code: |
   def is_defendant_party(p):
     return p.party_type == '20641' or \
@@ -391,7 +386,11 @@ code: |
   def is_plaintiff_party(p):
     return p.party_type == '20646' or \
         (p.party_type_name is not None and 'plaintiff' in p.party_type_name.lower())
-  
+---
+if: len(party_type_options) > 1
+comment: |
+  TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
+code: |
   if user_ask_role == 'plaintiff':
     is_user_party = is_plaintiff_party
     is_other_party = is_defendant_party
@@ -399,6 +398,12 @@ code: |
     is_user_party = is_defendant_party
     is_other_party = is_plaintiff_party
 ---
+if: len(party_type_options) == 1
+code: |
+  is_user_party = lambda p: True
+  is_other_party = lambda p: False
+---
+id: found-this-participant
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 1
 question: |
@@ -409,11 +414,12 @@ fields:
   - no label: x.self_in_case
     datatype: yesnomaybe
 ---
+id: found-these-participants
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) > 1
 question: |
   We found these participants in the existing case
-
+subquestion: |
   % for partip in x.maybe_user_partips:
   * ${ partip }
   % endfor
@@ -437,3 +443,8 @@ if: len(x.maybe_user_partips) == 1
 code: |
   if x.self_in_case:
     x.self_partip_choice = x.maybe_user_partips[0]
+---
+generic object: EFCaseSearch
+if: len(x.maybe_user_partips) == 0
+code: |
+  x.self_in_case = False

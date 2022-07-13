@@ -4,7 +4,7 @@ Feature: Make any type of filing
   Runs the `any_filing_interview.yml` to completion a few different ways
 
   @any_filing_interview @af1
-  Scenario: any_filing_interview starts
+  Scenario: any_filing_interview goes to end
     Given I start the interview at "any_filing_interview.yml"
     And the maximum seconds for each Step in this Scenario is 50
     And I set the variable "jurisdiction_id" to "illinois"
@@ -19,18 +19,20 @@ Feature: Make any type of filing
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
       | x.docket_id_from_user | 22-AD-00005 | case_search.docket_id_from_user |
+      | x.self_in_case | True | case_search.self_in_case |
+      | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
       | user_ask_role | defendant | |
-      | is_adding_new_parties | False | |
       | other_parties.there_are_any | False | |
+      | users.there_is_another | False | |
       | existing_parties_new_atts.there_are_any | False | |
       | lead_contact.email | example@example.com | |
       | lead_contact.name.first | Bob | |
       | lead_contact.name.last | Ma | |
-      | x.filing_type | 145445 | lead_doc.filing_type |
-      | x.filing_description | example description | lead_doc.filing_type |
-      | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
-      | x.document_type | 7688 | lead_doc.document_type |
-      | x.filing_component | 332 | lead_doc.filing_component |
+      | x.filing_type | 145436 | |
+      | x.filing_description | example description | |
+      | x.exhibits[0].pages | example_upload.pdf | |
+      | x.document_type | 7688 | lead_doc.document_description |
+      | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
       | contacts_to_attach.there_are_any | False | |
@@ -66,18 +68,21 @@ Feature: Make any type of filing
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
       | x.docket_id_from_user | 22-AD-00005 | case_search.docket_id_from_user |
+      | x.self_in_case | True | case_search.self_in_case |
+      | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
+      | users[0].is_form_filler | False | |
       | user_ask_role | defendant | |
-      | is_adding_new_parties | False | |
+      | users.there_is_another | False | |
       | other_parties.there_are_any | False | |
       | existing_parties_new_atts.there_are_any | False | |
       | lead_contact.email | example@example.com | |
       | lead_contact.name.first | Bob | |
       | lead_contact.name.last | Ma | |
-      | x.filing_type | 145445 | lead_doc.filing_type |
-      | x.filing_description | example description | lead_doc.filing_type |
-      | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
+      | x.filing_type | 145436 | |
+      | x.filing_description | example description | |
+      | x.exhibits[0].pages | example_upload.pdf | |
       | x.document_type | 7688 | lead_doc.document_type |
-      | x.filing_component | 332 | lead_doc.filing_component |
+      | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
       | service_contacts.there_are_any | True | |
@@ -118,27 +123,25 @@ Feature: Make any type of filing
       And I set the variable "case_search.somebody.name.last" to "Brown"
       And I tap to continue
       And I wait 30 seconds
-      And I set the variable "x.case_choice" to "case_search.found_cases[1]"
-      And I tap to continue
-      And I set the variable "user_ask_role" to "defendant"
-      And I tap to continue
-      And I set the variable "is_adding_new_parties" to "False"
-      And I tap to continue
-      And I set the variable "other_parties.there_are_any" to "False"
-      And I tap to continue
-      And I set the variable "existing_parties_new_atts.there_are_any" to "False"
-      And I tap to continue
-      And I set the variable "lead_contact.email" to "example@example.com"
-      And I set the variable "lead_contact.name.first" to "Bob"
-      And I set the variable "lead_contact.name.last" to "Ma"
-      And I tap to continue
       And I get to the question id "ready to efile" with this data:
         | var | value | trigger |
-        | x.filing_type | 142263 | lead_doc.filing_type |
-        | x.filing_description | example description | lead_doc.filing_type |
-        | x.exhibits[0].pages | example_upload.pdf | lead_doc.filing_type |
+        | x.case_choice | case_search.found_cases[1] | case_search.case_choice|
+        | user_ask_role | defendant | |
+        | other_parties.there_are_any | False | |
+        | existing_parties_new_atts.there_are_any | False | |
+        | x.self_in_case | True | case_search.self_in_case |
+        | x.self_partip_choice | case_search.found_case.participants[1] | case_search.self_in_case |
+        | users[0].is_form_filler | False | |
+        | lead_contact.email | example@example.com | |
+        | users.there_is_another | False | |
+        | other_parties.there_is_another | False | |
+        | lead_contact.name.first | Bob | |
+        | lead_contact.name.last | Ma | |
+        | x.filing_type | 142264 | |
+        | x.filing_description | example description | |
+        | x.exhibits[0].pages | example_upload.pdf | |
         | x.document_type | 5766 | lead_doc.document_type |
-        | x.filing_component | 332 | lead_doc.filing_component |
+        | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
         | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
         | x.existing_parties_payment_dict['350e3cb1-616b-493a-96a0-fca7492dd29b'] | True | lead_doc.existing_parties_payment_dict |
         | service_contacts.there_are_any | False | |

@@ -42,6 +42,7 @@ code: |
     if len(x.enabled_documents()) > 1 and len(x.filing_component_options) == 1 and not x.filing_component_map[x.filing_component_options[0][0]]['allowmultiple']:
       x.filing_component
       x.document_type
+      x.tyler_merge_attachments = True
     else:
       for subdoc in x.enabled_documents():
         subdoc.filing_type = x.filing_type
@@ -142,7 +143,7 @@ if: |
 code: |
   x.filing_component = next(iter(x.filing_component_options))[0]
 ---
-generic object: DAObject 
+generic object: DAObject
 if: |
   not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
 need:
@@ -229,7 +230,7 @@ id: case type
 question: |
   Case Type
 fields:
-  - Case Type: user_case_type
+  - Case Type: user_chosen_case_type
     datatype: dropdown
     code: |
       sorted(case_type_options,key=lambda cat: cat[1])
@@ -258,7 +259,7 @@ code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, tyler_case_type).data)
   party_type_new_options = [p_type for p_type in party_type_options] 
-  # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries 
+  # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries
   # if party_type_map[p_type[0]].get('isAvailableForNewParties')]
 ---
 code: |
@@ -403,16 +404,18 @@ code: |
   if i == 0:
     users[i].email
   users[i].party_type
-  users[i].attorney_ids
   users[i].is_new
+  if users[i].is_new:
+    users[i].attorney_ids
   users[i].complete = True
 ---
 #############################
 ## is_form_filler
+id: is_form_filler
 question: |
   Are you this party?
 subquestion: |
-  Your information in the E-file system will be used
+  If you are ${ users[0] }, and logged in as yourself, your information in the E-file system will be used.
 fields:
   - You are this party: users[0].is_form_filler
     datatype: yesnoradio
