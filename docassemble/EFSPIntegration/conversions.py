@@ -366,7 +366,7 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   new_case.case_details = full_case_details.data or {}
   # TODO: is the order of this array predictable? might it break if Tyler changes something?
   new_case.case_type = new_case.case_details.get('value', {}).get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
-  new_case.tyler_case_type = new_case.case_type
+  new_case.efile_case_type = new_case.case_type
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))

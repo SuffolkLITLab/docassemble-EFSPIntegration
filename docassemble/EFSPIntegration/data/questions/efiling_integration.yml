@@ -78,11 +78,11 @@ content: |
   % if efile_resp.response_code != 200:
   Some additional information:
     
-  % if defined('tyler_case_category') and defined('case_category_map'):
-  * Case category: ${ tyler_case_category } ${ case_category_map.get(tyler_case_category) }
+  % if defined('efile_case_category') and defined('case_category_map'):
+  * Case category: ${ efile_case_category } ${ case_category_map.get(efile_case_category) }
   % endif
-  % if defined('tyler_case_type') and defined('case_type_map'):
-  * Case type: ${ tyler_case_type } ${ case_type_map.get(tyler_case_type) }
+  % if defined('efile_case_type') and defined('case_type_map'):
+  * Case type: ${ efile_case_type } ${ case_type_map.get(efile_case_type) }
   % endif
   % if defined('al_court_bundle[0].filing_type'):
   * Lead document type: ${ al_court_bundle[0].filing_type }
@@ -273,8 +273,8 @@ only sets: all_required_screens_shown
 id: all required screens shown to user
 code: |
   users[0].is_form_filler
-  tyler_case_category
-  tyler_case_type
+  efile_case_category
+  efile_case_type
   cross_references.gather()
   show_any_disclaimers
   all_required_screens_shown = True

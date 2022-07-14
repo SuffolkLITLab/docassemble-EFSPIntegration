@@ -215,7 +215,7 @@ code: |
   filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
 ---
 code: |
-  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, tyler_case_category, tyler_case_type, is_initial_filing).data)
+  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, efile_case_category, eflie_case_type, is_initial_filing).data)
 ---
 id: user chosen case category
 question: |
@@ -224,7 +224,7 @@ fields:
   - Case category: user_chosen_case_category
     datatype: dropdown
     code: |
-      sorted(tyler_case_category_filtered_options, key=lambda cat: cat[1])
+      sorted(efile_case_category_filtered_options, key=lambda cat: cat[1])
 ---
 id: case type
 question: |
@@ -253,11 +253,11 @@ code: |
 ---
 code: |
   timing = 'Initial' if is_initial_filing else 'Subsequent'
-  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, tyler_case_category, timing=timing).data)
+  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, efile_case_category, timing=timing).data)
 ---
 code: |
   party_type_options, party_type_map = \
-    choices_and_map(proxy_conn.get_party_types(court_id, tyler_case_type).data)
+    choices_and_map(proxy_conn.get_party_types(court_id, efile_case_type).data)
   party_type_new_options = [p_type for p_type in party_type_options] 
   # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries
   # if party_type_map[p_type[0]].get('isAvailableForNewParties')]
@@ -274,7 +274,7 @@ code: |
 ---
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
-  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, tyler_case_type).data, backing='code')
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, efile_case_type).data, backing='code')
 ---
 code: |
   service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
@@ -490,18 +490,18 @@ fields:
   - Case type: user_chosen_case_type
     datatype: dropdown
     code: |
-      tyler_case_filtered_options
+      efile_case_filtered_options
 ---
 code: |
-  tyler_case_category_filtered_options, tyler_case_category = filter_codes(case_category_options,
-      tyler_case_category_filters, tyler_case_category_default)
-  if tyler_case_category is None:
-    del tyler_case_category
-    tyler_case_category = user_chosen_case_category
+  efile_case_category_filtered_options, efile_case_category = filter_codes(case_category_options,
+      efile_case_category_filters, efile_case_category_default)
+  if efile_case_category is None:
+    del efile_case_category
+    efile_case_category = user_chosen_case_category
 ---
 code: |
-  tyler_case_filtered_options, tyler_case_type = filter_codes(case_type_options,
-    tyler_case_type_filters, tyler_case_type_default)
-  if tyler_case_type is None:
-    del tyler_case_type
-    tyler_case_type = user_chosen_case_type
+  efile_case_filtered_options, efile_case_type = filter_codes(case_type_options,
+    efile_case_type_filters, efile_case_type_default)
+  if efile_case_type is None:
+    del efile_case_type
+    efile_case_type = user_chosen_case_type

@@ -19,8 +19,8 @@ objects:
 ---
 code: |
   trial_court = 'adams'
-  tyler_case_category = '7306'
-  tyler_case_type = '25361'
+  efile_case_category = '7306'
+  efile_case_type = '25361'
 ---
 code: |
   users[i].name.first

@@ -36,10 +36,10 @@ objects:
   - lower_court_case: DAObject
 ---
 code: |
-  tyler_case_category_filters = []
-  tyler_case_category_default = None
-  tyler_case_type_filters = []
-  tyler_case_type_default = None
+  efile_case_category_filters = []
+  efile_case_category_default = None
+  efile_case_type_filters = []
+  efile_case_type_default = None
 ---
 mandatory: True
 code: |
@@ -55,12 +55,12 @@ code: |
   if needs_all_info:
     if not case_category_options:
       go_back_screen
-    tyler_case_category = case_category_map.get(user_chosen_case_category,{}).get('code')
+    efile_case_category = case_category_map.get(user_chosen_case_category,{}).get('code')
     if not case_type_options:
       go_back_screen
-    tyler_case_type = user_chosen_case_type
-    if case_subtype_options:
-      tyler_case_subtype = case_subtype_map.get(case_subtype).get('code')
+    efile_case_type = user_chosen_case_type
+    if efile_case_subtype_options:
+      efile_case_subtype = case_subtype_map.get(user_chosen_case_subtype, {}).get('code')
     tyler_filing_attorney
     user_ask_role
     user_started_case
@@ -104,7 +104,7 @@ code: |
   if needs_all_info:
     lead_contact.email
 
-  if case_category_map[tyler_case_category]['ecfcasetype'] == 'AppellateCase':
+  if case_category_map[efile_case_category]['ecfcasetype'] == 'AppellateCase':
     lower_court_case
     lower_court_case.docket_number
     lower_court_case.judge
@@ -404,9 +404,9 @@ code: |
 code: |
   if selected_existing_case:
     if selected_existing_case.category:
-      tyler_case_category = selected_existing_case.category
+      efile_case_category = selected_existing_case.category
     if selected_existing_case.case_type:
-      tyler_case_type = selected_existing_case.case_type
+      efile_case_type = selected_existing_case.case_type
     # TODO(brycew): get party info from existing case to select filing parties 
     existing_case_parties = None
   load_existing_case_defaults = True
@@ -477,7 +477,7 @@ id: case subtype
 question: |
   Case Subtype
 fields:
-  - Case Subtype: case_subtype
+  - Case Subtype: user_chosen_case_subtype
     datatype: dropdown
     code: |
       sorted(case_subtype_options,key=lambda cat: cat[1])
@@ -906,7 +906,7 @@ subquestion: |
   Your selections aren't working. :/  Please try again.
 ---
 code: |
-  case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, tyler_case_type).data)
+  case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, efile_case_type).data)
 ---
 code: |
   tyler_filing_attorney_options, tyler_filing_attorney_map = choices_and_map(proxy_conn.get_attorney_list().data, 
