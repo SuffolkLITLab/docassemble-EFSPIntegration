@@ -514,15 +514,15 @@ class EfspConnection:
         data=json.dumps({'doc_id': doc_id, 'estimated_duration': estimated_duration, 'range_after' : range_after, 'range_before': range_before}))
     return self._call_proxy(send)
   
-  def get_cases_raw(self, court_id:str, *, person_name:dict=None, business_name:str=None, docket_id:str=None) -> ApiResponse:
+  def get_cases_raw(self, court_id:str, *, person_name:dict=None, business_name:str=None, docket_number:str=None) -> ApiResponse:
     """
-    Finds existing cases at a particular court. Only one of person_name, business_name, or docket_id should be
+    Finds existing cases at a particular court. Only one of person_name, business_name, or docket_number should be
     provided at a time.
     Params:
       court_id (str)
       person_name (dict)
       buisness_name (str)
-      docket_id (str)
+      docket_number (str)
     """
     send = lambda: self.proxy_client.get(self.full_url(f'cases/courts/{court_id}/cases'),
         params={
@@ -530,7 +530,7 @@ class EfspConnection:
           'middle_name': person_name.get('middle') if person_name is not None else None,
           'last_name': person_name.get('last') if person_name is not None else None,
           'business_name': business_name,
-          'docket_id': docket_id})
+          'docket_number': docket_number})
     return self._call_proxy(send)
 
   def get_case(self, court_id:str, case_id:str):

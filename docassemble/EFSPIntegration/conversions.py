@@ -336,8 +336,8 @@ def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
     roles = {}
   new_case.details = entry
   new_case.court_id = court_id
-  new_case.tracking_id =  chain_xml(entry, ['value', 'caseTrackingID', 'value'])
-  new_case.docket_id = entry.get('value',{}).get('caseDocketID',{}).get('value')
+  new_case.tracking_id = chain_xml(entry, ['value', 'caseTrackingID', 'value'])
+  new_case.docket_number = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')
 
   if fetch:

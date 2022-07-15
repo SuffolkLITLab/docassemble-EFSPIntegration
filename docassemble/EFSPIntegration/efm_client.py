@@ -167,13 +167,13 @@ class ProxyConnection(EfspConnection):
     all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().get_return_date(court_id, req_return_date, all_vars)
 
-  def get_cases(self, court_id:str, *, person:ALIndividual=None, docket_id:str=None):
+  def get_cases(self, court_id:str, *, person:ALIndividual=None, docket_number:str=None):
     if person is None:
-      return super().get_cases_raw(court_id, docket_id=docket_id)
+      return super().get_cases_raw(court_id, docket_number=docket_number)
     if person.person_type == 'business':
-      return super().get_cases_raw(court_id, business_name=person.name.first, docket_id=docket_id)
+      return super().get_cases_raw(court_id, business_name=person.name.first, docket_number=docket_number)
     else:
-      return super().get_cases_raw(court_id, person_name=person.name.as_serializable(), docket_id=docket_id)
+      return super().get_cases_raw(court_id, person_name=person.name.as_serializable(), docket_number=docket_number)
 
 def serialize_person(person:Union[Person,Individual])->Dict:
   """

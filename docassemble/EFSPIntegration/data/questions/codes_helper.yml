@@ -215,7 +215,7 @@ code: |
   filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
 ---
 code: |
-  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, efile_case_category, eflie_case_type, is_initial_filing).data)
+  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, efile_case_category, efile_case_type, is_initial_filing).data)
 ---
 id: user chosen case category
 question: |

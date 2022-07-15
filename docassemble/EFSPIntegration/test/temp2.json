@@ -223,7 +223,7 @@
         },
         "court_id": "peoria",
         "tracking_id": "ea8a49ec-4093-4f89-99b9-db5b84b210de",
-        "docket_id": "22-AD-00005",
+        "docket_number": "22-AD-00005",
         "category": "7405",
         "case_details": {
             "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}CivilCase",

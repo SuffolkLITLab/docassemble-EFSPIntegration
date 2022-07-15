@@ -1,8 +1,9 @@
 ---
 modules:
+  - docassemble.ALToolbox.misc
   - .efm_client
   - .conversions
-  - docassemble.ALToolbox.misc
+  - .interview_logic
 ---
 include:
   - common_qs.yml
@@ -229,26 +230,18 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
-id: get available_efile_courts 
+id: get available_efile_courts
 code: |
-  resp = proxy_conn.authenticate_user()  # Uses default config keys
-  if resp.response_code == 200:
-    court_list = proxy_conn.get_court_list()
-    if court_list.is_ok():
-      available_efile_courts = sorted(proxy_conn.get_court_list().data or [])
-    else:
-      log(f"Couldn't get courts from proxy server? {court_list}")
-      available_efile_courts = []
-  else:
-    log(f"Couldn't login to the proxy server! {resp}")
-    available_efile_courts = []
-  del resp
+  available_efile_courts = get_available_efile_courts(proxy_conn)
 ---
 depends on:
   - trial_court
-code: |  
+code: |
   court_id = convert_court_to_id(trial_court)
 ---
+depends on:
+  - court_id
+  - available_efile_courts
 only sets: efile_setup
 code: |
   efile_setup = court_id in available_efile_courts

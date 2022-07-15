@@ -1,3 +1,8 @@
+"""
+A group of methods that were code blocks in various parts of the EFSP
+package, but for better python tooling support, were moved here.
+"""
+
 from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 
 from docassemble.base.util import DAObject, DAList, log
@@ -39,7 +44,7 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
   if not var_name:
     var_name = 'found_cases'
   found_cases = DAList(var_name, object_type=DAObject, auto_gather=False)
-  get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_id=None)
+  get_cases_response = proxy_conn.get_cases(court_id, person=somebody, docket_number=None)
   cms_connection_issue = get_cases_response.response_code == 203
   if get_cases_response.is_ok():
     found_cases.resp_ok = True
@@ -137,13 +142,27 @@ def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], def
     return codes, None
 
 def case_labeler(case):
-  docket_id = ''
-  if hasattr(case, 'docket_id'):
-    docket_id = case.docket_id
+  docket_number = ''
+  if hasattr(case, 'docket_number'):
+    docket_number = case.docket_number
   title = ''
   if hasattr(case, 'title'):
     title = case.title
   date = ''
   if hasattr(case, 'date'):
     date = case.date
-  return f"{docket_id} {title} ({date})"
+  return f"{docket_number} {title} ({date})"
+
+def get_available_efile_courts(proxy_conn):
+  """Gets the list of efilable courts, if it can"""
+  resp = proxy_conn.authenticate_user() # use default config keys
+  if resp.response_code == 200:
+    court_list = proxy_conn.get_court_list()
+    if court_list.is_ok():
+      return sorted(court_list.data or [])
+    else:
+      log(f"Couldn't get courts from proxy server? {court_list}")
+      return []
+  else:
+    log(f"Couldn't login to the proxy server!: {resp}")
+    return []

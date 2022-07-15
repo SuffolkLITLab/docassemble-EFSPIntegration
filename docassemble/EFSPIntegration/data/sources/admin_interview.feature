@@ -107,7 +107,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue
@@ -122,7 +122,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue
@@ -147,7 +147,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_id_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
     And I see the phrase "IMPOUNDED ADOPTION"
     And I tap to continue

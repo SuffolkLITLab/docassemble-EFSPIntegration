@@ -70,12 +70,12 @@ code: |
   #     'x.case_choice', 'x.found_cases')
 ---
 depends on:
-  - x.docket_id_from_user
+  - x.docket_number_from_user
 generic object: EFCaseSearch
 if: |
   x.do_what_choice == 'docket_lookup'
 code: |
-  x.docket_id_from_user
+  x.docket_number_from_user
   x.docket_case_response
   if not x.docket_case_response.is_ok() or len(x.docket_case_response.data) == 0:
     x.warn_no_results
@@ -84,7 +84,7 @@ code: |
     x.court_id
     x.found_case = DAObject(x.instanceName + '.found_case')
     parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=all_party_type_map)
-  # undefine('x.docket_id_from_user', 'x.docket_case_response')
+  # undefine('x.docket_number_from_user', 'x.docket_case_response')
 ---
 only sets:
   - x.found_case
@@ -206,7 +206,7 @@ subquestion: |
   ${ collapse_template(case_number_format_template) }
 
 fields:
-  - Case number: x.docket_id_from_user
+  - Case number: x.docket_number_from_user
 ---
 id: ask non-indexed docket number
 generic object: EFCaseSearch
@@ -216,11 +216,16 @@ subquestion: |
   Enter the case number for the non-indexed case
 
   ${ collapse_template(case_number_format_template) }
-  
+
 fields:
   - Case number: x.non_indexed_docket_number
 # TODO: input validation is not possible--no required format for
 # case number in Illinois
+---
+generic object: EFCaseSearch
+code: |
+  if x.do_what_choice == 'docket_lookup' and x.found_case is None and x.can_file_non_indexed_case:
+    x.non_indexed_docket_number = x.docket_number_from_user
 ---
 template: case_number_format_template
 subject: ""
@@ -252,9 +257,9 @@ comment: |
 need:
   - proxy_conn.authed_user_id
 depends on:
-  - x.docket_id_from_user
+  - x.docket_number_from_user
 code: |
-  x.docket_case_response = proxy_conn.get_cases(x.court_id, docket_id=x.docket_id_from_user)
+  x.docket_case_response = proxy_conn.get_cases(x.court_id, docket_number=x.docket_number_from_user)
   x.cms_connection_issue = x.docket_case_response.response_code == 203
 ---
 need:
@@ -314,7 +319,7 @@ subject: |
 content: |
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   #### ${ case.title } (${ case.date })
-  * Docket ID: ${ case.docket_id }
+  * Docket ID: ${ case.docket_number }
   * Court ID: ${ case.court_id }
   * Case Category: ${ case_category_map.get(case.category, {}).get('name', case.category) }
   % endfor
@@ -334,7 +339,7 @@ subquestion: |
   
   % if x.found_case:
   #### ${ x.found_case.title} (${ x.found_case.date })
-  * DocketID: ${ x.found_case.docket_id }
+  * DocketID: ${ x.found_case.docket_number }
   * Court ID: ${ x.found_case.court_id }
   * CaseCategory: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
