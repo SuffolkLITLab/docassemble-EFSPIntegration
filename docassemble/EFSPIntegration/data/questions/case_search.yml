@@ -83,7 +83,7 @@ code: |
   else:
     x.court_id
     x.found_case = DAObject(x.instanceName + '.found_case')
-    parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=all_party_type_map)
+    parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=x.party_type_map)
   # undefine('x.docket_number_from_user', 'x.docket_case_response')
 ---
 only sets:
@@ -279,8 +279,8 @@ subquestion: |
   % endif
   :
 
-  ${ action_button_html(url_action('x.shift_cases_window', direction='prev'), label='Prev') if x.start_case_idx > 0 else '' }
-  ${ action_button_html(url_action('x.shift_cases_window', direction='next'), label='Next') if x.end_case_idx < len(x.found_cases) else ''}
+  ${ action_button_html(url_action(x.instanceName + '.shift_cases_window', direction='prev'), label='Prev') if x.start_case_idx > 0 else '' }
+  ${ action_button_html(url_action(x.instanceName + '.shift_cases_window', direction='next'), label='Next') if x.end_case_idx < len(x.found_cases) else ''}
   
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
   * ${ case.title } (${ case.date })
@@ -305,7 +305,7 @@ generic object: EFCaseSearch
 event: x.shift_cases_window
 code: |
   x.start_case_idx, x.end_case_idx = shift_case_select_window(proxy_conn, x.found_cases,
-    direction=action_argument('direction'), start_idx=x.start_case_idx, end_idx=x.end_case_idx)
+    direction=action_argument('direction'), start_idx=x.start_case_idx, end_idx=x.end_case_idx, roles=x.party_type_map)
 ---
 generic object: EFCaseSearch
 code: |

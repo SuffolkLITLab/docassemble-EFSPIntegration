@@ -63,9 +63,11 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
   return cms_connection_issue, found_cases
 
 def shift_case_select_window(proxy_conn, found_cases:DAList, *, 
-    direction:str, start_idx:int, end_idx:int) -> Tuple[int, int]:
+    direction:str, start_idx:int, end_idx:int, roles:dict=None) -> Tuple[int, int]:
   """Specifically used in case_search.yml, with an action to only fetch a detailed information
   for a few cases at a time"""
+  if not roles:
+    roles = {}
   if direction == 'prev':
     start_idx = max(0, start_idx - num_case_choices())
   else: # direction == 'next'
@@ -74,7 +76,7 @@ def shift_case_select_window(proxy_conn, found_cases:DAList, *,
   end_idx = min(len(found_cases), start_idx + num_case_choices())
   for case in found_cases[start_idx:end_idx]:
     if not hasattr(case, 'title'):
-      fetch_case_info(proxy_conn, case, roles={})
+      fetch_case_info(proxy_conn, case, roles=roles)
   return start_idx, end_idx
 
 def any_missing_party_types(party_type_map:dict, users:ALPeopleList, other_parties:ALPeopleList):
