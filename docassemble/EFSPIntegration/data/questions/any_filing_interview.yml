@@ -23,6 +23,7 @@ fields:
     choices:
       - Illinois: 'illinois'
       - Massachusetts: 'massachusetts'
+      - Texas: 'texas'
 ---
 code: |
   user_registration_choices = [

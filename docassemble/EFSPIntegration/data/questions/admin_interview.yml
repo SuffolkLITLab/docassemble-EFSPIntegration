@@ -1423,6 +1423,7 @@ fields:
     choices:
       - Illinois: 'illinois'
       - Massachusetts: 'massachusetts'
+      - Texas: 'texas'
 ---
 code: |
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=False, timing=None).data)
