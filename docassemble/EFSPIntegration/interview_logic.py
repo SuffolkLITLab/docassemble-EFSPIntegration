@@ -114,26 +114,34 @@ def get_full_court_info(proxy_conn, court_id:str) -> Dict:
     log(f"Couldn't get full court info for {court_id}")
     return {}
 
-def filter_codes(options, filters:Iterable[Union[Callable[..., bool], str]], default:str) -> Tuple[List[Any], Optional[str]]:
+
+class CodeType(str):
+  pass
+
+def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) -> Iterable[Callable[..., bool]]:
+  filter_lambdas = []
+  for filter_fn in filters:
+    if isinstance(filter_fn, CodeType):
+      filter_lambdas.append(lambda opt: opt[0] == filter_fn)
+    elif isinstance(filter_fn, str):
+      filter_lambdas.append(lambda opt: opt[1].lower() == filter_fn.lower())
+    else:
+      filter_lambdas.append(filter_fn)
+  for filter_fn in filters:
+    if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
+      filter_lambdas.append(lambda opt: filter_fn.lower() in opt[1].lower())
+  return filter_lambdas
+
+def filter_codes(options, filters:Iterable[Callable[..., bool]], default:str) -> Tuple[List[Any], Optional[str]]:
   """Given a list of filter functions from most specific to least specific,
   (if true, use that code)
   filters a total list of codes"""
   codes_tmp: List[Any] = []
-  for filter_fn in filters:
+  filter_lambdas = make_filters(filters)
+  for filter_fn in filter_lambdas:
     if codes_tmp:
       break
-    if isinstance(filter_fn, str):
-      match_this = filter_fn
-      filter_fn = lambda opt: opt[1].lower() == match_this.lower()
     codes_tmp = [opt for opt in options if filter_fn(opt)]
-  if not codes_tmp:
-    for filter_st in filters:
-      if codes_tmp:
-        break
-      if isinstance(filter_st, str):
-        contain_this = filter_st
-        filter_fn = lambda opt: contain_this.lower() in opt[1].lower()
-        codes_tmp = [opt for opt in options if filter_fn(opt)]
 
   codes = sorted(codes_tmp, key=lambda option: option[1])
   if len(codes) == 1:

@@ -384,13 +384,32 @@ code: |
   add_existing_users = True
 ---
 code: |
+  is_defendant_filters = [
+    CodeType('20641'),
+    'defendant',
+    'respondent',
+  ]
+
+  is_plaintiff_filters = [
+    CodeType('20646'),
+    'plaintiff',
+    'petitioner',
+  ]
+---
+code: |
   def is_defendant_party(p):
-    return p.party_type == '20641' or \
-        (p.party_type_name is not None and 'defendant' in p.party_type_name.lower())
+    return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_defendant_filters)])
   
   def is_plaintiff_party(p):
-    return p.party_type == '20646' or \
-        (p.party_type_name is not None and 'plaintiff' in p.party_type_name.lower())
+    return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_plaintiff_filters)])
+---
+code: |
+  if user_ask_role == 'plaintiff':
+    is_user_filters = is_plaintiff_filters
+    is_other_party_filters = is_defendant_filters
+  else:
+    is_user_filters = is_defendant_filters
+    is_other_party_filters = is_plaintiff_filters
 ---
 if: len(party_type_options) > 1
 comment: |
