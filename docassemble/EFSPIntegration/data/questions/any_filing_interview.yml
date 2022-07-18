@@ -60,7 +60,7 @@ code: |
     if not case_type_options:
       go_back_screen
     efile_case_type = user_chosen_case_type
-    if efile_case_subtype_options:
+    if case_subtype_options:
       efile_case_subtype = case_subtype_map.get(user_chosen_case_subtype, {}).get('code')
     tyler_filing_attorney
     user_ask_role
