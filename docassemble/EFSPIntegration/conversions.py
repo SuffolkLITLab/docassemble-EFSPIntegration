@@ -120,7 +120,7 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
   codes_map = { vv[backing] : vv for vv in codes_list }
   return choices_list, codes_map
 
-def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
+def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
   """Given an arbitrarily nested JSON structure, print it nicely.
   Recursive, for subsequent calls `tab_depth` increases."""
   tab_inc = 4
@@ -128,16 +128,22 @@ def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
   tab_str = ' ' * tab_depth
   if isinstance(data, list):
     for idx, elem in enumerate(data):
-      out += tab_str + f'* Item: {idx}\n'
+      if item_name:
+        out += tab_str + f'* {item_name}: {idx}\n'
+      else:
+        out += tab_str + f'* Item: {idx}\n'
       out += pretty_display(elem, tab_depth + tab_inc)
 
   elif isinstance(data, dict):
     if 'declaredType' in data:
       if data['declaredType'] == 'gov.niem.niem.niem_core._2.TextType':
-        out += tab_str + f"* {data['name']}: {data['value']['value']}\n"
+        out += tab_str + f"* {data['name'].replace(':', '/')}: {data['value']['value']}\n"
         return out
       if data['declaredType'] == 'gov.niem.niem.proxy.xsd._2.Boolean':
-        out += tab_str + f"* {data['name']}: {data['value']['value']}\n"
+        out += tab_str + f"* {data['name'].replace(':', '/')}: {data['value']['value']}\n"
+        return out
+      if data['declaredType'] == 'gov.niem.niem.proxy.xsd._2.DateTime':
+        out += tab_str + f"* date: {datetime.fromtimestamp(float(data['value']['value'])/1000)}\n"
         return out
     for key, val in data.items():
       if val is not None and (isinstance(val, dict)) \
@@ -157,7 +163,10 @@ def pretty_display(data, tab_depth=0, skip_xml=True) -> str:
         continue
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
-        out += pretty_display(val, tab_depth + tab_inc)
+        item_name = key
+        if item_name.startswith('document'):
+          item_name = item_name[8:]
+        out += pretty_display(val, tab_depth + tab_inc, item_name=item_name)
   else:
     out = tab_str + str(data) + '\n'
   return out
@@ -166,12 +175,13 @@ def debug_display(resp: ApiResponse) -> str:
   """Returns a string with either the error of the response,
   or it's data run through pretty_display"""
   if resp.is_ok() and resp.data is None:
-    return 'All ok!'
+    return f'All ok! ({resp.response_code})'
   if not resp.is_ok():
     to_return = resp.error_msg if resp.error_msg is not None else ''
     if get_config('debug'):
       to_return += f"\nResponse Code: {resp.response_code}"
     return to_return
+  log(f"resp.data: {resp.data}")
   return pretty_display(resp.data)
 
 def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:

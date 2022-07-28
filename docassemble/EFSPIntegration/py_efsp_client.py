@@ -174,7 +174,7 @@ class EfspConnection:
     if registration_type != 'FIRM_ADMIN_NEW_MEMBER':
       reg_obj['password'] = password
 
-    send = lambda: self.proxy_client.put(self.full_url("adminusers/users"), data=json.dumps(reg_obj))
+    send = lambda: self.proxy_client.post(self.full_url("adminusers/users"), data=json.dumps(reg_obj))
     return self._call_proxy(send)
 
   def get_password_rules(self) -> ApiResponse:
@@ -443,11 +443,11 @@ class EfspConnection:
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts'))
     return self._call_proxy(send)
 
-  def get_filing_list(self, court_id:str, user_id:str=None, start_date:datetime=None, end_date:datetime=None):
+  def get_filing_list(self, court_id:str, user_id:str=None, start_date:datetime=None, before_date:datetime=None):
     params = {
       "user_id": user_id,
-      "start_date": start_date.strftime("%y-%m-%d") if start_date else None,
-      "end_date": end_date.strftime("%y-%m-%d") if end_date else None
+      "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
+      "before_date": before_date.strftime("%Y-%m-%d") if before_date else None
     }
     send = lambda: self.proxy_client.get(self.full_url(f'filingreview/courts/{court_id}/filings'), params=params)
     return self._call_proxy(send)

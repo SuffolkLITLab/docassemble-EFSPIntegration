@@ -275,7 +275,7 @@ class TestClass:
     assert(deleted_maybe.response_code == 200)
 
   def test_filings(self):
-    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('illinois', 'adams', start_date=datetime.today() - timedelta(days=3), end_date=datetime.today()))
+    filing_list = self.basic_assert(self.proxy_conn.get_filing_list('illinois', 'adams', start_date=datetime.today() - timedelta(days=3), before_date=datetime.today()))
     policy = self.basic_assert(self.proxy_conn.get_policy('illinois', 'adams'))
 
     cdir = Path(__file__).resolve().parent

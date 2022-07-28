@@ -124,12 +124,18 @@ def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) ->
     if isinstance(filter_fn, CodeType):
       filter_lambdas.append(lambda opt: opt[0] == filter_fn)
     elif isinstance(filter_fn, str):
-      filter_lambdas.append(lambda opt: opt[1].lower() == filter_fn.lower())
+      # unfortunately mypy doesn't work work well with lambdas, so use a def instead
+      # https://github.com/python/mypy/issues/4226
+      def func_from_str(opt):
+        return opt[1].lower() == filter_fn.lower()
+      filter_lambdas.append(func_from_str)
     else:
       filter_lambdas.append(filter_fn)
   for filter_fn in filters:
     if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
-      filter_lambdas.append(lambda opt: filter_fn.lower() in opt[1].lower())
+      def func_in_str(opt):
+        return filter_fn.lower() in opt[1].lower()
+      filter_lambdas.append(func_in_str)
   return filter_lambdas
 
 def filter_codes(options, filters:Iterable[Callable[..., bool]], default:str) -> Tuple[List[Any], Optional[str]]:
