@@ -20,13 +20,15 @@ question: |
   What is your contact information?
 subquestion: |
   Include at least **one** way to reach you other than by mail.
-fields:  
+fields:
   - Mobile number: users[0].mobile_number
     required: False
   - Other phone number: users[0].phone_number
     required: False
   - Email address: users[0].email
     datatype: email
+    default: |
+      ${ proxy_conn.get_user().data.get('email', '') }
     # Email is required if the user wants to efile,
     # and we have to be able to attempt efiling, meaning the court has to be right
     required: can_check_efile
@@ -313,7 +315,8 @@ depends on:
 code: |
   if can_check_efile and user_wants_efile and ready_to_efile:
     efile_user_reviewed
-    prevent_going_back()
+    if not efile_author_mode:
+      prevent_going_back()
     efile_resp
     show_resp
     # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features

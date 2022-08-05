@@ -46,14 +46,15 @@ def _get_all_vars(bundle: ALDocumentBundle):
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
   _give_data_url(bundle)
   all_vars_dict = all_variables()
-  vars_to_pop = [
+  vars_to_pop = set([
     'trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
     'multi_user', 'url_args', 'nav', 'allow_cron', 'speak_text',
     'filing_type_options', 'filing_type_map', 'party_type_options',
     'available_efile_courts', 'case_category_map', 'full_court_info', 'tyler_login_resp', 
     'case_type_map', 'all_courts', 
-    'al_user_bundle', 'court_emails', 'party_type_map', 'case_search', 'subdoc',
-  ]
+    'al_user_bundle', 'court_emails', 'party_type_map', 'case_search', 'subdoc', 'target_case', 'menu_items',
+    'device_local', 'session_local'
+  ])
   for var in vars_to_pop:
     all_vars_dict.pop(var, None)
 
@@ -148,6 +149,8 @@ class ProxyConnection(EfspConnection):
 
   def file_for_review(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
     all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    if get_config('debug'):
+      log(all_vars, 'console')
     return super().file_for_review(court_id, all_vars)
 
   def get_service_types(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]=None):
