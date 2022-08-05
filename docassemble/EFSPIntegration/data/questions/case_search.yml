@@ -366,12 +366,13 @@ need:
   - target_case.found_case
 only sets: add_existing_users
 code: |
-  if not target_case.self_in_case:
+  if target_case.self_in_case not in ['is_self', 'is_filing']:
     users.appendObject()
     users[0].is_new = True
     to_add_participants = target_case.found_case.participants
   else:
     target_case.self_partip_choice.is_new = False
+    target_case.self_partip_choice.is_form_filler = target_case.self_in_case == 'is_self'
     # Change where DA thinks this obj came from, so it says "you", and not "NAME"
     users.append(target_case.self_partip_choice.copy_deep('users[0]'))
     to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
@@ -439,7 +440,9 @@ subquestion: |
   Are you ${ x.maybe_user_partips[0] }?
 fields:
   - no label: x.self_in_case
-    datatype: yesnomaybe
+    datatype: radio
+    code: |
+      x.self_in_case_choices
 ---
 id: found-these-participants
 generic object: EFCaseSearch
@@ -454,12 +457,15 @@ subquestion: |
   Are you any of the above participants?
 fields:
   - no label: x.self_in_case
-    datatype: yesnomaybe
+    datatype: radio
+    code: |
+      x.self_in_case_choices
   - I am: x.self_partip_choice
     datatype: object_radio
     choices: |
       x.maybe_user_partips
-    show if: x.self_in_case
+    js show if: |
+      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_self"
 ---
 generic object: EFCaseSearch
 code: |
@@ -468,10 +474,27 @@ code: |
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 1
 code: |
-  if x.self_in_case:
+  if x.self_in_case in ['is_self', 'is_filing']:
     x.self_partip_choice = x.maybe_user_partips[0]
 ---
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 0
 code: |
-  x.self_in_case = False
+  x.self_in_case = 'no'
+---
+generic object: EFCaseSearch
+code: |
+  if not proxy_conn.get_user().data.get('isIndividual'):
+    x.self_in_case_choices = [
+      ['is_filing', word(f'I am filing for { x.maybe_user_partips[0].name.familiar() }')]
+    ]
+  else:
+    x.self_in_case_choices = [
+      ['is_self', word('Yes')],
+      ['is_filing', word(f'No, but I am filing for { x.maybe_user_partips[0].name.familiar() }')]
+    ]
+
+  x.self_in_case_choices.extend([
+    ['no', word('No')],
+    ['idk', word("I do not know")]
+  ])
