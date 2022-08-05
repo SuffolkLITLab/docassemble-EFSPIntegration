@@ -39,9 +39,8 @@ code: |
   if x.case_search_task_status.ready():
     if not x.case_search_task_status.failed():
       x.tmp_obj = x.case_search_task_status.get()
-      x.tmp_dump = json_unwrap(x.tmp_obj)
-      x.cms_connection_issue = x.tmp_dump[0] or None
-      x.found_cases = x.tmp_dump[1] or DAEmpty(x.instanceName + '.found_cases')
+      x.cms_connection_issue = x.tmp_obj[0] or None
+      x.found_cases = x.tmp_obj[1] or DAEmpty(x.instanceName + '.found_cases')
     else:
       log(x.case_search_task_status.result().error_message)
       log(str(x.case_search_task_status.result().error_trace))
@@ -190,9 +189,9 @@ code: |
 event: case_search_task
 code: |
   my_x = action_argument('my_x')
-  background_response(json_wrap(search_case_by_name(proxy_conn=proxy_conn,
+  background_response(search_case_by_name(proxy_conn=proxy_conn,
       var_name=my_x.instanceName + '.found_cases', court_id=my_x.court_id,
-      somebody=my_x.somebody, filter_fn=filter_fn, roles=my_x.party_type_map)))
+      somebody=my_x.somebody, filter_fn=filter_fn, roles=my_x.party_type_map))
 ---
 generic object: EFCaseSearch
 code: |

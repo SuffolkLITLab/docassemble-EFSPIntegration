@@ -26,70 +26,9 @@ __all__ = [
   'payment_account_labels',
   'filing_id_and_label',
   'get_tyler_roles',
-  'transform_json_variables', 
 ]
 
 TypeType = type(type(None))
-
-def transform_json_variables(obj):
-    """A copy of docassemble's function in server.py (L25538). Can removed 
-    if https://github.com/jhpyle/docassemble/pull/541 is merged"""
-    if isinstance(obj, str):
-        if re.search(r'^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]', obj):
-            try:
-                return as_datetime(dateutil.parser.parse(obj))
-            except:
-                pass
-        elif re.search(r'^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]', obj):
-            try:
-                return datetime.time.fromisoformat(obj)
-            except:
-                pass
-        return obj
-    if isinstance(obj, (bool, int, float)):
-        return obj
-    if isinstance(obj, dict):
-        if '_class' in obj and obj['_class'] == 'type' and 'name' in obj and isinstance(obj['name'], str) and obj['name'].startswith('docassemble.') and not illegal_variable_name(obj['name']):
-            if '.' in obj['name']:
-                the_module = re.sub(r'\.[^\.]+$', '', obj['name'])
-            else:
-                the_module = None
-            try:
-                if the_module:
-                    importlib.import_module(the_module)
-                new_obj = eval(obj['name'])
-                if not isinstance(new_obj, TypeType):
-                    raise Exception("name is not a class")
-                return new_obj
-            except Exception as err:
-                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
-                return None
-        if '_class' in obj and isinstance(obj['_class'], str) and 'instanceName' in obj and isinstance(obj['instanceName'], str) \
-          and (obj['_class'].startswith('docassemble.base.') or obj['_class'].startswith('docassemble.AssemblyLine.')) and not illegal_variable_name(obj['_class']):
-            the_module = re.sub(r'\.[^\.]+$', '', obj['_class'])
-            try:
-                importlib.import_module(the_module)
-                the_class = eval(obj['_class'])
-                if not isinstance(the_class, TypeType):
-                    raise Exception("_class was not a class")
-                new_obj = the_class(obj['instanceName'])
-                for key, val in obj.items():
-                    if key == '_class':
-                        continue
-                    setattr(new_obj, key, transform_json_variables(val))
-                return new_obj
-            except Exception as err:
-                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
-                return None
-        new_dict = {}
-        for key, val in obj.items():
-            new_dict[transform_json_variables(key)] = transform_json_variables(val)
-        return new_dict
-    if isinstance(obj, list):
-        return [transform_json_variables(val) for val in obj]
-    if isinstance(obj, set):
-        return set(transform_json_variables(val) for val in obj)
-    return obj
 
 def convert_court_to_id(trial_court) -> str:
   if hasattr(trial_court, 'tyler_court_code'):
