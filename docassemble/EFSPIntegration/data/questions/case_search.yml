@@ -265,6 +265,9 @@ need:
   - x.found_cases
 id: results for case search
 generic object: EFCaseSearch
+comment: |
+  Sometimes the date returned for a case search is very wrong (i.e. year 1). We don't display
+  it if it's less than year 1000.
 question: |
   Case search results
 subquestion: |
@@ -282,8 +285,9 @@ subquestion: |
   ${ action_button_html(url_action(x.instanceName + '.shift_cases_window', direction='next'), label='Next') if x.end_case_idx < len(x.found_cases) else ''}
   
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
-  * ${ case.title } (${ case.date })
+  * ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   % endfor
+
 
   ${ collapse_template(x.case_results_template) }
 
@@ -317,7 +321,7 @@ subject: |
   View case data
 content: |
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
-  #### ${ case.title } (${ case.date })
+  #### ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   * Docket ID: ${ case.docket_number }
   * Court ID: ${ case.court_id }
   * Case Category: ${ case_category_map.get(case.category, {}).get('name', case.category) }
@@ -337,10 +341,10 @@ subquestion: |
   % endif
   
   % if x.found_case:
-  #### ${ x.found_case.title} (${ x.found_case.date })
-  * DocketID: ${ x.found_case.docket_number }
+  #### ${ x.found_case.title} ${ '(' + x.found_case.date + ')' if x.found_case.date.year > 1000 else '' })
+  * Case Number: ${ x.found_case.docket_number }
   * Court ID: ${ x.found_case.court_id }
-  * CaseCategory: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
+  * Case Category: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
 ---
 comment: |

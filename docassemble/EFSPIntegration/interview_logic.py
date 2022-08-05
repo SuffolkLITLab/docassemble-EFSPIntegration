@@ -159,9 +159,10 @@ def case_labeler(case):
   if hasattr(case, 'title'):
     title = case.title
   date = ''
-  if hasattr(case, 'date'):
+  # Sometimes we get absolutely silly dates on cases. So just don't show anything before year 1000
+  if hasattr(case, 'date') and isinstance(case.date, datetime) and case.date.year > 1000:
     date = case.date
-  return f"{docket_number} {title} ({date})"
+  return f"{docket_number} {title} {'(' + date + ')' if date else ''}"
 
 def get_available_efile_courts(proxy_conn):
   """Gets the list of efilable courts, if it can"""

@@ -100,6 +100,8 @@ def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
         continue
       elif skip_xml and key == 'name' and ('niem-core' in val or 'legalxml-courtfiling' in val):
         continue
+      elif val is not None and isinstance(val, str):
+        out += tab_str + f'* {key}: {val}\n'
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
         item_name = key
@@ -128,7 +130,7 @@ def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
   Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
   returns the datetime it repsents.
   """
-  timestamp = tyler_daterep.get('dateRepresentation', {}).get('value', {}).get('value', 0)
+  timestamp = chain_xml(tyler_daterep, ['dateRepresentation', 'value', 'value']) or 0
   return tyler_timestamp_to_datetime(timestamp)
 
 def tyler_timestamp_to_datetime(timestamp_ms:int)->DADateTime:
@@ -190,28 +192,28 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
   if phone_xml is None:
     return None
   if phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber':
-    return phone_xml.get('value', {}).get('telephoneNumberFullID', {}).get('value')
+    return chain_xml(phone_xml, ['value', 'telephoneNumberFullID', 'value'])
   elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}InternationalTelephoneNumber':
-    return phone_xml.get('value', {}).get('telephoneCountryCodeID', {}).get('value', '') +\
-        phone_xml.get('value', {}).get('telephoneNumberID', {}).get('value', '')
+    return (chain_xml(phone_xml, ['value', 'telephoneCountryCodeID', 'value']) or '') +\
+        (chain_xml(phone_xml, ['value', 'telephoneNumberID', 'value']) or '')
   elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}NANPTelephoneNumber':
-    tp = phone_xml.get('value', {})
-    return tp.get('telephoneAreaCodeID', {}).get('value', '') +\
-        tp.get('telephoneExchanceID').get('value', '') +\
-        tp.get('telephoneLineID').get('value', '')
+    tp = phone_xml.get('value') or {}
+    return (chain_xml(tp, ['telephoneAreaCodeID', 'value']) or '') +\
+        (chain_xml(tp, ['telephoneExchanceID', 'value']) or '') +\
+        (chain_xml(tp, ['telephoneLineID', 'value']) or '')
   else:
     # TODO(brycew): no telephone type we recognize?
     return None
 
 def _parse_address(address_xml) -> ALAddress:
   address = ALAddress()
-  city_xml = address_xml.get('value', {}).get('locationCityName', {})
+  city_xml = chain_xml(address_xml, ['value', 'locationCityName']) or {}
   if city_xml:
     address.city = city_xml.get('value')
-  zip_xml = address_xml.get('value', {}).get('locationPostalCode', {})
+  zip_xml = chain_xml(address_xml, ['value', 'locationPostalCode']) or {}
   if zip_xml:
     address.zip_code = zip_xml.get('value')
-  state_xml = address_xml.get('value', {}).get('locationState', {})
+  state_xml = chain_xml(address_xml, ['value', 'locationState']) or {}
   if state_xml.get('value', {}).get('value'):
     address.state = state_xml.get('value', {}).get('value')
   return address
@@ -234,7 +236,7 @@ def _parse_participant(part_obj, participant_val, roles:dict):
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
   if _is_person(entity): 
     part_obj.person_type = 'ALIndividual'
-    name = entity.get('personName', {})
+    name = entity.get('personName') or {}
     part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
     part_obj.name.middle = name.get('personMiddleName', {}).get('value', '').title()
     part_obj.name.last = name.get('personSurName', {}).get('value', '').title()
@@ -256,7 +258,7 @@ def _parse_participant(part_obj, participant_val, roles:dict):
           part_obj.email = email
   else:
     part_obj.person_type = 'business'
-    part_obj.name.first = entity.get('organizationName', {}).get('value', {})
+    part_obj.name.first = entity.get('organizationName', {}).get('value', '')
   part_obj.tyler_id = _parse_participant_id(entity)
   return part_obj
 
