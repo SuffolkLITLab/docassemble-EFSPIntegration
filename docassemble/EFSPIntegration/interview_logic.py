@@ -116,19 +116,23 @@ def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) ->
   filter_lambdas = []
   for filter_fn in filters:
     if isinstance(filter_fn, CodeType):
-      filter_lambdas.append(lambda opt: opt[0] == filter_fn)
+      filter_lambdas.append(lambda opt, filter_code=filter_fn: opt[0] == filter_code)
     elif isinstance(filter_fn, str):
       # unfortunately mypy doesn't work work well with lambdas, so use a def instead
       # https://github.com/python/mypy/issues/4226
-      def func_from_str(opt):
-        return opt[1].lower() == filter_fn.lower()
+      def func_from_str(opt, filter_str=filter_fn):
+        return opt[1].lower() == filter_str.lower()
       filter_lambdas.append(func_from_str)
+    elif isinstance(filter_fn, Iterable):
+      def func_from_iter(opt, filter_list=filter_fn):
+        return all([filter_item.lower() in opt[1].lower() for filter_item in filter_list])
+      filter_lambdas.append(func_from_iter)
     else:
       filter_lambdas.append(filter_fn)
   for filter_fn in filters:
     if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
-      def func_in_str(opt):
-        return filter_fn.lower() in opt[1].lower()
+      def func_in_str(opt, filter_str=filter_fn):
+        return filter_str.lower() in opt[1].lower()
       filter_lambdas.append(func_in_str)
   return filter_lambdas
 
@@ -164,7 +168,7 @@ def case_labeler(case):
     date = case.date
   return f"{docket_number} {title} {'(' + date + ')' if date else ''}"
 
-def get_available_efile_courts(proxy_conn):
+def get_available_efile_courts(proxy_conn) -> list:
   """Gets the list of efilable courts, if it can"""
   resp = proxy_conn.authenticate_user() # use default config keys
   if resp.response_code == 200:
