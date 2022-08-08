@@ -6,12 +6,15 @@ modules:
 include:
   - common_qs.yml
 ---
+code: |
+  logged_out_interview = "docassemble.EFSPIntegration:unauthenticated_interview.yml"
+---
 id: eFile Login
 question: |
   eFile${ state_name_to_code(jurisdiction_id) } Login Info
 subquestion: |
   Provide your eFile ${ jurisdiction_id.title() } Login information. If you don't yet have a login, you can create
-  <a href="${ interview_url(i="docassemble.EFSPIntegration:unauthenticated_interview.yml", reset=1, jurisdiction_id=jurisdiction_id) }" target="_blank">a new account here</a>.
+  <a href="${ interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id) }" target="_blank">a new account here</a>.
 fields:
   - email/username: my_username
   - password: my_password
@@ -31,7 +34,6 @@ code: |
       log(f'Failed to login: {tyler_login_resp}')
       login_failed_screen
   tyler_login = True
-  # TODO(brycew): handle improper login info
 ---
 code: |
   change_resp = proxy_conn.self_change_password(current_password, new_user_password)
@@ -86,7 +88,7 @@ fields:
     datatype: password
 validation code: |
   if not new_user_password == confirm_new_password:
-    validation_error("Your passwords do not match.", field="confirm_new_password")
+    validation_error(word("Your passwords do not match."), field="confirm_new_password")
   if not proxy_conn.is_valid_password(new_user_password):
     password_rules
     validation_error(password_rules.data.get("validationmessage"))

@@ -19,7 +19,7 @@ Feature: Make any type of filing
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
       | x.docket_number_from_user | 22-AD-00005 | case_search.docket_number_from_user |
-      | x.self_in_case | 'is_self' | case_search.self_in_case |
+      | x.self_in_case | is_self | case_search.self_in_case |
       | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
       | user_ask_role | defendant | |
       | other_parties.there_are_any | False | |
@@ -68,7 +68,7 @@ Feature: Make any type of filing
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
       | x.docket_number_from_user | 22-AD-00005 | case_search.docket_number_from_user |
-      | x.self_in_case | True | case_search.self_in_case |
+      | x.self_in_case | is_self| case_search.self_in_case |
       | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
       | users[0].is_form_filler | False | |
       | user_ask_role | defendant | |
@@ -129,7 +129,7 @@ Feature: Make any type of filing
         | user_ask_role | defendant | |
         | other_parties.there_are_any | False | |
         | existing_parties_new_atts.there_are_any | False | |
-        | x.self_in_case | 'is_self' | case_search.self_in_case |
+        | x.self_in_case | is_self | case_search.self_in_case |
         | x.self_partip_choice | case_search.found_case.participants[1] | case_search.self_in_case |
         | users[0].is_form_filler | False | |
         | lead_contact.email | example@example.com | |
