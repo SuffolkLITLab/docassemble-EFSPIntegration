@@ -1,6 +1,7 @@
 ---
 modules:
   - .conversions
+  - .interview_logic
   - .efm_client
 ---
 include:
@@ -139,3 +140,24 @@ subquestion: |
   % endif
 buttons:
   - restart
+---
+##########
+## As a result of logging in, we can use defaults. That's why they're in this file.
+---
+# TODO: consider removing default state
+id: your address
+sets:
+  - users[0].address.address
+  - users[0].address.city
+  - users[0].address.zip
+  - users[0].address.unit
+  - users[0].address.state
+  - users[0].address.country
+question: |
+  What is your address?
+subquestion: |
+  Use an address where you can be contacted.
+fields:
+  - code: |
+      address_fields_with_defaults(proxy_conn, users[0], logged_in_user_is_admin, country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+---

@@ -15,31 +15,19 @@ code: |
 code: |
   efile_author_mode = get_config("debug")
 ---
+sets:
+  - users[0].phone_number
+  - users[0].mobile_number
+  - users[0].email
+  - users[0].other_contact_method
 id: your contact information
 question: |
   What is your contact information?
 subquestion: |
   Include at least **one** way to reach you other than by mail.
 fields:
-  - Mobile number: users[0].mobile_number
-    required: False
-  - Other phone number: users[0].phone_number
-    required: False
-  - Email address: users[0].email
-    datatype: email
-    default: |
-      ${ proxy_conn.get_user().data.get('email', '') }
-    # Email is required if the user wants to efile,
-    # and we have to be able to attempt efiling, meaning the court has to be right
-    required: can_check_efile
-  - Other ways to reach you: users[0].other_contact_method
-    input type: area
-    required: False
-    help: |
-      If you do not have a phone number or email, provide
-      specific contact instructions. For example, use a friend's phone number.
-      But the friend must be someone you can rely on to give you a
-      message.
+  code: |
+    contact_fields_with_defaults(proxy_conn, users[0], logged_in_user_is_admin, can_check_efile)
 validation code: |
   if (not showifdef('users[0].phone_number') and \
       (not showifdef('users[0].mobile_number')) and \
