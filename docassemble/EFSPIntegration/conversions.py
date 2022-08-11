@@ -26,70 +26,9 @@ __all__ = [
   'payment_account_labels',
   'filing_id_and_label',
   'get_tyler_roles',
-  'transform_json_variables', 
 ]
 
 TypeType = type(type(None))
-
-def transform_json_variables(obj):
-    """A copy of docassemble's function in server.py (L25538). Can removed 
-    if https://github.com/jhpyle/docassemble/pull/541 is merged"""
-    if isinstance(obj, str):
-        if re.search(r'^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]', obj):
-            try:
-                return as_datetime(dateutil.parser.parse(obj))
-            except:
-                pass
-        elif re.search(r'^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]', obj):
-            try:
-                return datetime.time.fromisoformat(obj)
-            except:
-                pass
-        return obj
-    if isinstance(obj, (bool, int, float)):
-        return obj
-    if isinstance(obj, dict):
-        if '_class' in obj and obj['_class'] == 'type' and 'name' in obj and isinstance(obj['name'], str) and obj['name'].startswith('docassemble.') and not illegal_variable_name(obj['name']):
-            if '.' in obj['name']:
-                the_module = re.sub(r'\.[^\.]+$', '', obj['name'])
-            else:
-                the_module = None
-            try:
-                if the_module:
-                    importlib.import_module(the_module)
-                new_obj = eval(obj['name'])
-                if not isinstance(new_obj, TypeType):
-                    raise Exception("name is not a class")
-                return new_obj
-            except Exception as err:
-                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
-                return None
-        if '_class' in obj and isinstance(obj['_class'], str) and 'instanceName' in obj and isinstance(obj['instanceName'], str) \
-          and (obj['_class'].startswith('docassemble.base.') or obj['_class'].startswith('docassemble.AssemblyLine.')) and not illegal_variable_name(obj['_class']):
-            the_module = re.sub(r'\.[^\.]+$', '', obj['_class'])
-            try:
-                importlib.import_module(the_module)
-                the_class = eval(obj['_class'])
-                if not isinstance(the_class, TypeType):
-                    raise Exception("_class was not a class")
-                new_obj = the_class(obj['instanceName'])
-                for key, val in obj.items():
-                    if key == '_class':
-                        continue
-                    setattr(new_obj, key, transform_json_variables(val))
-                return new_obj
-            except Exception as err:
-                log("transform_json_variables: " + err.__class__.__name__ + ": " + str(err))
-                return None
-        new_dict = {}
-        for key, val in obj.items():
-            new_dict[transform_json_variables(key)] = transform_json_variables(val)
-        return new_dict
-    if isinstance(obj, list):
-        return [transform_json_variables(val) for val in obj]
-    if isinstance(obj, set):
-        return set(transform_json_variables(val) for val in obj)
-    return obj
 
 def convert_court_to_id(trial_court) -> str:
   if hasattr(trial_court, 'tyler_court_code'):
@@ -161,6 +100,8 @@ def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
         continue
       elif skip_xml and key == 'name' and ('niem-core' in val or 'legalxml-courtfiling' in val):
         continue
+      elif val is not None and isinstance(val, str):
+        out += tab_str + f'* {key}: {val}\n'
       elif val is not None and val != [] and val != {}:
         out += tab_str + f'* {key}: \n'
         item_name = key
@@ -189,7 +130,7 @@ def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
   Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
   returns the datetime it repsents.
   """
-  timestamp = tyler_daterep.get('dateRepresentation', {}).get('value', {}).get('value', 0)
+  timestamp = chain_xml(tyler_daterep, ['dateRepresentation', 'value', 'value']) or 0
   return tyler_timestamp_to_datetime(timestamp)
 
 def tyler_timestamp_to_datetime(timestamp_ms:int)->DADateTime:
@@ -251,28 +192,28 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
   if phone_xml is None:
     return None
   if phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}FullTelephoneNumber':
-    return phone_xml.get('value', {}).get('telephoneNumberFullID', {}).get('value')
+    return chain_xml(phone_xml, ['value', 'telephoneNumberFullID', 'value'])
   elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}InternationalTelephoneNumber':
-    return phone_xml.get('value', {}).get('telephoneCountryCodeID', {}).get('value', '') +\
-        phone_xml.get('value', {}).get('telephoneNumberID', {}).get('value', '')
+    return (chain_xml(phone_xml, ['value', 'telephoneCountryCodeID', 'value']) or '') +\
+        (chain_xml(phone_xml, ['value', 'telephoneNumberID', 'value']) or '')
   elif phone_xml.get('name') == '{http://niem.gov/niem/niem-core/2.0}NANPTelephoneNumber':
-    tp = phone_xml.get('value', {})
-    return tp.get('telephoneAreaCodeID', {}).get('value', '') +\
-        tp.get('telephoneExchanceID').get('value', '') +\
-        tp.get('telephoneLineID').get('value', '')
+    tp = phone_xml.get('value') or {}
+    return (chain_xml(tp, ['telephoneAreaCodeID', 'value']) or '') +\
+        (chain_xml(tp, ['telephoneExchanceID', 'value']) or '') +\
+        (chain_xml(tp, ['telephoneLineID', 'value']) or '')
   else:
     # TODO(brycew): no telephone type we recognize?
     return None
 
 def _parse_address(address_xml) -> ALAddress:
   address = ALAddress()
-  city_xml = address_xml.get('value', {}).get('locationCityName', {})
+  city_xml = chain_xml(address_xml, ['value', 'locationCityName']) or {}
   if city_xml:
     address.city = city_xml.get('value')
-  zip_xml = address_xml.get('value', {}).get('locationPostalCode', {})
+  zip_xml = chain_xml(address_xml, ['value', 'locationPostalCode']) or {}
   if zip_xml:
     address.zip_code = zip_xml.get('value')
-  state_xml = address_xml.get('value', {}).get('locationState', {})
+  state_xml = chain_xml(address_xml, ['value', 'locationState']) or {}
   if state_xml.get('value', {}).get('value'):
     address.state = state_xml.get('value', {}).get('value')
   return address
@@ -295,7 +236,7 @@ def _parse_participant(part_obj, participant_val, roles:dict):
   entity = chain_xml(participant_val, ['value', 'entityRepresentation', 'value'])
   if _is_person(entity): 
     part_obj.person_type = 'ALIndividual'
-    name = entity.get('personName', {})
+    name = entity.get('personName') or {}
     part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
     part_obj.name.middle = name.get('personMiddleName', {}).get('value', '').title()
     part_obj.name.last = name.get('personSurName', {}).get('value', '').title()
@@ -317,7 +258,7 @@ def _parse_participant(part_obj, participant_val, roles:dict):
           part_obj.email = email
   else:
     part_obj.person_type = 'business'
-    part_obj.name.first = entity.get('organizationName', {}).get('value', {})
+    part_obj.name.first = entity.get('organizationName', {}).get('value', '')
   part_obj.tyler_id = _parse_participant_id(entity)
   return part_obj
 
@@ -471,11 +412,11 @@ def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
     return False, False
 
   user_details = proxy_conn.get_user(login_data.get('TYLER-ID', login_data.get('TYLER_ID')))
-  firm_details = proxy_conn.get_firm()
   if not user_details.data:
     return False, False
 
   is_admin = lambda role: role.get('roleName') == 'FIRM_ADMIN'
+  firm_details = proxy_conn.get_firm()
   logged_in_user_is_admin = any(filter(is_admin, user_details.data.get('role'))) and not firm_details.data.get('isIndividual', False)
   logged_in_user_is_global_admin = logged_in_user_is_admin and \
       user_details.data.get('email') in get_config('efile proxy').get('global server admins',[])

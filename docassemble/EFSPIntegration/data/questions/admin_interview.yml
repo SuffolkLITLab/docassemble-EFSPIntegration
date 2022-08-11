@@ -777,7 +777,9 @@ fields:
   - Global: new_account_is_global
     datatype: yesno
     default: False
-    show if: logged_in_user_is_global_admin
+    show if:
+      code: |
+        logged_in_user_is_global_admin
   - Name of account: new_account_name
   - Type: new_account_type_code
     datatype: radio

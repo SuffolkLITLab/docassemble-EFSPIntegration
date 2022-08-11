@@ -36,24 +36,29 @@ def _give_data_url(bundle: ALDocumentBundle, key:str='final'):
           attachment.proxy_enabled = attachment.is_enabled()
           attachment_pdf = attachment.as_pdf(key)
           attachment.data_url = attachment_pdf.url_for(external=True, temporary=True)
+          if attachment.data_url.startswith('http://localhost/'):
+            attachment.data_url = attachment.data_url.replace('http://localhost/', 'http://' + get_config('external hostname') + '/')
           attachment.page_court = attachment_pdf.num_pages()
       else:
         doc_pdf = doc.as_pdf(key)
         doc.data_url = doc_pdf.url_for(external=True, temporary=True)
+        if doc.data_url.startswith('http://localhost/'):
+          doc.data_url = doc.data_url.replace('http://localhost/', 'http://' + get_config('external hostname') + '/')
         doc.page_count = doc_pdf.num_pages()
 
-def _get_all_vars(bundle: ALDocumentBundle):
+def _get_all_vars(bundle: ALDocumentBundle, key:str='final'):
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
-  _give_data_url(bundle)
+  _give_data_url(bundle, key=key)
   all_vars_dict = all_variables()
-  vars_to_pop = [
+  vars_to_pop = set([
     'trial_court_resp', 'x', 'trial_court_options', 'found_case', 'selected_existing_case', 
     'multi_user', 'url_args', 'nav', 'allow_cron', 'speak_text',
     'filing_type_options', 'filing_type_map', 'party_type_options',
     'available_efile_courts', 'case_category_map', 'full_court_info', 'tyler_login_resp', 
     'case_type_map', 'all_courts', 
-    'al_user_bundle', 'court_emails', 'party_type_map', 'case_search', 'subdoc',
-  ]
+    'al_user_bundle', 'court_emails', 'party_type_map', 'case_search', 'subdoc', 'target_case', 'menu_items',
+    'device_local', 'session_local'
+  ])
   for var in vars_to_pop:
     all_vars_dict.pop(var, None)
 
@@ -143,11 +148,13 @@ class ProxyConnection(EfspConnection):
     return super().create_service_contact(service_contact_dict, is_public=is_public, is_in_master_list=is_in_master_list, admin_copy=admin_copy)
 
   def check_filing(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
-    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    all_vars = _get_all_vars(court_bundle, key='preview') if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().check_filing(court_id, all_vars)
 
   def file_for_review(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
     all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    if get_config('debug'):
+      log(all_vars, 'console')
     return super().file_for_review(court_id, all_vars)
 
   def get_service_types(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]=None):
@@ -160,11 +167,11 @@ class ProxyConnection(EfspConnection):
     return super().get_service_types(court_id, all_vars=all_vars)
 
   def calculate_filing_fees(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
-    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    all_vars = _get_all_vars(court_bundle, key='preview') if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().calculate_filing_fees(court_id, all_vars)
 
   def get_return_date(self, court_id:str, req_return_date, court_bundle:Union[ALDocumentBundle, dict]):
-    all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
+    all_vars = _get_all_vars(court_bundle, key='preview') if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().get_return_date(court_id, req_return_date, all_vars)
 
   def get_cases(self, court_id:str, *, person:ALIndividual=None, docket_number:str=None):

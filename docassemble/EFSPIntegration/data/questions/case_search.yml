@@ -39,9 +39,8 @@ code: |
   if x.case_search_task_status.ready():
     if not x.case_search_task_status.failed():
       x.tmp_obj = x.case_search_task_status.get()
-      x.tmp_dump = json_unwrap(x.tmp_obj)
-      x.cms_connection_issue = x.tmp_dump[0] or None
-      x.found_cases = x.tmp_dump[1] or DAEmpty(x.instanceName + '.found_cases')
+      x.cms_connection_issue = x.tmp_obj[0] or None
+      x.found_cases = x.tmp_obj[1] or DAEmpty(x.instanceName + '.found_cases')
     else:
       log(x.case_search_task_status.result().error_message)
       log(str(x.case_search_task_status.result().error_trace))
@@ -142,15 +141,16 @@ question: |
   Find your case
 subquestion: |
   % if x.can_file_non_indexed_case:
-  ${ collapse_template(explain_case_search_choices_template) }
+  ${ collapse_template(x.explain_case_search_choices_template) }
   % endif
 fields:
   - How do you want to find your case?: x.do_what_choice
     datatype: radio
     code: |
-      get_lookup_choices(x.can_file_non_indexed_case)
+      x.get_lookup_choices(x.can_file_non_indexed_case)
 ---
-template: explain_case_search_choices_template
+generic object: EFCaseSearch
+template: x.explain_case_search_choices_template
 subject: |
   What is a non-indexed case?
 content: |
@@ -158,6 +158,21 @@ content: |
   docket. If that applies to the court you want to file into,
   you can still file but you must use the case number so that
   a clerk can match your filing to the case.
+---
+generic object: EFCaseSearch
+template: x.party_search_choice
+content: |
+  Party name
+---
+generic object: EFCaseSearch
+template: x.docket_lookup_choice
+content: |
+  Case number
+---
+generic object: EFCaseSearch
+template: x.non_indexed_choice
+content: |
+  I want to file into a non-indexed case
 ---
 sets:
   - x.somebody.name.first
@@ -190,9 +205,9 @@ code: |
 event: case_search_task
 code: |
   my_x = action_argument('my_x')
-  background_response(json_wrap(search_case_by_name(proxy_conn=proxy_conn,
+  background_response(search_case_by_name(proxy_conn=proxy_conn,
       var_name=my_x.instanceName + '.found_cases', court_id=my_x.court_id,
-      somebody=my_x.somebody, filter_fn=filter_fn, roles=my_x.party_type_map)))
+      somebody=my_x.somebody, filter_fn=filter_fn, roles=my_x.party_type_map))
 ---
 generic object: EFCaseSearch
 code: |
@@ -201,12 +216,12 @@ code: |
 id: docket id
 generic object: EFCaseSearch
 question: |
-  Case number
+  ${ str(x.docket_lookup_choice) }
 subquestion: |
-  ${ collapse_template(case_number_format_template) }
+  ${ collapse_template(x.case_number_format_template) }
 
 fields:
-  - Case number: x.docket_number_from_user
+  - ${ str(x.docket_lookup_choice) }: x.docket_number_from_user
 ---
 id: ask non-indexed docket number
 generic object: EFCaseSearch
@@ -215,7 +230,7 @@ question: |
 subquestion: |
   Enter the case number for the non-indexed case
 
-  ${ collapse_template(case_number_format_template) }
+  ${ collapse_template(x.case_number_format_template) }
 
 fields:
   - Case number: x.non_indexed_docket_number
@@ -227,13 +242,15 @@ code: |
   if x.do_what_choice == 'docket_lookup' and x.found_case is None and x.can_file_non_indexed_case:
     x.non_indexed_docket_number = x.docket_number_from_user
 ---
-template: case_number_format_template
+generic object: EFCaseSearch
+template: x.case_number_format_template
 subject: ""
 content: ""
 ---
+generic object: EFCaseSearch
 if: |
  jurisdiction_id == 'illinois'
-template: case_number_format_template
+template: x.case_number_format_template
 subject: |
   How to enter your case number (Except Cook County)
 content: |
@@ -241,9 +258,10 @@ content: |
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
   [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-).
 ---
+generic object: EFCaseSearch
 if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
-template: case_number_format_template
+template: x.case_number_format_template
 subject: |
   How to enter your case number (Chicago/Cook County only)
 content: |
@@ -266,6 +284,9 @@ need:
   - x.found_cases
 id: results for case search
 generic object: EFCaseSearch
+comment: |
+  Sometimes the date returned for a case search is very wrong (i.e. year 1). We don't display
+  it if it's less than year 1000.
 question: |
   Case search results
 subquestion: |
@@ -283,8 +304,9 @@ subquestion: |
   ${ action_button_html(url_action(x.instanceName + '.shift_cases_window', direction='next'), label='Next') if x.end_case_idx < len(x.found_cases) else ''}
   
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
-  * ${ case.title } (${ case.date })
+  * ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   % endfor
+
 
   ${ collapse_template(x.case_results_template) }
 
@@ -318,10 +340,10 @@ subject: |
   View case data
 content: |
   % for case in x.found_cases[x.start_case_idx:x.end_case_idx]:
-  #### ${ case.title } (${ case.date })
+  #### ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   * Docket ID: ${ case.docket_number }
   * Court ID: ${ case.court_id }
-  * Case Category: ${ case_category_map.get(case.category, {}).get('name', case.category) }
+  * Case Category: ${ x.case_category_map.get(case.category, {}).get('name', case.category) }
   % endfor
 comment: |
   Can't use this code for court ID without causing an infinite loop? Unclear why
@@ -338,10 +360,10 @@ subquestion: |
   % endif
   
   % if x.found_case:
-  #### ${ x.found_case.title} (${ x.found_case.date })
-  * DocketID: ${ x.found_case.docket_number }
+  #### ${ x.found_case.title} ${ '(' + x.found_case.date + ')' if x.found_case.date.year > 1000 else '' }
+  * ${ str(x.docket_lookup_choice) }: ${ x.found_case.docket_number }
   * Court ID: ${ x.found_case.court_id }
-  * CaseCategory: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
+  * Case Category: ${ x.case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
 ---
 comment: |
@@ -350,6 +372,10 @@ comment: |
 code: |
   def filter_fn(new_case):
     return True
+---
+generic object: EFCaseSearch
+code: |
+  x.case_category_options, x.case_category_map = choices_and_map(proxy_conn.get_case_categories(x.court_id, fileable_only=False, timing=None).data)
 ---
 #########################################
 ## Populating Case Parties based on the case search
@@ -363,12 +389,13 @@ need:
   - target_case.found_case
 only sets: add_existing_users
 code: |
-  if not target_case.self_in_case:
+  if target_case.self_in_case not in ['is_self', 'is_filing']:
     users.appendObject()
     users[0].is_new = True
     to_add_participants = target_case.found_case.participants
   else:
     target_case.self_partip_choice.is_new = False
+    target_case.self_partip_choice.is_form_filler = target_case.self_in_case == 'is_self'
     # Change where DA thinks this obj came from, so it says "you", and not "NAME"
     users.append(target_case.self_partip_choice.copy_deep('users[0]'))
     to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
@@ -436,7 +463,9 @@ subquestion: |
   Are you ${ x.maybe_user_partips[0] }?
 fields:
   - no label: x.self_in_case
-    datatype: yesnomaybe
+    datatype: radio
+    code: |
+      x.self_in_case_choices
 ---
 id: found-these-participants
 generic object: EFCaseSearch
@@ -451,12 +480,15 @@ subquestion: |
   Are you any of the above participants?
 fields:
   - no label: x.self_in_case
-    datatype: yesnomaybe
+    datatype: radio
+    code: |
+      x.self_in_case_choices
   - I am: x.self_partip_choice
     datatype: object_radio
     choices: |
       x.maybe_user_partips
-    show if: x.self_in_case
+    js show if: |
+      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_filing"
 ---
 generic object: EFCaseSearch
 code: |
@@ -465,10 +497,32 @@ code: |
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 1
 code: |
-  if x.self_in_case:
+  if x.self_in_case in ['is_self', 'is_filing']:
     x.self_partip_choice = x.maybe_user_partips[0]
 ---
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 0
 code: |
-  x.self_in_case = False
+  x.self_in_case = 'no'
+---
+generic object: EFCaseSearch
+code: |
+  if len(x.maybe_user_partips) == 1:
+    person_word = word(x.maybe_user_partips[0].name.familiar())
+  else:
+    person_word = word('one of them')
+
+  if logged_in_user_is_admin:
+    x.self_in_case_choices = [
+      ['is_filing', word(f'I am filing for { person_word }')]
+    ]
+  else:
+    x.self_in_case_choices = [
+      ['is_self', word('Yes')],
+      ['is_filing', word(f'No, but I am filing for { person_word }')]
+    ]
+
+  x.self_in_case_choices.extend([
+    ['no', word('No')],
+    ['idk', word("I do not know")]
+  ])

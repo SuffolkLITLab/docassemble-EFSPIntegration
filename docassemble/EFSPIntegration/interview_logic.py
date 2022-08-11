@@ -4,11 +4,11 @@ package, but for better python tooling support, were moved here.
 """
 
 from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
+from datetime import datetime
 
-from docassemble.base.util import DAObject, DAList, log
-from docassemble.base.functions import safe_json
-from .conversions import parse_case_info, fetch_case_info, transform_json_variables
-from docassemble.AssemblyLine.al_general import ALPeopleList
+from docassemble.base.util import DAObject, DAList, log, word
+from .conversions import parse_case_info, fetch_case_info
+from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 class EFCaseSearch(DAObject):
   court_id:str
@@ -17,25 +17,86 @@ class EFCaseSearch(DAObject):
   found_case: DAObject
   case_was_found: bool
 
+  def get_lookup_choices(self, can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
+    lookup_choices = [
+      {'party_search': str(self.party_search_choice)},
+      {'docket_lookup': str(self.docket_lookup_choice)},
+    ]
+    if can_file_non_indexed_case:
+      lookup_choices.append({'non_indexed_case': str(self.non_indexed_choice)})
+    return lookup_choices
+
+def address_fields_with_defaults(proxy_conn, person:ALIndividual, is_admin:bool, **kwargs):
+  address_fields = person.address_fields(**kwargs)
+  if is_admin:
+    # Don't autofill if the person is an admin
+    return address_fields
+  firm_info = proxy_conn.get_firm()
+  if firm_info.is_ok():
+    if 'address' in firm_info.data:
+      for field in address_fields:
+        if field.get('field', '').endswith('.address'):
+          field['default'] = firm_info.data['address'].get('addressLine1')
+        if field.get('field', '').endswith('.unit'):
+          field['default'] = firm_info.data['address'].get('addressLine2')
+        if field.get('field', '').endswith('.city'):
+          field['default'] = firm_info.data['address'].get('city')
+        if field.get('field', '').endswith('.state'):
+          field['default'] = firm_info.data['address'].get('state')
+        if field.get('field', '').endswith('.zip'):
+          field['default'] = firm_info.data['address'].get('zipCode')
+  return address_fields
+
+def contact_fields_with_defaults(proxy_conn, person:ALIndividual, is_admin:bool, can_check_efile:bool):
+  contact_fields = [
+    {
+      "label": word("Mobile number"),
+      "field": person.attr_name("mobile_number"),
+      "required": False,
+    },
+    {
+      "label": word("Other phone number"),
+      "field": person.attr_name("phone_number"),
+      "required": False,
+    },
+    {
+      "label": word("Email address"),
+      "field": person.attr_name("email"),
+      "datatype": "email",
+      # Email is required if the user wants to efile,
+      # and we have to be able to attempt efiling, meaning the court has to be right
+      "required": can_check_efile,
+    },
+    {
+      "label": word("Other ways to reach you"),
+      "field": person.attr_name("other_contact_method"),
+      "input type": "area",
+      "required": False,
+      "help": word("""
+If you do not have a phone number or email, provide
+specific contact instructions. For example, use a friend's phone number.
+But the friend must be someone you can rely on to give you a
+message.
+      """)
+    }
+  ]
+  if is_admin:
+    return contact_fields
+
+  user_info = proxy_conn.get_user()
+  firm_info = proxy_conn.get_firm()
+  if user_info.is_ok() and firm_info.is_ok():
+    for field in contact_fields:
+      if field.get('field', '').endswith('.email') and 'email' in user_info.data:
+        field['default'] = user_info.data.get('email')
+      if field.get('field', '').endswith('.phone_number') and 'phoneNumber' in firm_info.data:
+        field['default'] = firm_info.data.get('phoneNumber')
+  return contact_fields
+
 def num_case_choices() -> int:
   """The number of cases that someone should have to choose between if there are too many.
   Mostly to limit the amount of up-front waiting someone will have to do."""
   return 8
-
-def get_lookup_choices(can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
-  lookup_choices = [
-    {'party_search': 'Party name'},
-    {'docket_lookup': 'Case number'},
-  ]
-  if can_file_non_indexed_case:
-    lookup_choices.append({'non_indexed_case': 'I want to file into a non-indexed case'})
-  return lookup_choices
-
-def json_wrap(item:Tuple):
-  return safe_json([*item])
-
-def json_unwrap(val):
-  return transform_json_variables(val)
 
 def search_case_by_name(*, proxy_conn, var_name:str=None, 
     court_id:str, somebody, filter_fn:Callable[[Any], bool], roles=None) -> Tuple[bool, DAList]:
@@ -122,19 +183,23 @@ def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) ->
   filter_lambdas = []
   for filter_fn in filters:
     if isinstance(filter_fn, CodeType):
-      filter_lambdas.append(lambda opt: opt[0] == filter_fn)
+      filter_lambdas.append(lambda opt, filter_code=filter_fn: opt[0] == filter_code)
     elif isinstance(filter_fn, str):
       # unfortunately mypy doesn't work work well with lambdas, so use a def instead
       # https://github.com/python/mypy/issues/4226
-      def func_from_str(opt):
-        return opt[1].lower() == filter_fn.lower()
+      def func_from_str(opt, filter_str=filter_fn):
+        return opt[1].lower() == filter_str.lower()
       filter_lambdas.append(func_from_str)
+    elif isinstance(filter_fn, Iterable):
+      def func_from_iter(opt, filter_list=filter_fn):
+        return all([filter_item.lower() in opt[1].lower() for filter_item in filter_list])
+      filter_lambdas.append(func_from_iter)
     else:
       filter_lambdas.append(filter_fn)
   for filter_fn in filters:
     if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
-      def func_in_str(opt):
-        return filter_fn.lower() in opt[1].lower()
+      def func_in_str(opt, filter_str=filter_fn):
+        return filter_str.lower() in opt[1].lower()
       filter_lambdas.append(func_in_str)
   return filter_lambdas
 
@@ -165,11 +230,12 @@ def case_labeler(case):
   if hasattr(case, 'title'):
     title = case.title
   date = ''
-  if hasattr(case, 'date'):
+  # Sometimes we get absolutely silly dates on cases. So just don't show anything before year 1000
+  if hasattr(case, 'date') and isinstance(case.date, datetime) and case.date.year > 1000:
     date = case.date
-  return f"{docket_number} {title} ({date})"
+  return f"{docket_number} {title} {'(' + date + ')' if date else ''}"
 
-def get_available_efile_courts(proxy_conn):
+def get_available_efile_courts(proxy_conn) -> list:
   """Gets the list of efilable courts, if it can"""
   resp = proxy_conn.authenticate_user() # use default config keys
   if resp.response_code == 200:

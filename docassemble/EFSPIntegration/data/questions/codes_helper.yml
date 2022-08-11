@@ -167,6 +167,29 @@ fields:
       x.filtered_filing_component_options
 ---
 generic object: DAObject
+need:
+  - x.filing_type_default
+  - x.filing_type_filters
+code: |
+  x.filtered_filing_type_options, x.filing_type = \
+      filter_codes(filing_type_options, x.filing_type_filters, x.filing_type_default)
+  if x.filing_type is None:
+    del x.filing_type
+    x.filing_type = x.user_chosen_filing_type
+---
+generic object: DAObject
+id: filing type question
+question: |
+  What type of filing will you be making?
+subquestion: |
+  We found a few filing codes that could be used to file your ${ x.title }. Choose the one that you think best fits your case.
+fields:
+  - Filing Type: x.user_chosen_filing_type
+    datatype: dropdown
+    code: |
+      x.filtered_filing_type_options
+---
+generic object: DAObject
 id: motion_type
 question: |
   Motion Type

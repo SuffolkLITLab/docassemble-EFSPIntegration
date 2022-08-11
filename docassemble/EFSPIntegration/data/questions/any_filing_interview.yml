@@ -187,7 +187,7 @@ id: any exhibits
 question: |
   Please upload your documents
 subquestion: |
-  You will have a chance to upload multiple documents. 
+  You will have a chance to upload multiple documents.
   You can also add additional pages to this document.
 fields:
   - Filing Type: x.filing_type
@@ -202,20 +202,20 @@ fields:
     field: x.filing_description
     datatype: text
     required: |
-      filing_description_datafield.get('isrequired', False)   
+      filing_description_datafield.get('isrequired', False)
   - Reference Number (optional): x.reference_number
     datatype: text
     required: False
   - Document: x.exhibits[0].pages
     datatype: files
     maximum image size: 1024
-    image upload type: jpeg        
+    image upload type: jpeg
     accept: |
       "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"
   - Add a courtesy email: x.has_courtesy_copies
     datatype: yesno
   - Courtesy emails (one per line): x.courtesy_copies_raw
-    datatype: area  
+    datatype: area
     show if: x.has_courtesy_copies
 validation code: |
   if sum(exhibit.size_in_bytes() for exhibit in x.exhibits[0].pages) > (15 * 1024 * 1024):

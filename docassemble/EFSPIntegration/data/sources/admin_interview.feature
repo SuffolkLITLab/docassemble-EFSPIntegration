@@ -130,7 +130,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "case_party_id" to "66488af3-c376-4500-b99e-3ff665fcc5fd"
     And I tap to continue
-    And I see the phrase "Service Contact already attached to case."
+    And I see the phrase "All ok! (204)"
 
   @ai7 @admin_interview @attach @prose
   Scenario: earlyish stop attach when no service contacts

@@ -21,14 +21,14 @@ code: |
 ---
 code: |
   user_admin_list = [
-    ('self_resend_activation', 'Resend Self Activitation Email'),
-    ('reset_user_password', 'Reset Your Password'),
+    ('self_resend_activation', word('Resend Activitation Email')),
+    ('reset_user_password', word('Reset Your Password')),
   ]
 ---
 code: |
   user_registration_choices = [
-    ('INDIVIDUAL', 'Pro Se user'),
-    ('FIRM_ADMINISTRATOR', 'Administrator of a new firm')
+    ('INDIVIDUAL', word('Pro Se user')),
+    ('FIRM_ADMINISTRATOR', word('Administrator of a new firm'))
   ]
 ---
 mandatory: True
@@ -41,7 +41,7 @@ subquestion: |
 
   ${ action_button_html(url_ask(
       [{'recompute': ['register_introduction', 'person_to_reg', 'register', 'register_status']}]),
-      label='Register') }
+      label=word('Register')) }
 
   % for elem in user_admin_list:
   ${ action_button_html(url_ask(
