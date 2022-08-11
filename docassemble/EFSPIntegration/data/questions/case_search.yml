@@ -141,15 +141,16 @@ question: |
   Find your case
 subquestion: |
   % if x.can_file_non_indexed_case:
-  ${ collapse_template(explain_case_search_choices_template) }
+  ${ collapse_template(x.explain_case_search_choices_template) }
   % endif
 fields:
   - How do you want to find your case?: x.do_what_choice
     datatype: radio
     code: |
-      get_lookup_choices(x.can_file_non_indexed_case)
+      x.get_lookup_choices(x.can_file_non_indexed_case)
 ---
-template: explain_case_search_choices_template
+generic object: EFCaseSearch
+template: x.explain_case_search_choices_template
 subject: |
   What is a non-indexed case?
 content: |
@@ -157,6 +158,21 @@ content: |
   docket. If that applies to the court you want to file into,
   you can still file but you must use the case number so that
   a clerk can match your filing to the case.
+---
+generic object: EFCaseSearch
+template: x.party_search_choice
+content: |
+  Party name
+---
+generic object: EFCaseSearch
+template: x.docket_lookup_choice
+content: |
+  Case number
+---
+generic object: EFCaseSearch
+template: x.non_indexed_choice
+content: |
+  I want to file into a non-indexed case
 ---
 sets:
   - x.somebody.name.first
@@ -200,12 +216,12 @@ code: |
 id: docket id
 generic object: EFCaseSearch
 question: |
-  Case number
+  ${ str(x.docket_lookup_choice) }
 subquestion: |
-  ${ collapse_template(case_number_format_template) }
+  ${ collapse_template(x.case_number_format_template) }
 
 fields:
-  - Case number: x.docket_number_from_user
+  - ${ str(x.docket_lookup_choice) }: x.docket_number_from_user
 ---
 id: ask non-indexed docket number
 generic object: EFCaseSearch
@@ -214,7 +230,7 @@ question: |
 subquestion: |
   Enter the case number for the non-indexed case
 
-  ${ collapse_template(case_number_format_template) }
+  ${ collapse_template(x.case_number_format_template) }
 
 fields:
   - Case number: x.non_indexed_docket_number
@@ -226,13 +242,15 @@ code: |
   if x.do_what_choice == 'docket_lookup' and x.found_case is None and x.can_file_non_indexed_case:
     x.non_indexed_docket_number = x.docket_number_from_user
 ---
-template: case_number_format_template
+generic object: EFCaseSearch
+template: x.case_number_format_template
 subject: ""
 content: ""
 ---
+generic object: EFCaseSearch
 if: |
  jurisdiction_id == 'illinois'
-template: case_number_format_template
+template: x.case_number_format_template
 subject: |
   How to enter your case number (Except Cook County)
 content: |
@@ -240,9 +258,10 @@ content: |
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
   [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-).
 ---
+generic object: EFCaseSearch
 if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
-template: case_number_format_template
+template: x.case_number_format_template
 subject: |
   How to enter your case number (Chicago/Cook County only)
 content: |
@@ -324,7 +343,7 @@ content: |
   #### ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   * Docket ID: ${ case.docket_number }
   * Court ID: ${ case.court_id }
-  * Case Category: ${ case_category_map.get(case.category, {}).get('name', case.category) }
+  * Case Category: ${ x.case_category_map.get(case.category, {}).get('name', case.category) }
   % endfor
 comment: |
   Can't use this code for court ID without causing an infinite loop? Unclear why
@@ -341,10 +360,10 @@ subquestion: |
   % endif
   
   % if x.found_case:
-  #### ${ x.found_case.title} ${ '(' + x.found_case.date + ')' if x.found_case.date.year > 1000 else '' })
-  * Case Number: ${ x.found_case.docket_number }
+  #### ${ x.found_case.title} ${ '(' + x.found_case.date + ')' if x.found_case.date.year > 1000 else '' }
+  * ${ str(x.docket_lookup_choice) }: ${ x.found_case.docket_number }
   * Court ID: ${ x.found_case.court_id }
-  * Case Category: ${ case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
+  * Case Category: ${ x.case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
 ---
 comment: |
@@ -353,6 +372,10 @@ comment: |
 code: |
   def filter_fn(new_case):
     return True
+---
+generic object: EFCaseSearch
+code: |
+  x.case_category_options, x.case_category_map = choices_and_map(proxy_conn.get_case_categories(x.court_id, fileable_only=False, timing=None).data)
 ---
 #########################################
 ## Populating Case Parties based on the case search
@@ -484,7 +507,7 @@ code: |
 ---
 generic object: EFCaseSearch
 code: |
-  if not proxy_conn.get_user().data.get('isIndividual'):
+  if logged_in_user_is_admin:
     x.self_in_case_choices = [
       ['is_filing', word(f'I am filing for { x.maybe_user_partips[0].name.familiar() }')]
     ]
