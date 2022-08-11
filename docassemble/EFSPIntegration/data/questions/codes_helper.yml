@@ -182,7 +182,7 @@ id: filing type question
 question: |
   What type of filing will you be making?
 subquestion: |
-  We found a few filing codes that could be used to file your fee waiver. Choose the one that you think best fits your case.
+  We found a few filing codes that could be used to file your ${ x.title }. Choose the one that you think best fits your case.
 fields:
   - Filing Type: x.user_chosen_filing_type
     datatype: dropdown

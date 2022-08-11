@@ -125,7 +125,7 @@ Feature: Make any type of filing
       And I wait 30 seconds
       And I get to the question id "ready to efile" with this data:
         | var | value | trigger |
-        | x.case_choice | case_search.found_cases[1] | case_search.case_choice|
+        | x.case_choice | case_search.found_cases[1] | case_search.case_choice |
         | user_ask_role | defendant | |
         | other_parties.there_are_any | False | |
         | existing_parties_new_atts.there_are_any | False | |
