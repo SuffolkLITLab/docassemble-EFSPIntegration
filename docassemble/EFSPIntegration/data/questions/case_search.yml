@@ -488,7 +488,7 @@ fields:
     choices: |
       x.maybe_user_partips
     js show if: |
-      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_self"
+      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_filing"
 ---
 generic object: EFCaseSearch
 code: |
@@ -507,14 +507,19 @@ code: |
 ---
 generic object: EFCaseSearch
 code: |
+  if len(x.maybe_user_partips) == 1:
+    person_word = word(x.maybe_user_partips[0].name.familiar())
+  else:
+    person_word = word('one of them')
+
   if logged_in_user_is_admin:
     x.self_in_case_choices = [
-      ['is_filing', word(f'I am filing for { x.maybe_user_partips[0].name.familiar() }')]
+      ['is_filing', word(f'I am filing for { person_word }')]
     ]
   else:
     x.self_in_case_choices = [
       ['is_self', word('Yes')],
-      ['is_filing', word(f'No, but I am filing for { x.maybe_user_partips[0].name.familiar() }')]
+      ['is_filing', word(f'No, but I am filing for { person_word }')]
     ]
 
   x.self_in_case_choices.extend([
