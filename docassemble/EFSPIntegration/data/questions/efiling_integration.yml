@@ -294,6 +294,9 @@ code: |
         fallback_user_choice
   else:
     ready_to_efile = False
+  if not ready_to_efile:
+    show_no_efile
+
   globals().pop('check_resp', None)
 ---
 id: actually efile
