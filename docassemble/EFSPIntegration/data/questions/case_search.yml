@@ -40,7 +40,9 @@ code: |
     if not x.case_search_task_status.failed():
       x.tmp_obj = x.case_search_task_status.get()
       x.cms_connection_issue = x.tmp_obj[0] or None
-      x.found_cases = x.tmp_obj[1] or DAEmpty(x.instanceName + '.found_cases')
+      x.found_cases = x.tmp_obj[1]
+      if x.found_cases is None: # we're okay with empty lists, but not None
+        x.found_cases = DAEmpty(x.instanceName + '.found_cases')
     else:
       log(x.case_search_task_status.result().error_message)
       log(str(x.case_search_task_status.result().error_trace))

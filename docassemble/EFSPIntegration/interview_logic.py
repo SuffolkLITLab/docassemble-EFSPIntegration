@@ -119,6 +119,7 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
       if not filter_fn(new_case):
         found_cases.pop()
   else:
+    log(f"get_cases_response: {get_cases_response}")
     found_cases.resp_ok = False
   found_cases.gathered = True
   return cms_connection_issue, found_cases
