@@ -40,7 +40,9 @@ code: |
     if not x.case_search_task_status.failed():
       x.tmp_obj = x.case_search_task_status.get()
       x.cms_connection_issue = x.tmp_obj[0] or None
-      x.found_cases = x.tmp_obj[1] or DAEmpty(x.instanceName + '.found_cases')
+      x.found_cases = x.tmp_obj[1]
+      if x.found_cases is None: # we're okay with empty lists, but not None
+        x.found_cases = DAEmpty(x.instanceName + '.found_cases')
     else:
       log(x.case_search_task_status.result().error_message)
       log(str(x.case_search_task_status.result().error_trace))
@@ -365,6 +367,8 @@ subquestion: |
   * Court ID: ${ x.found_case.court_id }
   * Case Category: ${ x.case_category_map.get(x.found_case.category, {}).get('name', x.found_case.category) }
   % endif
+
+  ${ collapse_template(x.not_actually_case) }
 ---
 comment: |
   Meant to be overridden to allow authors to control what cases
@@ -372,6 +376,13 @@ comment: |
 code: |
   def filter_fn(new_case):
     return True
+---
+generic object: EFCaseSearch
+template: x.not_actually_case
+subject: |
+  This isn't my case!
+content: |
+  If we found the wrong case, you can press the "undo" button to go back and find a different case
 ---
 generic object: EFCaseSearch
 code: |

@@ -133,7 +133,7 @@ continue button field: fallback_user_choice
 ---
 id: user-wants-efile
 question: |
-  Do you want to efile this document directly with the court?
+  Do you want to e-file this document directly with the court?
 subquestion: |
   You are able to electronically-file (e-file) this document with ${ full_court_info['name'] }!
 
@@ -143,7 +143,7 @@ subquestion: |
   You will have to provide your email to e-file this document. If you don't wish to provide that,
   you can choose not to efile.
 fields:
-  - Do you want to efile?: user_wants_efile
+  - Do you want to e-file?: user_wants_efile
     datatype: yesnoradio
 ---
 id: you-will-not-be-able-to-efile
@@ -294,6 +294,9 @@ code: |
         fallback_user_choice
   else:
     ready_to_efile = False
+  if not ready_to_efile:
+    show_no_efile
+
   globals().pop('check_resp', None)
 ---
 id: actually efile

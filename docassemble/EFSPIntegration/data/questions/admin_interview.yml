@@ -168,7 +168,7 @@ content: |
       [{'recompute': [elem[0], 'show_resp']}]), 
       label=elem[1], id_tag=elem[0]) }
 
-  % endfor  
+  % endfor
 ---
 template: code_cache_template
 subject: |
@@ -1426,6 +1426,10 @@ fields:
       - Illinois: 'illinois'
       - Massachusetts: 'massachusetts'
       - Texas: 'texas'
+---
+code: |
+  if 'jurisdiction_id' in url_args:
+    jurisdiction_id = url_args['jurisdiction_id']
 ---
 code: |
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=False, timing=None).data)
