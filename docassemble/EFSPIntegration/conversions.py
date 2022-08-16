@@ -54,6 +54,10 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
 
   if codes_list is None:
     return [], {}
+  
+  if isinstance(codes_list, str):
+    log(f"choices_and_map codes_list is a string? {codes_list}")
+    return [], {}
 
   choices_list = [(code_obj[backing], display.format(**code_obj)) for code_obj in codes_list]
   codes_map = { vv[backing] : vv for vv in codes_list }
