@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Callable, Optional
 import docassemble.base.util
-from docassemble.base.util import DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
+from docassemble.base.util import DADict, DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.functions import get_config, illegal_variable_name, TypeType
 from .efm_client import ApiResponse
@@ -236,6 +236,7 @@ def _parse_participant_id(entity):
 def _parse_name(name_obj, name_val):
   if not name_val:
     name_val = {}
+  # TODO(brycew): some french last names are all caps? It could happen, but this is best for now.
   def make_readable(name):
     if len(name) > 1 and name.isupper():
       return name.title()
@@ -387,6 +388,7 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
                   else:
                     participant.existing_attorney_ids = [attorney_tyler_id]
   new_case.participants.gathered = True
+  new_case.attorneys.gathered = True
 
 def _payment_labels(acc):
   if acc.get('paymentAccountTypeCode') == 'CC':
