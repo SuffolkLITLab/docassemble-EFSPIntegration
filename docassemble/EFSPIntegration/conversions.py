@@ -233,6 +233,37 @@ def _parse_participant_id(entity):
   else:
     return chain_xml(entity, ['organizationIdentification', 'value', 'identification', 0, 'identificationID', 'value'])
 
+def _parse_name(name_obj, name_val):
+  if not name_val:
+    name_val = {}
+  def make_readable(name):
+    if len(name) > 1 and name.isupper():
+      return name.title()
+    return name
+  name_obj.first = make_readable(name_val.get('personGivenName', {}).get('value', ''))
+  name_obj.middle = make_readable(name_val.get('personMiddleName', {}).get('value', ''))
+  name_obj.last = make_readable(name_val.get('personSurName', {}).get('value', ''))
+  return name_obj
+
+def _parse_contact_means(obj, contact_means_xml):
+  if not contact_means_xml:
+    contact_means_xml = []
+  for contact_info in contact_means_xml:
+    if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber':
+      phone = _parse_phone_number(contact_info.get('value', {}).get('telephoneNumberRepresentation'))
+      if phone:
+        obj.phone_number = phone
+    if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress':
+      address = _parse_address(contact_info.get('value', {}).get('addressRepresentation'))
+      if address:
+        obj.address = address
+        obj.address.instanceName = obj.instanceName + '.address'
+    if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactEmailID':
+      email = contact_info.get('value', {}).get('value')
+      if email:
+          obj.email = email
+  return obj
+
 def _parse_participant(part_obj, participant_val, roles:dict):
   """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
   part_obj.party_type = chain_xml(participant_val, ['value', 'caseParticipantRoleCode', 'value'])
@@ -241,30 +272,26 @@ def _parse_participant(part_obj, participant_val, roles:dict):
   if _is_person(entity): 
     part_obj.person_type = 'ALIndividual'
     name = entity.get('personName') or {}
-    part_obj.name.first = name.get('personGivenName', {}).get('value', '').title()
-    part_obj.name.middle = name.get('personMiddleName', {}).get('value', '').title()
-    part_obj.name.last = name.get('personSurName', {}).get('value', '').title()
+    _parse_name(part_obj.name, name)
     # TODO(brycew): parse the address, phone, and email if possible
     contact_xml = next(iter(entity.get('personAugmentation', {}).get('contactInformation', []))).get('contactMeans', [])
-    for contact_info in contact_xml:
-      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactTelephoneNumber':
-        phone = _parse_phone_number(contact_info.get('value', {}).get('telephoneNumberRepresentation'))
-        if phone:
-          part_obj.phone_number = phone
-      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress':
-        address = _parse_address(contact_info.get('value', {}).get('addressRepresentation'))
-        if address:
-          part_obj.address = address
-          part_obj.address.instanceName = part_obj.instanceName + '.address'
-      if contact_info.get('name') == '{http://niem.gov/niem/niem-core/2.0}ContactEmailID':
-        email = contact_info.get('value', {}).get('value')
-        if email:
-          part_obj.email = email
+    _parse_contact_means(part_obj, contact_xml)
   else:
     part_obj.person_type = 'business'
     part_obj.name.first = entity.get('organizationName', {}).get('value', '')
   part_obj.tyler_id = _parse_participant_id(entity)
   return part_obj
+
+
+def _parse_attorney(att_obj, att_val):
+  """Given an Attorney (caseOtherEntityAttorney), gets the name and contact info into a docassemble object"""
+  entity = chain_xml(att_val, ['roleOfPersonReference', 'ref'])
+  if entity:
+    _parse_name(att_obj.name, entity.get('personName') or {})
+    contact_xml = next(iter(entity.get('personAugmentation', {}).get('contactInformation', []))).get('contactMeans', [])
+    _parse_contact_means(att_obj, contact_xml)
+  return att_obj
+
 
 def parse_service_contacts(service_list):
   """We'll take both Tyler service contact lists and Niem service contact lists.
@@ -300,7 +327,7 @@ def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
 
 def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   """Fills in these attributes with the full case details:
-  * attorney_ids
+  * attorneys
   * party_to_attorneys
   * case_details_worked
   * case_details
@@ -315,7 +342,7 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   full_case_details = proxy_conn.get_case(new_case.court_id, new_case.tracking_id)
   if not full_case_details.is_ok():
     log(f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}: {full_case_details}")
-  new_case.attorney_ids = []
+  new_case.attorneys = DADict(new_case.instanceName + '.attorneys', object_type=ALIndividual, auto_gather=False)
   new_case.party_to_attorneys = {}
   new_case.case_details_worked = (full_case_details.response_code, full_case_details.error_msg)
   new_case.case_details = full_case_details.data or {}
@@ -344,7 +371,8 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
           entity = chain_xml(attorney, ['roleOfPersonReference', 'ref'])
           tmp: Dict = next(iter(entity.get('personOtherIdentification', {})), {})
           attorney_tyler_id = tmp.get('identificationID', {}).get('value', None)
-          new_case.attorney_ids.append(attorney_tyler_id)
+          new_att_obj = new_case.attorneys.initializeObject(attorney_tyler_id, ALIndividual)
+          _parse_attorney(new_att_obj, attorney)
           parties = attorney.get('caseRepresentedPartyReference', [])
           for party in parties:
               party_id = _parse_participant_id(party.get('ref', {}))

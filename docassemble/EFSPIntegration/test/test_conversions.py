@@ -65,7 +65,7 @@ class TestConversionIgnoreAttorneys(unittest.TestCase):
     """Attorneys are just stuck in the middle with normal case participants. You can't attach service contacts to them, so"""
     case = DAObject('case')
     parse_case_info(self.proxy_conn, case, self.first_resp, 'peoria')
-    self.assertEqual(len(case.attorney_ids), 2)
-    self.assertTrue('e650827f-3a2b-4550-b76c-f7d22ed479ff' in case.attorney_ids)
-    self.assertTrue('7ff43f9b-53ff-4e6d-9253-e393318549d0' in case.attorney_ids)
+    self.assertEqual(len(case.attorneys.keys()), 2)
+    self.assertTrue('e650827f-3a2b-4550-b76c-f7d22ed479ff' in case.attorneys.keys())
+    self.assertTrue('7ff43f9b-53ff-4e6d-9253-e393318549d0' in case.attorneys.keys())
 
