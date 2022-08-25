@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime, timezone
-from typing import List, Dict, Tuple, Any, Callable, Optional
+from typing import List, Dict, Tuple, Any, Callable, Optional, Union
 import docassemble.base.util
 from docassemble.base.util import DADict, DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
@@ -170,7 +170,7 @@ def _is_person(possible_person_entity:dict):
   # TODO(brycew): could also check the declaredType?
   return possible_person_entity.get('personOtherIdentification') is not None
 
-def chain_xml(xml_val, elems: List[str]):
+def chain_xml(xml_val, elems: List[Union[str, int]]):
   val = xml_val
   for elem in elems:
     if not val:
@@ -211,6 +211,10 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
 
 def _parse_address(address_xml) -> ALAddress:
   address = ALAddress()
+  street_xml = chain_xml(address_xml, ['value', 'addressDeliveryPoint', 0])
+  # TODO(brycew): haven't seen street address IRL yet, not sure how it serializes
+  if street_xml:
+    address.address = street_xml.get('value')
   city_xml = chain_xml(address_xml, ['value', 'locationCityName']) or {}
   if city_xml:
     address.city = city_xml.get('value')

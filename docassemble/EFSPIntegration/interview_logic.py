@@ -17,6 +17,13 @@ class EFCaseSearch(DAObject):
   found_case: DAObject
   case_was_found: bool
 
+  def search_went_wrong(self) -> bool:
+    if hasattr(self, 'docket_case_response') and not self.docket_case_response.is_ok():
+      return True
+    if hasattr(self, 'found_cases') and hasattr(self.found_cases, 'resp_ok') and not self.found_cases.resp_ok:
+      return True
+    return False
+
   def get_lookup_choices(self, can_file_non_indexed_case:bool) -> List[Dict[str, str]]:
     lookup_choices = [
       {'party_search': str(self.party_search_choice)},
@@ -25,6 +32,7 @@ class EFCaseSearch(DAObject):
     if can_file_non_indexed_case:
       lookup_choices.append({'non_indexed_case': str(self.non_indexed_choice)})
     return lookup_choices
+
 
 def address_fields_with_defaults(proxy_conn, person:ALIndividual, is_admin:bool, **kwargs):
   address_fields = person.address_fields(**kwargs)

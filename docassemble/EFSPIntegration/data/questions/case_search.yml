@@ -125,7 +125,7 @@ subquestion: |
   The court's case management system isn't online, and the case you are searching for might exist.
   % endif
 
-  % if hasattr(x.found_cases, 'resp_ok') and not x.found_cases.resp_ok:
+  % if x.search_went_wrong():
   Something went wrong with the e-filing system when searching for cases.
   % endif
 
