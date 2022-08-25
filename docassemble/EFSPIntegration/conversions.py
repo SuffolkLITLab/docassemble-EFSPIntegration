@@ -211,10 +211,17 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
 
 def _parse_address(address_xml) -> ALAddress:
   address = ALAddress()
-  street_xml = chain_xml(address_xml, ['value', 'addressDeliveryPoint', 0])
+  street_xml = chain_xml(address_xml, ['value', 'addressDeliveryPoint', 0, 'value'])
   # TODO(brycew): haven't seen street address IRL yet, not sure how it serializes
   if street_xml:
-    address.address = street_xml.get('value')
+    street_full = chain_xml(street_xml, ['streetFullText', 'value'])
+    if street_full:
+      address.address = street_full
+    else:
+      street_name = chain_xml(street_xml, ['streetName', 'value'])
+      street_number = chain_xml(street_xml, ['streetNumberText', 'value'])
+      if street_name and street_number:
+        address.address = f'{street_number} {street_name}'
   city_xml = chain_xml(address_xml, ['value', 'locationCityName']) or {}
   if city_xml:
     address.city = city_xml.get('value')
