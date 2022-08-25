@@ -125,7 +125,7 @@ subquestion: |
   The court's case management system isn't online, and the case you are searching for might exist.
   % endif
 
-  % if not x.found_cases.resp_ok:
+  % if hasattr(x.found_cases, 'resp_ok') and not x.found_cases.resp_ok:
   Something went wrong with the e-filing system when searching for cases.
   % endif
 
@@ -204,6 +204,8 @@ generic object: EFCaseSearch
 code: |
   x.case_search_task_status = background_action('case_search_task', 'refresh', my_x=x)
 ---
+need:
+  - filter_fn
 event: case_search_task
 code: |
   my_x = action_argument('my_x')
