@@ -151,7 +151,7 @@ class TestClass:
     mock_person = MockPerson()
     firm_id = self.proxy_conn.get_firm().data['firmID']
     new_user = self.proxy_conn.register_user(mock_person, registration_type='FIRM_ADMIN_NEW_MEMBER', firm_name_or_id=firm_id)
-    assert(new_user.response_code == 200)
+    assert(new_user.response_code == 201)
     new_id = new_user.data['userID']
 
     self.basic_assert(self.proxy_conn.resend_activation_email(new_id))
@@ -249,10 +249,11 @@ class TestClass:
     serv_info = self.basic_assert(self.proxy_conn.get_service_information('adams', case_id))
     history_serv_info = self.basic_assert(self.proxy_conn.get_service_information_history('adams', case_id))
 
-    serv_id = 'abcd'  # serv_info.data[0]
-    attach_cases = self.proxy_conn.get_service_attach_case_list('adams', serv_id)
-    if self.verbose:
-      print(attach_cases)
+    if len(serv_info.data) > 0:
+      serv_id = serv_info.data[0]
+      attach_cases = self.proxy_conn.get_service_attach_case_list('adams', serv_id)
+      if self.verbose:
+        print(attach_cases)
 
 
   def test_attorneys(self):

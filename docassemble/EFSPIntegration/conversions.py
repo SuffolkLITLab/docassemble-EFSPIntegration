@@ -2,12 +2,12 @@
 
 import re
 from datetime import datetime, timezone
-from typing import List, Dict, Tuple, Any, Callable, Optional, Union
+from typing import List, Dict, Tuple, Any, Mapping, Callable, Optional, Union
 import docassemble.base.util
 from docassemble.base.util import DADict, DAList, DAObject, DADateTime, as_datetime, validation_error, log, as_datetime
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.functions import get_config, illegal_variable_name, TypeType
-from .efm_client import ApiResponse
+from .efm_client import ApiResponse, ProxyConnection
 import importlib
 import dateutil.parser
 
@@ -129,7 +129,7 @@ def debug_display(resp: ApiResponse) -> str:
   log(f"resp.data: {resp.data}")
   return pretty_display(resp.data)
 
-def tyler_daterep_to_datetime(tyler_daterep) -> DADateTime:
+def tyler_daterep_to_datetime(tyler_daterep:Mapping) -> DADateTime:
   """
   Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
   returns the datetime it repsents.
@@ -141,7 +141,7 @@ def tyler_timestamp_to_datetime(timestamp_ms:int)->DADateTime:
   """Given a timestamp in milliseconds from epoch (in UTC), make a datetime from it"""
   return as_datetime(datetime.fromtimestamp(timestamp_ms/1000, tz=timezone.utc))
 
-def validate_tyler_regex(data_field:Dict)->Callable:
+def validate_tyler_regex(data_field:Mapping)->Callable:
   """
   Return a function that validates a given input with the provided regex,
   suitable for use with Docassemble's `validate:` question modifier
@@ -209,7 +209,7 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
     # TODO(brycew): no telephone type we recognize?
     return None
 
-def _parse_address(address_xml) -> ALAddress:
+def _parse_address(address_xml:Mapping) -> ALAddress:
   address = ALAddress()
   street_xml = chain_xml(address_xml, ['value', 'addressDeliveryPoint', 0, 'value'])
   # TODO(brycew): haven't seen street address IRL yet, not sure how it serializes
@@ -324,7 +324,7 @@ def parse_service_contacts(service_list):
     info.append((serv_id, display_name))
   return info
 
-def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
+def parse_case_info(proxy_conn:ProxyConnection, new_case:DAObject, entry:dict, court_id:str, *,
     fetch:bool=True, roles:dict=None):
   if not roles:
     roles = {}
@@ -337,7 +337,7 @@ def parse_case_info(proxy_conn, new_case:DAObject, entry:dict, court_id:str, *,
   if fetch:
     fetch_case_info(proxy_conn, new_case, roles)
 
-def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
+def fetch_case_info(proxy_conn:ProxyConnection, new_case:DAObject, roles:dict=None):
   """Fills in these attributes with the full case details:
   * attorneys
   * party_to_attorneys
@@ -401,7 +401,7 @@ def fetch_case_info(proxy_conn, new_case:DAObject, roles:dict=None):
   new_case.participants.gathered = True
   new_case.attorneys.gathered = True
 
-def _payment_labels(acc):
+def _payment_labels(acc:Mapping) -> str:
   if acc.get('paymentAccountTypeCode') == 'CC':
     return f"{acc.get('accountName')} ({acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')})"
   elif acc.get('paymentAccountTypeCode') == 'WV':
@@ -409,7 +409,7 @@ def _payment_labels(acc):
   else:
     return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
 
-def filter_payment_accounts(account_list, allowable_card_types):
+def filter_payment_accounts(account_list, allowable_card_types) -> List:
   """ Gets a list of all payment accounts and filters them by if the card is
       accepted at a particular court"""
   allowed_card = lambda acc: acc.get('paymentAccountTypeCode') != 'CC' or \
@@ -423,7 +423,7 @@ def payment_account_labels(resp):
   else:
     return None
 
-def filing_id_and_label(case, style="FILING_ID"):
+def filing_id_and_label(case:Mapping, style="FILING_ID") -> Dict[str, str]:
   tracking_id = case.get('caseTrackingID',{}).get('value')
   try:
     filing_id = case.get('documentIdentification',[{},{}])[1].get('identificationID',{}).get('value')
@@ -432,11 +432,12 @@ def filing_id_and_label(case, style="FILING_ID"):
   filer_name = case.get('documentSubmitter',{}).get('entityRepresentation',{}).get('value',{}).get('personName',{}).get('personFullName',{}).get('value')
   document_description = case.get('documentDescriptionText',{}).get('value')
   # Filing code is plain English
-  filing_code = next(
+  matching_category:Mapping = next(
     filter(
       lambda category: category.get('name') == "{urn:tyler:ecf:extensions:Common}FilingCode",
       case.get("documentCategoryText", [])
-      ),{}).get('value',{}).get('value')
+      ),{})
+  filing_code = matching_category.get('value',{}).get('value')
   try:
     filing_date = tyler_timestamp_to_datetime(case.get('documentFiledDate',{}).get('dateRepresentation',{}).get('value',{}).get('value',1000))
   except:
@@ -447,7 +448,7 @@ def filing_id_and_label(case, style="FILING_ID"):
   else:
     return { tracking_id: filing_label }
 
-def get_tyler_roles(proxy_conn, login_data) -> Tuple[bool, bool]:
+def get_tyler_roles(proxy_conn:ProxyConnection, login_data:Mapping) -> Tuple[bool, bool]:
   """Gets whether or not the user of this interview is a Tyler Admin, and a 'global' admin.
   The global admin means that they are allowed to change specific Global payment methods,
   and can be listed under the 'global server admins' section of the 'efile proxy' settings in the

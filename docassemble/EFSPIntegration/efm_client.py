@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import json
 import pycountry
-from typing import Union, Dict
+from typing import Callable, Dict, Union
 
 import requests
+from requests import Response
 from docassemble.base.functions import all_variables, get_config
 from docassemble.base.util import DAObject, log, Person, Individual, DADateTime, as_datetime, reconsider
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
@@ -18,7 +19,7 @@ def state_name_to_code(state_name:str) -> str:
   except LookupError as ex:
     return state_name
 
-def _give_data_url(bundle: ALDocumentBundle, key:str='final'):
+def _give_data_url(bundle: ALDocumentBundle, key:str='final') -> None:
   """Prepares the filing documents by setting a semi-permanent enabled and a data url
   The document bundle can either consist of documents or other document bundles. But each top element will
   sent to Tyler as a separate filing document, and needs to have the necessary attributes set (tyler_filing_id, etc)
@@ -46,7 +47,7 @@ def _give_data_url(bundle: ALDocumentBundle, key:str='final'):
           doc.data_url = doc.data_url.replace('http://localhost/', 'http://' + get_config('external hostname') + '/')
         doc.page_count = doc_pdf.num_pages()
 
-def _get_all_vars(bundle: ALDocumentBundle, key:str='final'):
+def _get_all_vars(bundle: ALDocumentBundle, key:str='final') -> Dict:
   """Strips out some extra big variables that we don't need to serialize and send across the network"""
   _give_data_url(bundle, key=key)
   all_vars_dict = all_variables()
@@ -70,7 +71,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key:str='final'):
     doc.pop('filing_component_options', None)
     doc.pop('optional_service_map', None)
     
-  return json.dumps(all_vars_dict)
+  return all_vars_dict
 
 class ProxyConnection(EfspConnection):
   def __init__(self, *, url:str=None, api_key:str=None, credentials_code_block:str='tyler_login', default_jurisdiction:str=None):
@@ -91,7 +92,7 @@ class ProxyConnection(EfspConnection):
 
     super().__init__(url=url, api_key=api_key, default_jurisdiction=default_jurisdiction)
 
-  def _call_proxy(self, send_func) -> ApiResponse:
+  def _call_proxy(self, send_func:Callable[[], Response]) -> ApiResponse:
     try:
       resp = send_func()
       if resp.status_code == 401 and self.credentials_code_block:
@@ -102,7 +103,7 @@ class ProxyConnection(EfspConnection):
       return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
     return _user_visible_resp(resp)
 
-  def authenticate_user(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None, *, jurisdiction:str=None):
+  def authenticate_user(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None, *, jurisdiction:str=None) -> ApiResponse:
     """
     Params:
         tyler_email (str)
@@ -121,7 +122,7 @@ class ProxyConnection(EfspConnection):
         jeffnet_key=jeffnet_key,
         jurisdiction=jurisdiction)
 
-  def register_user(self, person:Union[Individual, dict], registration_type:str, *, password:str=None, firm_name_or_id:str=None):
+  def register_user(self, person:Union[Individual, dict], registration_type:str, *, password:str=None, firm_name_or_id:str=None) -> ApiResponse:
     """
     registration_type needs to be INDIVIDUAL, FIRM_ADMINISTRATOR, or FIRM_ADMIN_NEW_MEMBER.
     If registration_type is INDIVIDUAL or FIRM_ADMINISTRATOR, you need a password.
@@ -133,31 +134,31 @@ class ProxyConnection(EfspConnection):
 
   #### Managing Firm Users
 
-  def update_firm(self, firm:Person):
+  def update_firm(self, firm:Person) -> ApiResponse:
     # firm is stateful
     update = serialize_person(firm)
     return super().update_firm(update)
 
   # Managing Service Contacts
-  def update_service_contact(self, service_contact_id:str, service_contact:Individual, is_public:bool=None, is_in_master_list:bool=None, admin_copy:str=None):
+  def update_service_contact(self, service_contact_id:str, service_contact:Individual, is_public:bool=None, is_in_master_list:bool=None, admin_copy:str=None) -> ApiResponse:
     service_contact_dict = serialize_person(service_contact)
     return super().update_service_contact(service_contact_id, service_contact_dict, is_public=is_public, is_in_master_list=is_in_master_list, admin_copy=admin_copy)
 
-  def create_service_contact(self, service_contact:Individual, *, is_public:bool, is_in_master_list:bool, admin_copy:str=None):
+  def create_service_contact(self, service_contact:Individual, *, is_public:bool, is_in_master_list:bool, admin_copy:str=None) -> ApiResponse:
     service_contact_dict = serialize_person(service_contact)
     return super().create_service_contact(service_contact_dict, is_public=is_public, is_in_master_list=is_in_master_list, admin_copy=admin_copy)
 
-  def check_filing(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
+  def check_filing(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]) -> ApiResponse:
     all_vars = _get_all_vars(court_bundle, key='preview') if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     return super().check_filing(court_id, all_vars)
 
-  def file_for_review(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]):
+  def file_for_review(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]) -> ApiResponse:
     all_vars = _get_all_vars(court_bundle) if isinstance(court_bundle, ALDocumentBundle) else court_bundle
     if get_config('debug'):
       log(all_vars, 'console')
     return super().file_for_review(court_id, all_vars)
 
-  def get_service_types(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]=None):
+  def get_service_types(self, court_id:str, court_bundle:Union[ALDocumentBundle, dict]=None) -> ApiResponse:
     """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
     court_info = self.get_court(court_id)
     if court_info.data.get('hasconditionalservicetypes') and court_bundle:
