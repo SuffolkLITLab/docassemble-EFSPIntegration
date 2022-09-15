@@ -396,12 +396,13 @@ code: |
 ---
 need:
   - users
-  - is_user_party
-  - is_other_party
-  - other_parties
+  - is_plaintiff_party
+  - is_defendant_party
   - target_case.found_case
-only sets: add_existing_users
+  - target_case.self_in_case
+only sets: to_add_participants
 code: |
+  users.clear()
   if target_case.self_in_case not in ['is_self', 'is_filing']:
     users.appendObject()
     users[0].is_new = True
@@ -411,17 +412,77 @@ code: |
     target_case.self_partip_choice.is_form_filler = target_case.self_in_case == 'is_self'
     # Change where DA thinks this obj came from, so it says "you", and not "NAME"
     users.append(target_case.self_partip_choice.copy_deep('users[0]'))
+    users[-1].address.geocode()
+    if is_plaintiff_party(users[0]):
+      user_ask_role = 'plaintiff'
+    elif is_defendant_party(users[0]):
+      user_ask_role = 'defendant'
+    user_ask_role
     to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
-
+---
+need:
+  - users
+  - is_user_party
+  - is_other_party
+  - other_parties
+  - target_case.found_case
+  - to_add_participants
+only sets: add_existing_users
+code: |
+  weird_roles = []
   for partip in to_add_participants:
     partip.is_new = False
     if is_user_party(partip):
       users.append(partip.copy_deep(f'users[{len(users.elements)}]'))
+      users[-1].address.geocode()
     elif is_other_party(partip):
       other_parties.append(partip.copy_deep(f'other_parties[{len(other_parties.elements)}]'))
+      other_parties[-1].address.geocode()
     else:
-      log(f'partip: ${partip} has weird role: ${partip.party_type}')
+      weird_roles.append(partip)
+      log(f'partip: {partip} has weird role: {partip.party_type}')
+  # If there are any roles that can't be placed, be we also couldn't find an opposing party,
+  # the weird roles are more than likely the opposing party
+  if weird_roles:
+    if len(other_parties.elements) == 0:
+      for weird_party in weird_roles:
+        other_parties.append(weird_party.copy_deep(f'other_parties[{len(other_parties.elements)}]'))
+  show_existing_users
   add_existing_users = True
+---
+id: show existing users
+question: |
+  Here are your case's participants
+subquestion: |
+  These individuals will be placed on your form. You can edit the information
+  that is put on the form by clicking **Appearance** in the review section.
+  However, editing this information will not change the copy of this information
+  that the court has.
+
+  % if user_ask_role == "plaintiff":
+  <h2 class="h4">Plaintiffs (your side)</h2>
+  % else:
+  <h2 class="h4">Plaintiffs (the other side)</h2>
+  % endif
+
+  % for p in plaintiffs:
+  * ${ p } ${ "(you)" if p == users[0] else "" } ${"(" + p.lawyer + " is their lawyer)" if hasattr(p, "lawyer") else ""}
+      * ${ p.address.on_one_line() }
+
+  % endfor
+
+  % if user_ask_role == "defendant":
+  <h2 class="h4">Defendants (your side)</h2>
+  % else:
+  <h2 class="h4">Defendants (the other side)</h2>
+  % endif
+
+  % for d in defendants:
+  * ${ d } ${"(" + d.lawyer + " is their lawyer)" if hasattr(d, "lawyer") else ""}
+
+  % endfor
+
+continue button field: show_existing_users
 ---
 code: |
   is_defendant_filters = [
@@ -436,6 +497,9 @@ code: |
     'petitioner',
   ]
 ---
+need:
+  - is_defendant_filters
+  - is_plaintiff_filters
 code: |
   def is_defendant_party(p):
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_defendant_filters)])
@@ -450,6 +514,10 @@ code: |
   else:
     is_user_filters = is_defendant_filters
     is_other_party_filters = is_plaintiff_filters
+---
+code: |
+  def is_person_party(p):
+    return p.person_type != 'business'
 ---
 if: len(party_type_options) > 1
 comment: |
@@ -505,7 +573,7 @@ fields:
 ---
 generic object: EFCaseSearch
 code: |
-  x.maybe_user_partips = [partip for partip in x.found_case.participants if is_user_party(partip)]
+  x.maybe_user_partips = [partip for partip in x.found_case.participants if is_person_party(partip)]
 ---
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 1
