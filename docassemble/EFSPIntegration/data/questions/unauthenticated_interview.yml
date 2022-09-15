@@ -19,17 +19,23 @@ code: |
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
-code: |
-  user_admin_list = [
-    ('self_resend_activation', word('Resend Activitation Email')),
-    ('reset_user_password', word('Reset Your Password')),
-  ]
+variable name: account_action_list
+data: !!omap
+  - register: "Register"
+  - reset_user_password: "Reset your password"
+  - self_resend_activation: "Resend activation email"
+---
+variable name: account_registration_choices
+data: !!omap
+  - INDIVIDUAL: Self-represented user
+  - "FIRM_ADMINISTRATOR": Administrator of a new firm
 ---
 code: |
-  user_registration_choices = [
-    ('INDIVIDUAL', word('Pro Se user')),
-    ('FIRM_ADMINISTRATOR', word('Administrator of a new firm'))
-  ]
+  account_action_recompute = {
+    "register": ["register_introduction", "person_to_reg", "register", "register_status"],
+    "reset_user_password": ["reset_user_password", "show_resp"],
+    "self_resend_activation": ["self_resend_activation", "show_resp"]
+  }
 ---
 mandatory: True
 id: main-unauth-page
@@ -39,14 +45,10 @@ question: |
 subquestion: |
   You aren't logged in, but you can take any of the below actions
 
+  % for var, disp in account_action_list.items():
   ${ action_button_html(url_ask(
-      [{'recompute': ['register_introduction', 'person_to_reg', 'register', 'register_status']}]),
-      label=word('Register')) }
-
-  % for elem in user_admin_list:
-  ${ action_button_html(url_ask(
-      [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
+      [{'recompute': account_action_recompute[var]}]), 
+      label=disp) }
 
   % endfor
 ---
