@@ -25,13 +25,6 @@ fields:
       - Massachusetts: 'massachusetts'
       - Texas: 'texas'
 ---
-code: |
-  user_registration_choices = [
-    ('INDIVIDUAL', 'Pro Se user'),
-    ('FIRM_ADMINISTRATOR', 'Administrator of a new firm'),
-    ('FIRM_ADMIN_NEW_MEMBER', 'New member of current firm')
-  ]
----
 objects:
   - case_search: EFCaseSearch.using(court_id=court_id)
   - lower_court_case: DAObject

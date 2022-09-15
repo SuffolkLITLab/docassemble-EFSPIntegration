@@ -362,6 +362,8 @@ def fetch_case_info(proxy_conn:ProxyConnection, new_case:DAObject, roles:dict=No
   new_case.case_type = new_case.case_details.get('value', {}).get('rest',[{},{}])[1].get('value',{}).get('caseTypeText',{}).get('value')
   new_case.efile_case_type = new_case.case_type
   new_case.title = chain_xml(new_case.case_details, ['value', 'caseTitleText', 'value'])
+  new_case.title = re.sub(r'([A-Z])In the Matter of the Estate of([A-Z])', r'\1 In the Matter of the Estate of \2', new_case.title)
+  new_case.title = re.sub(r'([A-Z])vs([A-Z])', r'\1 vs \2', new_case.title)
   new_case.date = tyler_daterep_to_datetime(
       chain_xml(new_case.case_details, ['value', 'activityDateRepresentation', 'value']))
   new_case.participants = DAList(new_case.instanceName + '.participants',

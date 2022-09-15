@@ -8,7 +8,7 @@ include:
   - common_qs.yml
 ---
 objects:
-  person_to_reg: Individual
+  person_to_reg: ALIndividual
 ---
 code: |
   if 'jurisdiction_id' in url_args:

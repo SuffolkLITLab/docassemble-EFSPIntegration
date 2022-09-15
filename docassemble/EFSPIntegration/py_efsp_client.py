@@ -57,6 +57,9 @@ class EfspConnection:
     """
     if not url.endswith('/'):
       url = url + '/'
+
+    if not (url.startswith('http://') or url.startswith('https://')):
+      url = "https://" + url
     
     self.base_url = url
     self.api_key = api_key

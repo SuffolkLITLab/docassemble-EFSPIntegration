@@ -38,7 +38,7 @@ validation code: |
 id: submitted form
 question: |
   % if efile_resp.response_code == 200:
-  Your form was submitted!
+  Your forms were submitted!
   % else:
   Something went wrong delivering your form
   % endif
