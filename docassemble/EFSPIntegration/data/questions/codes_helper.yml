@@ -17,6 +17,10 @@ comment: |
 objects:
   - cross_references: DADict.using(there_are_any=len(cross_ref_types))
 ---
+generic object: DAObject
+objects:
+  - x.optional_services: DAList.using(object_type=DAObject)
+---
 generic object: ALDocument
 code: |
   if x.enabled:
@@ -225,10 +229,6 @@ code: |
     # explain_user_paying
   else:
     x.filing_parties = list(x.existing_parties_payment_dict.true_values())
----
-generic object: DAObject
-objects:
-  - x.optional_services: DAList.using(object_type=DAObject)
 ---
 generic object: ALExhibitDocument
 code: |

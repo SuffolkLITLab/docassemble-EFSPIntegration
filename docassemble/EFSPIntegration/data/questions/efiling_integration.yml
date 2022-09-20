@@ -148,9 +148,9 @@ fields:
 ---
 id: you-will-not-be-able-to-efile
 question: |
-  You will *not* be able to efile this document
+  You will *not* be able to e-file this document
 subquestion: |
-  Unfortunately, you won't be able to efile this document at ${ trial_court }.
+  Unfortunately, you won't be able to e-file this document at ${ trial_court }.
 
   However, you are still be able to continue and download a completed form.
 continue button field: show_no_efile

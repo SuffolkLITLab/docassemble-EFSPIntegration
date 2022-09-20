@@ -214,8 +214,7 @@ def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) ->
 
 def filter_codes(options, filters:Iterable[Callable[..., bool]], default:str) -> Tuple[List[Any], Optional[str]]:
   """Given a list of filter functions from most specific to least specific,
-  (if true, use that code)
-  filters a total list of codes"""
+  (if true, use that code), filters a total list of codes"""
   codes_tmp: List[Any] = []
   filter_lambdas = make_filters(filters)
   for filter_fn in filter_lambdas:

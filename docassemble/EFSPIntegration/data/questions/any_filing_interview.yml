@@ -690,7 +690,7 @@ subquestion: |
   Choose the number of ${ x.optional_service_map.get(x.optional_services[i].code).get('name') } that you want below.
   
   Usually this means the number of copies. This may affect
-  the total fee for this service.  
+  the total fee for this service.
 fields:
   - Multiplier: x.optional_services[i].multiplier
     datatype: integer
