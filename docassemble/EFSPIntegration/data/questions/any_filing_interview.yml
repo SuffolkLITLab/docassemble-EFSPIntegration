@@ -65,6 +65,7 @@ code: |
       previous_case_id = case_search.found_case.tracking_id
       user_started_case
       add_existing_users
+      show_existing_users
 
   users.gather(complete_attribute='complete')
   other_parties.gather()

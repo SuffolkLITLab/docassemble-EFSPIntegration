@@ -422,22 +422,25 @@ code: |
 ---
 need:
   - users
+  - to_add_participants
   - is_user_party
   - is_other_party
   - other_parties
   - target_case.found_case
-  - to_add_participants
 only sets: add_existing_users
 code: |
   weird_roles = []
+  other_parties.clear()
   for partip in to_add_participants:
     partip.is_new = False
     if is_user_party(partip):
       users.append(partip.copy_deep(f'users[{len(users.elements)}]'))
-      users[-1].address.geocode()
+      if hasattr(users[-1].address, 'address'):
+        users[-1].address.geocode()
     elif is_other_party(partip):
       other_parties.append(partip.copy_deep(f'other_parties[{len(other_parties.elements)}]'))
-      other_parties[-1].address.geocode()
+      if hasattr(other_parties[-1].address, 'address'):
+        other_parties[-1].address.geocode()
     else:
       weird_roles.append(partip)
       log(f'partip: {partip} has weird role: {partip.party_type}')
@@ -447,7 +450,6 @@ code: |
     if len(other_parties.elements) == 0:
       for weird_party in weird_roles:
         other_parties.append(weird_party.copy_deep(f'other_parties[{len(other_parties.elements)}]'))
-  show_existing_users
   add_existing_users = True
 ---
 id: show existing users
@@ -467,7 +469,7 @@ subquestion: |
 
   % for p in plaintiffs:
   * ${ p } ${ "(you)" if p == users[0] else "" } ${"(" + p.lawyer + " is their lawyer)" if hasattr(p, "lawyer") else ""}
-      * ${ p.address.on_one_line() }
+      * ${ p.address.on_one_line() if hasattr(p.address, 'address') else "No address given" }
 
   % endfor
 

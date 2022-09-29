@@ -223,13 +223,13 @@ def _parse_address(address_xml:Mapping) -> ALAddress:
       if street_name and street_number:
         address.address = f'{street_number} {street_name}'
   city_xml = chain_xml(address_xml, ['value', 'locationCityName']) or {}
-  if city_xml:
+  if city_xml and 'value' in city_xml:
     address.city = city_xml.get('value')
   zip_xml = chain_xml(address_xml, ['value', 'locationPostalCode']) or {}
-  if zip_xml:
+  if zip_xml and 'value' in zip_xml:
     address.zip_code = zip_xml.get('value')
   state_xml = chain_xml(address_xml, ['value', 'locationState']) or {}
-  if state_xml.get('value', {}).get('value'):
+  if state_xml and state_xml.get('value', {}).get('value'):
     address.state = state_xml.get('value', {}).get('value')
   return address
 
