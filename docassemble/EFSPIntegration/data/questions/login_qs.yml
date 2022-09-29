@@ -98,7 +98,11 @@ depends on:
   - tyler_login
   - tyler_login_resp
 code: |
-  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
+  if not can_check_efile:
+    logged_in_user_is_admin = False
+    logged_is_user_is_global_admin = False
+  else:
+    logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
 ---
 event: reset_password_screen
 question: |

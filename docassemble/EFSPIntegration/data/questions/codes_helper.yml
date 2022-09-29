@@ -452,6 +452,17 @@ code: |
     users[i].attorney_ids
   users[i].complete = True
 ---
+comment: |
+  If `is_new` is ever sought, means it wasn't set from
+  a parsed person from the existing case, so it should
+  always be new
+generic object: ALIndividual
+code: |
+  x.is_new = True
+---
+code: |
+  users[i].is_new = True
+---
 #############################
 ## is_form_filler
 id: is_form_filler
@@ -469,7 +480,9 @@ code: |
 ---
 code: |
   # Can only get the attorney list for firm users, which can't be form fillers
-  if proxy_conn.get_attorney_list().is_ok():
+  if not can_check_efile:
+    users[0].is_form_filler = False
+  elif proxy_conn.get_attorney_list().is_ok():
     users[0].is_form_filler = False
 ---
 need: proxy_conn
