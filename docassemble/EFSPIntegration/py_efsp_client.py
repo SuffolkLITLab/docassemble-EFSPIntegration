@@ -82,6 +82,10 @@ class EfspConnection:
       return _user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
     except requests.exceptions.MissingSchema as ex:
       return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    except requests.exceptions.InvalidURL as ex:
+      return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    except requests.exceptions.RequestException as ex:
+      return _user_visible_resp(f'Something went wrong with the request: {ex}')
     return _user_visible_resp(resp)
 
   @staticmethod
@@ -143,6 +147,10 @@ class EfspConnection:
         f'Could not connect to the Proxy server at {self.base_url}')
     except requests.exceptions.MissingSchema as ex:
       return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    except requests.exceptions.InvalidURL as ex:
+      return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    except requests.exceptions.RequestException as ex:
+      return _user_visible_resp(f'Something went wrong when connecting to {self.base_url + "authenticate"}: {ex}')
     return _user_visible_resp(resp)
 
   def register_user(self, person:dict, registration_type:str, *, password:str=None, firm_name_or_id:str=None) -> ApiResponse:

@@ -101,6 +101,8 @@ class ProxyConnection(EfspConnection):
       return _user_visible_resp(f'Could not connect to the Proxy server at {self.base_url}: {ex}')
     except requests.exceptions.MissingSchema as ex:
       return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
+    except requests.exceptions.InvalidURL as ex:
+      return _user_visible_resp(f'Url {self.base_url} is not valid: {ex}')
     return _user_visible_resp(resp)
 
   def authenticate_user(self, tyler_email:str=None, tyler_password:str=None, jeffnet_key:str=None, *, jurisdiction:str=None) -> ApiResponse:
