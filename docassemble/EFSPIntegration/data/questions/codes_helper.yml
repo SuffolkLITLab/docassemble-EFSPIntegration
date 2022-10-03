@@ -19,7 +19,7 @@ objects:
 ---
 generic object: DAObject
 objects:
-  - x.optional_services: DAList.using(object_type=DAObject)
+  - x.optional_services: DAList.using(object_type=DAObject, complete_attribute='complete')
 ---
 generic object: ALDocument
 code: |
@@ -33,7 +33,8 @@ code: |
     x.filing_parties
     x.filing_action
     x.has_courtesy_copies
-    x.optional_services.gather(complete_attribute='complete')
+    x.added_necessary_opt_services
+    x.optional_services.gather()
     x.as_pdf('preview')
   x.completed = True
 ---
@@ -62,7 +63,7 @@ code: |
     x.filing_parties
     x.filing_action
     x.has_courtesy_copies
-    x.optional_services.gather(complete_attribute='complete')
+    x.optional_services.gather()
     x.as_pdf('preview')
   x.completed = True
 ---
@@ -114,6 +115,22 @@ code: |
   raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
   x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
   del raw_opt_servs
+---
+generic object: DAObject
+need:
+  - x.optional_services_defaults
+  - x.optional_services_filters
+code: |
+  x.optional_services.clear()
+  for opt_srv_default, opt_srv_filter in zip(x.optional_services_defaults, x.optional_services_filters):
+    opt_srv_options, opt_srv_code = filter_codes(x.optional_services_options, opt_srv_filter, opt_srv_default)
+    if opt_srv_code is None:
+      # We shouldn't automatically add things, but should pay attention to:
+      log(f"Can't find optional service for {x.filing_code} at {court_id}, {opt_srv_filter}")
+    else:
+      new_opt_srv = x.optional_services.appendObject()
+      new_opt_srv.code = opt_srv_code
+  x.added_necessary_opt_services = True
 ---
 generic object: DAObject
 code: |
