@@ -39,6 +39,9 @@ objects:
   - case_search: EFCaseSearch
 ---
 code: |
+  can_check_efile = True
+---
+code: |
   case_search.court_id = court_id
 ---
 code: |

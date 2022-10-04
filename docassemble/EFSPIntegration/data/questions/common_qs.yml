@@ -60,3 +60,7 @@ code: |
 if: defined('court_id')
 code: |
   trial_court = trial_court_map[court_id]
+---
+id: get available_efile_courts
+code: |
+  available_efile_courts = get_available_efile_courts(proxy_conn)

@@ -412,7 +412,8 @@ code: |
     target_case.self_partip_choice.is_form_filler = target_case.self_in_case == 'is_self'
     # Change where DA thinks this obj came from, so it says "you", and not "NAME"
     users.append(target_case.self_partip_choice.copy_deep('users[0]'))
-    users[-1].address.geocode()
+    if hasattr(users[-1].address, 'address'):
+      users[-1].address.geocode()
     if is_plaintiff_party(users[0]):
       user_ask_role = 'plaintiff'
     elif is_defendant_party(users[0]):

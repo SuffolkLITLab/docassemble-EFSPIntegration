@@ -87,6 +87,8 @@ code: |
   else:
     contacts_to_attach.gather()
 
+  lead_doc.optional_services_defaults = []
+  lead_doc.optional_services_filters = []
   lead_doc.completed
   append_lead_doc
   al_court_bundle.auto_gather=True

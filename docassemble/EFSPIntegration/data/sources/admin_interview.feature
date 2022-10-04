@@ -109,7 +109,8 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
-    And I see the phrase "IMPOUNDED ADOPTION"
+    And I see the phrase "Adoption"
+    And I see the phrase "CONFIDENTIAL"
     And I tap to continue
     And I set the variable "service_contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I tap to continue
@@ -124,7 +125,8 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
-    And I see the phrase "IMPOUNDED ADOPTION"
+    And I see the phrase "Adoption"
+    And I see the phrase "CONFIDENTIAL"
     And I tap to continue
     And I set the variable "service_contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I tap to continue
@@ -149,6 +151,7 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.docket_number_from_user" to "22-AD-00005"
     And I tap to continue
-    And I see the phrase "IMPOUNDED ADOPTION"
+    And I see the phrase "Adoption"
+    And I see the phrase "CONFIDENTIAL"
     And I tap to continue
     Then I see the phrase "You don’t have any service contacts you can add."

@@ -220,10 +220,6 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
-id: get available_efile_courts
-code: |
-  available_efile_courts = get_available_efile_courts(proxy_conn)
----
 depends on:
   - trial_court
 code: |

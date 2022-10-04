@@ -130,7 +130,7 @@ Feature: Make any type of filing
         | other_parties.there_are_any | False | |
         | existing_parties_new_atts.there_are_any | False | |
         | x.self_in_case | is_self | case_search.self_in_case |
-        | x.self_partip_choice | case_search.found_case.participants[1] | case_search.self_in_case |
+        | x.self_partip_choice | case_search.found_cases[1].participants[1] | case_search.self_in_case |
         | users[0].is_form_filler | False | |
         | lead_contact.email | example@example.com | |
         | users.there_is_another | False | |
