@@ -2,6 +2,9 @@
 include:
   - docassemble.ALToolbox:phone-number-validation.yml
 ---
+objects:
+  - person_to_reg: ALIndividual
+---
 variable name: account_registration_choices
 data: !!omap
   - 'INDIVIDUAL': 'Pro Se user'
@@ -39,7 +42,7 @@ fields:
   - note: |
       ---
   - code: |
-      person_to_reg.address.address_fields()
+      person_to_reg.address_fields()
 ---
 code: |
   password_rules = proxy_conn.get_password_rules()

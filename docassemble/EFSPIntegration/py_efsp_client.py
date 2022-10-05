@@ -177,7 +177,8 @@ class EfspConnection:
           'city': person.get('address', {}).get('city', ''),
           'stateCode': person.get('address', {}).get('state', ''),
           'zipCode': person.get('address', {}).get('zip', ''),
-          'countryCode': person.get('address', {}).get('country', ''),
+          # Will error without it, and US is a good default
+          'countryCode': person.get('address', {}).get('country', 'US'),
           'phoneNumber': phone_number
     }
     if registration_type != 'INDIVIDUAL':

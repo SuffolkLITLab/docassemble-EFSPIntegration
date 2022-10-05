@@ -35,7 +35,7 @@ code: |
     x.has_courtesy_copies
     x.added_necessary_opt_services
     x.optional_services.gather()
-    x.as_pdf('preview')
+    x.as_pdf('preview', refresh=False)
   x.completed = True
 ---
 generic object: ALDocumentBundle
@@ -64,7 +64,7 @@ code: |
     x.filing_action
     x.has_courtesy_copies
     x.optional_services.gather()
-    x.as_pdf('preview')
+    x.as_pdf('preview', refresh=False)
   x.completed = True
 ---
 generic object: DAObject
