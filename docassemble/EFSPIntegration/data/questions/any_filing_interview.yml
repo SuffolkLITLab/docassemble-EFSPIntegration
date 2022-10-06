@@ -684,25 +684,6 @@ fields:
     code: |
       x.optional_service_options
 ---
-id: optional service multiplier
-generic object: ALDocument
-question: |
-  How many "${ x.optional_service_map.get(x.optional_services[i].code).get('name') }"
-  do you want?
-subquestion: |
-  Choose the number of ${ x.optional_service_map.get(x.optional_services[i].code).get('name') } that you want below.
-  
-  Usually this means the number of copies. This may affect
-  the total fee for this service.
-fields:
-  - Multiplier: x.optional_services[i].multiplier
-    datatype: integer
-    min: 1
-    validate: |
-      validate_tyler_regex(multiplier_datafield)
----
-code: |
-  multiplier_datafield = proxy_conn.get_datafield(court_id, 'OptionalServicesMultipleCopies').data or {}
 ---
 id: cross reference type
 question: |

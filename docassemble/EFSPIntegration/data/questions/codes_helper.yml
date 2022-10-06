@@ -133,6 +133,26 @@ code: |
       new_opt_srv.code = opt_srv_code
   x.added_necessary_opt_services = True
 ---
+id: optional service multiplier
+generic object: DAObject
+question: |
+  How many "${ x.optional_service_map.get(x.optional_services[i].code).get('name') }"
+  do you want?
+subquestion: |
+  Choose the number of ${ x.optional_service_map.get(x.optional_services[i].code).get('name') } that you want below.
+  
+  Usually this means the number of copies. This may affect
+  the total fee for this service.
+fields:
+  - Multiplier: x.optional_services[i].multiplier
+    datatype: integer
+    min: 1
+    validate: |
+      validate_tyler_regex(multiplier_datafield)
+---
+code: |
+  multiplier_datafield = proxy_conn.get_datafield(court_id, 'OptionalServicesMultipleCopies').data or {}
+---
 generic object: DAObject
 code: |
   x.filing_component_options, x.filing_component_map = choices_and_map(proxy_conn.get_filing_components(court_id, x.filing_type).data)
