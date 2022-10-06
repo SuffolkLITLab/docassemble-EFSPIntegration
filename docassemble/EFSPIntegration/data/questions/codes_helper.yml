@@ -124,7 +124,7 @@ need:
 code: |
   x.optional_services.clear()
   for opt_srv_default, opt_srv_filter in zip(x.optional_services_defaults, x.optional_services_filters):
-    opt_srv_options, opt_srv_code = filter_codes(x.optional_services_options, opt_srv_filter, opt_srv_default)
+    opt_srv_options, opt_srv_code = filter_codes(x.optional_service_options, opt_srv_filter, opt_srv_default)
     if opt_srv_code is None:
       # We shouldn't automatically add things, but should pay attention to:
       log(f"Can't find optional service for {x.filing_code} at {court_id}, {opt_srv_filter}")
