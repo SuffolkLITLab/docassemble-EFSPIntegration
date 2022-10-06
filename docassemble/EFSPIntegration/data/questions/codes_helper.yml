@@ -63,6 +63,7 @@ code: |
     x.filing_parties
     x.filing_action
     x.has_courtesy_copies
+    x.added_necessary_opt_services
     x.optional_services.gather()
     x.as_pdf('preview', refresh=False)
   x.completed = True

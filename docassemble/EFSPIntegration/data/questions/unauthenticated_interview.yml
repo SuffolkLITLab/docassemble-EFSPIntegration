@@ -33,8 +33,8 @@ data: !!omap
 code: |
   account_action_recompute = {
     "register": ["register_introduction", "person_to_reg", "register", "register_status"],
-    "reset_user_password": ["reset_user_password", "show_resp"],
-    "self_resend_activation": ["self_resend_activation", "show_resp"]
+    "reset_user_password": ["reset_user_password", "show_reset_resp"],
+    "self_resend_activation": ["self_resend_activation", "show_resend_resp"]
   }
 ---
 mandatory: True
@@ -73,12 +73,31 @@ code: |
   del new_password
   register = True
 ---
-id: unauth-action-completed
+id: unauth-reset-completed
 question: |
-  Action completed
+  % if resp.get("response_code") == 200:
+  You have been sent an email to reset your password
+  % else:
+  Something went wrong when trying to reset your password
+  % endif
 subquestion: |
-  Response: ${ pretty_display(resp) }
-continue button field: show_resp
+  % if resp.get("response_code") != 200:
+  Error message: ${ pretty_display(resp) }
+  % endif
+continue button field: show_reset_resp
+---
+id: unauth-resend-completed
+question: |
+  % if resp.get("response_code") == 200:
+  Your activation email has been resent
+  % else:
+  Something went wrong when resending your activation email
+  % endif
+subquestion: |
+  % if resp.get("response_code") != 200:
+  Error message: ${ pretty_display(resp) }
+  % endif
+continue button field: show_resend_resp
 ---
 id: unauth-register-done
 question: |
@@ -90,8 +109,8 @@ question: |
 subquestion: |
   % if resp.is_ok():
   You will get an email from efile${ state_name_to_code(jurisdiction_id) } asking you to activate your account.
-  
-  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resp']}]) })
+
+  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resend_resp']}]) })
 
   % else:
   ${ debug_display(resp) }

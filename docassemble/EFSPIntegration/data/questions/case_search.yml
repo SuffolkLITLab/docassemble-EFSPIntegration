@@ -418,12 +418,12 @@ code: |
       user_ask_role = 'plaintiff'
     elif is_defendant_party(users[0]):
       user_ask_role = 'defendant'
-    user_ask_role
     to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
 ---
 need:
   - users
   - to_add_participants
+  - user_ask_role
   - is_user_party
   - is_other_party
   - other_parties
