@@ -44,6 +44,10 @@ def convert_court_to_id(trial_court) -> str:
     return trial_court.lower()
   return trial_court
 
+class SafeDict(dict):
+  def disp(self, elem, attr):
+    return (self.get(elem) or {}).get(attr, elem)
+
 def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tuple[List[Any], Dict]:
   """Takes the responses from the 'codes' service and make a DA ready list of choices and a map back
   to the full code object"""
@@ -53,14 +57,14 @@ def choices_and_map(codes_list:List, display:str=None, backing:str=None) -> Tupl
     backing = 'code'
 
   if codes_list is None:
-    return [], {}
+    return [], SafeDict({})
   
   if isinstance(codes_list, str):
     log(f"choices_and_map codes_list is a string? {codes_list}")
-    return [], {}
+    return [], SafeDict({})
 
   choices_list = [(code_obj[backing], display.format(**code_obj)) for code_obj in codes_list]
-  codes_map = { vv[backing] : vv for vv in codes_list }
+  codes_map = SafeDict({ vv[backing] : vv for vv in codes_list })
   return choices_list, codes_map
 
 def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
@@ -330,6 +334,7 @@ def parse_case_info(proxy_conn:ProxyConnection, new_case:DAObject, entry:dict, c
     roles = {}
   new_case.details = entry
   new_case.court_id = court_id
+  new_case.title = chain_xml(entry, ['value', 'caseTitleText', 'value'])
   new_case.tracking_id = chain_xml(entry, ['value', 'caseTrackingID', 'value'])
   new_case.docket_number = entry.get('value',{}).get('caseDocketID',{}).get('value')
   new_case.category = entry.get('value',{}).get('caseCategoryText',{}).get('value')

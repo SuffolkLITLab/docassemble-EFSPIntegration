@@ -149,6 +149,8 @@ buttons:
 ## As a result of logging in, we can use defaults. That's why they're in this file.
 ---
 # TODO: consider removing default state
+if: |
+  can_check_efile
 id: your address
 sets:
   - users[0].address.address

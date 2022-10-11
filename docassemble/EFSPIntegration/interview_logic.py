@@ -145,7 +145,7 @@ def shift_case_select_window(proxy_conn, found_cases:DAList, *,
   # end idx is always as far from start as it can go
   end_idx = min(len(found_cases), start_idx + num_case_choices())
   for case in found_cases[start_idx:end_idx]:
-    if not hasattr(case, 'title'):
+    if not hasattr(case, 'title') or not hasattr(case, 'date'):
       fetch_case_info(proxy_conn, case, roles=roles)
   return start_idx, end_idx
 

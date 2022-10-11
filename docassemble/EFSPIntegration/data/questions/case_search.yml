@@ -140,7 +140,7 @@ continue button field: x.warn_no_results
 generic object: EFCaseSearch
 id: case lookup
 question: |
-  Find your case
+  Find your case in ${ trial_court }
 subquestion: |
   % if x.can_file_non_indexed_case:
   ${ collapse_template(x.explain_case_search_choices_template) }
@@ -334,6 +334,14 @@ code: |
     direction=action_argument('direction'), start_idx=x.start_case_idx, end_idx=x.end_case_idx, roles=x.party_type_map)
 ---
 generic object: EFCaseSearch
+sets:
+  - x.found_cases[i].date
+  - x.found_cases[i].title
+code: |
+  if not hasattr(x.found_cases[i], 'title') or not hasattr(x.found_cases[i], 'date'):
+    fetch_case_info(proxy_conn, x.found_cases[i], roles=x.party_type_map)
+---
+generic object: EFCaseSearch
 code: |
   x.start_case_idx = 0
   x.end_case_idx = min(len(x.found_cases), num_case_choices())
@@ -347,7 +355,7 @@ content: |
   #### ${ case.title } ${ '(' + case.date + ')' if case.date.year > 1000 else '' }
   * Docket ID: ${ case.docket_number }
   * Court ID: ${ case.court_id }
-  * Case Category: ${ x.case_category_map.get(case.category, {}).get('name', case.category) }
+  * Case Category: ${ x.case_category_map.disp(case.category, 'name') }
   % endfor
 comment: |
   Can't use this code for court ID without causing an infinite loop? Unclear why
@@ -418,7 +426,7 @@ code: |
       user_ask_role = 'plaintiff'
     elif is_defendant_party(users[0]):
       user_ask_role = 'defendant'
-    to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName]
+    to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName and not is_unused_party(p)]
 ---
 need:
   - users
@@ -493,22 +501,31 @@ code: |
     'defendant',
     'respondent',
   ]
-
+---
+code: |
   is_plaintiff_filters = [
     CodeType('20646'),
     'plaintiff',
     'petitioner',
   ]
 ---
+code: |
+  is_unused_filters = []
+---
 need:
   - is_defendant_filters
   - is_plaintiff_filters
+  - is_unused_filters
+  - make_filters
 code: |
   def is_defendant_party(p):
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_defendant_filters)])
   
   def is_plaintiff_party(p):
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_plaintiff_filters)])
+
+  def is_unused_party(p):
+    return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_unused_filters)])
 ---
 code: |
   if user_ask_role == 'plaintiff':
@@ -576,7 +593,7 @@ fields:
 ---
 generic object: EFCaseSearch
 code: |
-  x.maybe_user_partips = [partip for partip in x.found_case.participants if is_person_party(partip)]
+  x.maybe_user_partips = [p for p in x.found_case.participants if is_person_party(p) and not is_unused_party(p)]
 ---
 generic object: EFCaseSearch
 if: len(x.maybe_user_partips) == 1

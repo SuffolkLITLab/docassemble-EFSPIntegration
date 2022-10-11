@@ -229,7 +229,7 @@ fields:
   - Filing Type: x.user_chosen_filing_type
     datatype: dropdown
     code: |
-      x.filtered_filing_type_options
+      sorted(x.filtered_filing_type_options, key=lambda y: y[1])
 ---
 generic object: DAObject
 id: motion_type
@@ -336,6 +336,28 @@ code: |
 code: |
   service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
   cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, efile_case_type).data, backing='code')
+---
+id: cross reference type
+question: |
+  Cross references
+# This works in Illinois at least--error message should be shown
+# before user types, since it explains a confusing concept
+subquestion: |
+  % if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired'):
+  ${ next(iter(cross_ref_type_map.values()),{}).get('customvalidationfailuremessage') }
+  % endif
+fields:
+  - Type of Reference: cross_references.new_item_name
+    datatype: dropdown
+    code: |
+      cross_ref_types
+    default: |
+      ${ next(iter(cross_ref_type_map)) if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired') else None }
+  - Reference text: cross_references.new_item_value
+validation code: |
+  regex_str = cross_ref_type_map[cross_references.new_item_name]['validationregex']
+  if not re.search(regex_str, cross_references.new_item_value):
+    validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'], field="cross_references.new_item_value")
 ---
 code: |
   service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
