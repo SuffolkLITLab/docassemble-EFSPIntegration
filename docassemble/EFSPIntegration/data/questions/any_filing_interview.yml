@@ -56,7 +56,7 @@ code: |
     if case_subtype_options:
       efile_case_subtype = case_subtype_map.get(user_chosen_case_subtype, {}).get('code')
     tyler_filing_attorney
-    user_ask_role
+    user_role
     user_started_case
   else:
     if case_search.case_was_found:
@@ -623,7 +623,7 @@ fields:
 ---
 code: |
   if is_initial_filing or users[0].is_form_filler:
-    if showifdef('user_ask_role') == 'plaintiff':
+    if showifdef('user_role') == 'plaintiff':
       plaintiff = matching_tuple_option('plaintiff', party_type_options)
       petitioner = matching_tuple_option('petitioner', party_type_options)
       if plaintiff:
@@ -641,7 +641,7 @@ code: |
 generic object: ALIndividual
 code: |
   x.party_type_default = None
-  x.party_type_filters = ['plaintiff'] if showifdef('user_ask_role') == 'plaintiff' else ['defendant']
+  x.party_type_filters = ['plaintiff'] if showifdef('user_role') == 'plaintiff' else ['defendant']
 ---
 id: party type of other parties
 question: |
@@ -651,7 +651,7 @@ fields:
     input type: radio
     code: |
       party_type_options if is_nonindexed_filing else party_type_new_options
-    default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_ask_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
+    default: ${ matching_tuple_option('defendant', party_type_options) if showifdef('user_role') == 'plaintiff' else matching_tuple_option('plaintiff', party_type_options) }
 ---
 generic object: ALDocument
 id: reference number

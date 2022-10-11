@@ -126,6 +126,7 @@ def search_case_by_name(*, proxy_conn, var_name:str=None,
       # Allows users to control what cases are shown as options
       if not filter_fn(new_case):
         found_cases.pop()
+      log(f"done with {idx} in search_case_by_name, {new_case.as_serializable()}")
   else:
     log(f"get_cases_response: {get_cases_response}")
     found_cases.resp_ok = False

@@ -133,6 +133,11 @@ code: |
       new_opt_srv.code = opt_srv_code
   x.added_necessary_opt_services = True
 ---
+generic object: DAObject
+code: |
+  x.optional_services_defaults = []
+  x.optional_services_filters = []
+---
 id: optional service multiplier
 generic object: DAObject
 question: |
