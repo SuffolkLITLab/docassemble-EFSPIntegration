@@ -483,12 +483,20 @@ code: |
     x.party_type = x.user_chosen_party_type
 ---
 generic object: ALIndividual
+if: can_check_efile
 code: |
   str(x.name)
   x.party_type
   x.is_new
   x.complete = True
 ---
+generic object: ALIndividual
+if: not can_check_efile
+code: |
+  str(x.name)
+  x.complete = True
+---
+if: can_check_efile
 code: |
   users[i].is_form_filler
   str(users[i].name)
@@ -498,6 +506,14 @@ code: |
   users[i].is_new
   if users[i].is_new:
     users[i].attorney_ids
+  users[i].complete = True
+---
+if: not can_check_efile
+code: |
+  users[i].is_form_filler
+  str(users[i].name)
+  if i == 0:
+    users[i].email
   users[i].complete = True
 ---
 comment: |
