@@ -1,14 +1,24 @@
 ---
+comment: |
+  This file requires the following variables:
+  * `jurisdiction_id`
+---
 modules:
   - .conversions
   - .interview_logic
   - .efm_client
 ---
 include:
-  - common_qs.yml
+  - unauthenticated_actions.yml
 ---
 code: |
   logged_out_interview = "docassemble.EFSPIntegration:unauthenticated_interview.yml"
+---
+code: |
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  AL_DEFAULT_STATE = None
 ---
 id: eFile Login
 question: |
@@ -98,7 +108,7 @@ depends on:
   - tyler_login
   - tyler_login_resp
 code: |
-  if not available_efile_courts:
+  if not can_check_efile:
     logged_in_user_is_admin = False
     logged_in_user_is_global_admin = False
   else:
@@ -117,11 +127,6 @@ subquestion: |
       [{'recompute': ['self_resend_activation','show_activation_resp']}]) }).
 buttons:
   - restart
----
-code: |
-  resent_activation_resp = proxy_conn.self_resend_activation_email(my_username)
-  del my_username
-  self_resend_activation = True
 ---
 id: results
 question: |
@@ -166,4 +171,80 @@ subquestion: |
 fields:
   - code: |
       address_fields_with_defaults(proxy_conn, users[0], logged_in_user_is_admin, country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+---
+id: court
+question: |
+  Choose a court
+fields:
+  - no label: trial_court
+    code: |
+      trial_court_options
+---
+code: |
+  trial_court_resp = proxy_conn.get_courts(fileable_only=True, with_names=True)
+  trial_court_options = sorted([(court['code'], court['name']) for court in trial_court_resp.data or []], key=lambda c: c[1])
+  trial_court_map = {court['code']: court['name'] for court in trial_court_resp.data or []}
+---
+if: defined('court_id')
+code: |
+  trial_court = trial_court_map[court_id]
+---
+id: get available_efile_courts
+code: |
+  available_efile_courts = get_available_efile_courts(proxy_conn)
+---
+depends on:
+  - trial_court
+code: |
+  court_id = convert_court_to_id(trial_court)
+---
+code: |
+  all_party_type_options, all_party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, None).data)
+---
+id: user-wants-efile
+question: |
+  Do you want to e-file this document directly with the court?
+subquestion: |
+  You are able to electronically-file (e-file) this document with ${ full_court_info['name'] }!
+
+  This means you don't have to print out the document. The court
+  will communicate with you through your email or phone.
+
+  You will have to provide your email to e-file this document. If you don't wish to provide that,
+  you can choose not to efile.
+fields:
+  - Do you want to e-file?: user_wants_efile
+    datatype: yesnoradio
+---
+id: you-will-not-be-able-to-efile
+question: |
+  You will *not* be able to e-file this document
+subquestion: |
+  Unfortunately, you won't be able to e-file this document at ${ trial_court }.
+
+  However, you are still be able to continue and download a completed form.
+continue button field: show_no_efile
+---
+depends on:
+  - court_id
+  - available_efile_courts
+only sets: efile_setup
+code: |
+  efile_setup = court_id in available_efile_courts
+---
+id: check efile possibility
+sets:
+  - can_check_efile
+code: |
+  if efile_setup:
+    # Ask the user if they want to efile
+    can_check_efile = user_wants_efile
+  else:
+    show_no_efile
+    can_check_efile = False
+---
+only sets: full_court_info
+code: |
+  full_court_info = get_full_court_info(proxy_conn, court_id)
 ---

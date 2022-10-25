@@ -2,11 +2,9 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.EFSPIntegration:efiling_integration.yml
-  - docassemble.EFSPIntegration:login_qs.yml
-  - docassemble.EFSPIntegration:codes_helper.yml
 ---
 code: |
-  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction='illinois')
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
 objects:
   - lead_contact: ALIndividual
@@ -18,6 +16,7 @@ objects:
   - al_court_bundle: ALDocumentBundle.using(filename="full_bundle.pdf", title="All forms to submit to the court", elements=[main_document], enabled=True)
 ---
 code: |
+  jurisdiction_id = 'illinois'
   trial_court = 'adams'
   efile_case_category = '7306'
   efile_case_type = '25361'

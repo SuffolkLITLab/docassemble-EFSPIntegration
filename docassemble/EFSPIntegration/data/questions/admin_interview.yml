@@ -5,9 +5,8 @@ modules:
 ---
 include:
   - login_qs.yml
-  - common_qs.yml
   - case_search.yml
-  - docassemble.AssemblyLine:al_package.yml  
+  - docassemble.AssemblyLine:al_package.yml
 ---
 features:
   question back button: True
@@ -414,12 +413,6 @@ content: |
   
   % endfor
 ---
-id: email
-question: |
-  What is your email address?
-fields:
-  - email: email
----
 id: contact info
 generic object: Individual
 question: |
@@ -440,12 +433,12 @@ id: user id
 question: |
   User ID?
 subquestion: |
-  Type in a user GUID or choose from members in your firm.  
+  Type in a user GUID or choose from members in your firm.
 fields:
   - User ID: user_id
     datatype: combobox
     code: |
-      [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data or []]
+      user_list_choices()
 ---
 id: admin trial court
 question: |
@@ -488,7 +481,17 @@ fields:
   - User: filtering_user_id
     datatype: combobox
     code: |
-      [{None: 'Any user (no filter)'}] + [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data or []]
+      [{None: 'Any user (no filter)'}] + user_list_choices()
+---
+code: |
+  def user_list_dict():
+    """Returns a dict from user id to email"""
+    return {y.get('userID'): y.get('email') for y in proxy_conn.get_user_list().data or []}
+---
+code: |
+  def user_list_choices():
+    """Returns individual choices of users, as a list of userID -> email dicts"""
+    return [{y.get('userID'): y.get('email')} for y in proxy_conn.get_user_list().data or []]
 ---
 id: firm id
 question: |
@@ -859,10 +862,6 @@ code: |
     updated_attorney.default_bar_number = ''
 ---
 code: |
-  all_party_type_options, all_party_type_map = \
-    choices_and_map(proxy_conn.get_party_types(court_id, None).data)
----
-code: |
   resp = proxy_conn.update_user(user_id, 
     email=updated_user.email,
     first_name=updated_user.name.first,
@@ -987,11 +986,6 @@ code: |
   globals().pop('trial_court', None)
   globals().pop('court_id', None)
   get_filings = True
----
-code: |
-  resp = proxy_conn.self_resend_activation_email(email)
-  del email
-  self_resend_activation = True
 ---
 code: |
   resp = proxy_conn.resend_activation_email(id=user_id)
@@ -1375,7 +1369,7 @@ code: |
   remove_global_payment_account = True
 ---
 code: |
-  resp = proxy_conn.change_password(user_id, email, new_user_password)
+  resp = proxy_conn.change_password(user_id, user_list_dict().get(user_id), new_user_password)
   globals().pop('user_id', None)
   globals().pop('new_user_password', None)
   change_password = True
