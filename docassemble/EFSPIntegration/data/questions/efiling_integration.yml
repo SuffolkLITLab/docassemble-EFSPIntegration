@@ -6,7 +6,7 @@ modules:
   - .interview_logic
 ---
 include:
-  - common_qs.yml
+  - login_qs.yml
 ---
 code: |
   proxy_conn = ProxyConnection()  # Uses default configs in the python module
@@ -131,30 +131,6 @@ subquestion: |
   You can continue to a page that will let you download your form.
 continue button field: fallback_user_choice
 ---
-id: user-wants-efile
-question: |
-  Do you want to e-file this document directly with the court?
-subquestion: |
-  You are able to electronically-file (e-file) this document with ${ full_court_info['name'] }!
-
-  This means you don't have to print out the document. The court
-  will communicate with you through your email or phone.
-
-  You will have to provide your email to e-file this document. If you don't wish to provide that,
-  you can choose not to efile.
-fields:
-  - Do you want to e-file?: user_wants_efile
-    datatype: yesnoradio
----
-id: you-will-not-be-able-to-efile
-question: |
-  You will *not* be able to e-file this document
-subquestion: |
-  Unfortunately, you won't be able to e-file this document at ${ trial_court }.
-
-  However, you are still be able to continue and download a completed form.
-continue button field: show_no_efile
----
 id: missing-fields
 question: |
   Missing fields
@@ -175,7 +151,7 @@ subquestion: |
   ## Required
 
   % for var in remaining_to_check.get("required_vars") + remaining_to_check.get("wrong_vars"):
-  * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
+  * `${ var.get("name") }`: ${ var.get("description") }. Should be a ${ var.get("datatype") }
     % if var.get("choices"):
     and have these choices:
     % for choice in var.get("choices"):
@@ -187,7 +163,7 @@ subquestion: |
   ## Optional
 
   % for var in remaining_to_check.get("optional_vars"):
-  * ${ var.get("name") }: ${ var.get("description") }. Should be a ${ var.get("datatype") }
+  * `${ var.get("name") }`: ${ var.get("description") }. Should be a ${ var.get("datatype") }
     % if var.get("choices"):
     and have these choices:
     % for choice in var.get("choices",[]):
@@ -220,29 +196,6 @@ code: |
   follow_up_vars.gathered = True
   follow_up_setup = True
 ---
-depends on:
-  - trial_court
-code: |
-  court_id = convert_court_to_id(trial_court)
----
-depends on:
-  - court_id
-  - available_efile_courts
-only sets: efile_setup
-code: |
-  efile_setup = court_id in available_efile_courts
----
-id: check efile possibility
-sets:
-  - can_check_efile
-code: |
-  if efile_setup:
-    # Ask the user if they want to efile
-    can_check_efile = user_wants_efile
-  else:
-    show_no_efile
-    can_check_efile = False
----
 only sets:
   - check_resp
 code: |
@@ -258,42 +211,42 @@ code: |
   show_any_disclaimers
   all_required_screens_shown = True
 ---
+if: not can_check_efile
+code: |
+  ready_to_efile = False
+---
+if: can_check_efile
 need:
   - efile_author_mode
-  - can_check_efile
 id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
-  if can_check_efile:
-    check_resp
-    remaining_to_check = check_resp.data
-    log('check_resp: ' + str(check_resp))
-    if not check_resp.is_ok():
-      ready_to_efile = False
-      if efile_author_mode:
-        show_remaining
-      else:
-        log(f'Something went wrong: {check_resp.error_msg}')
-      
-    elif not remaining_to_check.get("required_vars") and not remaining_to_check.get("wrong_vars"):
+  check_resp
+  remaining_to_check = check_resp.data
+  log('check_resp: ' + str(check_resp))
+  if not check_resp.is_ok():
+    ready_to_efile = False
+    if efile_author_mode:
+      show_remaining
+    else:
+      log(f'Something went wrong: {check_resp.error_msg}')
+  elif not remaining_to_check.get("required_vars") and not remaining_to_check.get("wrong_vars"):
+    ready_to_efile = True
+  else:
+    if efile_author_mode:
+      show_remaining
+      follow_up_setup 
+      for key in follow_up_vars.keys():
+        define(follow_up_vars[key].name, follow_up_vars[key].value)
       ready_to_efile = True
     else:
-      if efile_author_mode:
-        show_remaining
-        follow_up_setup 
-        for key in follow_up_vars.keys():
-          define(follow_up_vars[key].name, follow_up_vars[key].value)
-        ready_to_efile = True
-      else:
-        ready_to_efile = False
-        log(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
-        fallback_user_choice
-  else:
-    ready_to_efile = False
+      ready_to_efile = False
+      log(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
+      fallback_user_choice
+  globals().pop('check_resp', None)
+
   if not ready_to_efile:
     show_no_efile
-
-  globals().pop('check_resp', None)
 ---
 id: actually efile
 depends on:
@@ -408,3 +361,624 @@ subquestion: |
   ${ x[i].description }
 fields:
   - no label: x[i].value
+---
+#############################
+### codes help code
+---
+comment: |
+  generic object only works on a single type of object. However, in ALDocumentBundles, we
+  treat ALDocuments and ALDocumentBundles the same: we just call as_pdf().
+  From the Tyler perspective, authors should be able to declare at what level the ALDocument
+  or ALDocumentBundles are going to be combined and sent to Tyler, and at that level, we need
+  to define all of the below attributes (filing_type, etc.)
+
+  For simplicity, the generic objects below will mostly be DAObjects, to catch both ALDocumentBundles
+  and ALDocuments. However, it would be best to eventually in AssemblyLine core to make sure both
+  classes multiple-inherit from a dummy object, Pdfizable (TODO(brycew): make a better name), so there
+  can be a more specific object to make generic
+---
+objects:
+  - cross_references: DADict.using(there_are_any=len(cross_ref_types))
+---
+generic object: DAObject
+objects:
+  - x.optional_services: DAList.using(object_type=DAObject, complete_attribute='complete')
+---
+generic object: ALDocument
+code: |
+  if x.enabled:
+    x.filing_type
+    x.filing_description
+    x.reference_number
+    x.document_type
+    x.motion_type
+    x.filing_component
+    x.filing_parties
+    x.filing_action
+    x.has_courtesy_copies
+    x.added_necessary_opt_services
+    x.optional_services.gather()
+    x.as_pdf('preview', refresh=False)
+  x.completed = True
+---
+generic object: ALDocumentBundle
+code: |
+  if x.enabled:
+    x.filing_type
+    x.filing_component_options
+    x.document_type_options
+    if len(x.enabled_documents()) > 1 and len(x.filing_component_options) == 1 and not x.filing_component_map[x.filing_component_options[0][0]]['allowmultiple']:
+      x.filing_component
+      x.document_type
+      x.tyler_merge_attachments = True
+    else:
+      for subdoc in x.enabled_documents():
+        subdoc.filing_type = x.filing_type
+        subdoc.filing_component_options = x.filing_component_options
+        subdoc.filing_component_map = x.filing_component_map
+        subdoc.filing_component
+        subdoc.document_type_options = x.document_type_options
+        subdoc.document_type_map = x.document_type_map
+        subdoc.document_type
+    x.filing_description
+    x.reference_number
+    x.motion_type
+    x.filing_parties
+    x.filing_action
+    x.has_courtesy_copies
+    x.added_necessary_opt_services
+    x.optional_services.gather()
+    x.as_pdf('preview', refresh=False)
+  x.completed = True
+---
+generic object: DAObject
+id: eserve
+question: |
+  Would you like to e-file this document, serve to the desginated party, or both?
+fields:
+  - Efile or serve?: x.filing_action
+    choices:
+      - Efile: efile
+      - Efile and Serve: efile_and_serve
+      - Serve: serve
+---
+generic object: DAObject
+id: any optional services
+question: |
+  Optional services - ${ x.title }
+subquestion: |
+  Do you want to add any optional services for this document?
+fields:
+  - no label: x.optional_services.there_are_any
+    datatype: yesnoradio
+---
+generic object: DAObject
+code: |
+  if not x.optional_service_options:
+    x.optional_services.there_are_any = False
+---
+generic object: DAObject
+id: another optional service
+question: |
+  Are there any other optional services that you want for ${ x.title }?
+fields:
+  - no label: x.optional_services.there_is_another
+    datatype: yesnoradio
+---
+generic object: DAObject
+code: |
+  my_code = x.optional_services[i].code
+  if x.optional_service_map.get(my_code,{}).get('multiplier'):
+    x.optional_services[i].multiplier
+  if x.optional_service_map.get(my_code,{}).get('hasfeeprompt'):
+    x.optional_services[i].fee_amount
+  x.optional_services[i].complete = True
+---
+generic object: DAObject
+code: |
+  raw_opt_servs = proxy_conn.get_optional_services(court_id, x.filing_type).data
+  x.optional_service_options, x.optional_service_map = choices_and_map(raw_opt_servs)
+  del raw_opt_servs
+---
+generic object: DAObject
+need:
+  - x.optional_services_defaults
+  - x.optional_services_filters
+code: |
+  x.optional_services.clear()
+  for opt_srv_default, opt_srv_filter in zip(x.optional_services_defaults, x.optional_services_filters):
+    opt_srv_options, opt_srv_code = filter_codes(x.optional_service_options, opt_srv_filter, opt_srv_default)
+    if opt_srv_code is None:
+      # We shouldn't automatically add things, but should pay attention to:
+      log(f"Can't find optional service for {x.filing_code} at {court_id}, {opt_srv_filter}")
+    else:
+      new_opt_srv = x.optional_services.appendObject()
+      new_opt_srv.code = opt_srv_code
+  x.added_necessary_opt_services = True
+---
+generic object: DAObject
+code: |
+  x.optional_services_defaults = []
+  x.optional_services_filters = []
+---
+id: optional service multiplier
+generic object: DAObject
+question: |
+  How many "${ x.optional_service_map.get(x.optional_services[i].code).get('name') }"
+  do you want?
+subquestion: |
+  Choose the number of ${ x.optional_service_map.get(x.optional_services[i].code).get('name') } that you want below.
+  
+  Usually this means the number of copies. This may affect
+  the total fee for this service.
+fields:
+  - Multiplier: x.optional_services[i].multiplier
+    datatype: integer
+    min: 1
+    validate: |
+      validate_tyler_regex(multiplier_datafield)
+---
+code: |
+  multiplier_datafield = proxy_conn.get_datafield(court_id, 'OptionalServicesMultipleCopies').data or {}
+---
+generic object: DAObject
+code: |
+  x.filing_component_options, x.filing_component_map = choices_and_map(proxy_conn.get_filing_components(court_id, x.filing_type).data)
+---
+generic object: DAObject
+code: |
+  x.motion_type_options, x.motion_type_map = choices_and_map(proxy_conn.get_motion_types(court_id, x.filing_type).data)
+---
+generic object: DAObject
+code: |
+  x.document_type_options, x.document_type_map = choices_and_map(proxy_conn.get_document_types(court_id, x.filing_type).data)
+---
+generic object: DAObject
+id: document type
+question: |
+  Document type - ${ x.title }
+subquestion: |
+  If a judge has ordered that this case is sealed, select
+  "Confidential". You should also attach a copy of the judge's order.
+fields:
+  - Document type: x.document_type
+    input type: radio
+    code: |
+      x.document_type_options
+    default: ${ matching_tuple_option('non-confidential', x.document_type_options) }
+---
+generic object: DAObject
+if: |
+  exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
+code: |
+  x.filing_component = next(iter(x.filing_component_options))[0]
+---
+generic object: DAObject
+if: |
+  not exactly_one_required_filing_component(x.filing_component_options, x.filing_component_map)
+need:
+  - x.filing_component_default
+  - x.filing_component_filters
+code: |
+  x.filtered_filing_component_options, x.filing_component = \
+      filter_codes(x.filing_component_options, x.filing_component_filters, x.filing_component_default)
+  if x.filing_component is None:
+    del x.filing_component
+    x.filing_component = x.user_chosen_filing_component
+---
+generic object: DAObject
+id: filing component
+question: |
+  Filing component
+fields:
+  - Filing Component: x.user_chosen_filing_component
+    datatype: dropdown
+    code: |
+      x.filtered_filing_component_options
+---
+generic object: DAObject
+need:
+  - x.filing_type_default
+  - x.filing_type_filters
+code: |
+  x.filtered_filing_type_options, x.filing_type = \
+      filter_codes(filing_type_options, x.filing_type_filters, x.filing_type_default)
+  if x.filing_type is None:
+    del x.filing_type
+    x.filing_type = x.user_chosen_filing_type
+---
+generic object: DAObject
+id: filing type question
+question: |
+  What type of filing will you be making?
+subquestion: |
+  We found a few filing codes that could be used to file your ${ x.title }. Choose the one that you think best fits your case.
+fields:
+  - Filing Type: x.user_chosen_filing_type
+    datatype: dropdown
+    code: |
+      sorted(x.filtered_filing_type_options, key=lambda y: y[1])
+---
+generic object: DAObject
+id: motion_type
+question: |
+  Motion Type
+fields:
+  - Motion Type: x.motion_type_code
+    datatype: dropdown
+    code: |
+      x.motion_type_options
+---
+generic object: DAObject
+code: |
+  if x.motion_type_options:
+    x.motion_type = x.motion_type_map.get(x.motion_type_code)
+  else:
+    x.motion_type = None
+---
+generic object: DAObject
+id: Parties resp for payment
+question: |
+  Parties responsible for payment
+fields: 
+  - Parties for payment: x.existing_parties_payment_dict
+    datatype: checkboxes
+    none of the above: False
+    minlength: 1
+    code: |
+      all_case_parties
+---
+generic object: DAObject
+code: |
+  if needs_all_info and len(users) == 1:
+    x.filing_parties = ['users[0]']
+    # explain_user_paying
+  else:
+    x.filing_parties = list(x.existing_parties_payment_dict.true_values())
+---
+generic object: ALExhibitDocument
+code: |
+  x.title = x.exhibits[0].title
+---
+code: |
+  filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
+---
+code: |
+  filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, efile_case_category, efile_case_type, is_initial_filing).data)
+---
+id: user chosen case category
+question: |
+  What category is this case?
+fields:
+  - Case category: user_chosen_case_category
+    datatype: dropdown
+    code: |
+      sorted(efile_case_category_filtered_options, key=lambda cat: cat[1])
+---
+id: case type
+question: |
+  Case Type
+fields:
+  - Case Type: user_chosen_case_type
+    datatype: dropdown
+    code: |
+      sorted(case_type_options,key=lambda cat: cat[1])
+---
+code: |
+  all_case_parties_tmp = []
+  for u in users + other_parties:
+    if u.is_new:
+      all_case_parties.append([u.instanceName, str(u)])
+    else:
+      all_case_parties.append([u.tyler_id, str(u)])
+  
+  all_case_parties = all_case_parties_tmp
+  del all_case_parties_tmp
+---
+code: |
+  timing = 'Initial' if is_initial_filing else 'Subsequent'
+  case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=True, timing=timing).data) 
+---
+code: |
+  timing = 'Initial' if is_initial_filing else 'Subsequent'
+  case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, efile_case_category, timing=timing).data)
+---
+code: |
+  party_type_options, party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, efile_case_type).data)
+  party_type_new_options = [p_type for p_type in party_type_options] 
+  # TODO(brycew): need to prevent multiple parties using the isAvailableForNewParties = False entries
+---
+code: |
+  all_party_type_options, all_party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, None).data)
+---
+code: |
+  court_policy = proxy_conn.get_policy(court_id).data or {}
+---
+code: |
+  filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
+---
+code: |
+  service_type_options, service_type_map = choices_and_map(proxy_conn.get_service_types(court_id).data)
+  cross_ref_types, cross_ref_type_map = choices_and_map(proxy_conn.get_cross_references(court_id, efile_case_type).data, backing='code')
+---
+id: cross reference type
+question: |
+  Cross references
+# This works in Illinois at least--error message should be shown
+# before user types, since it explains a confusing concept
+subquestion: |
+  % if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired'):
+  ${ next(iter(cross_ref_type_map.values()),{}).get('customvalidationfailuremessage') }
+  % endif
+fields:
+  - Type of Reference: cross_references.new_item_name
+    datatype: dropdown
+    code: |
+      cross_ref_types
+    default: |
+      ${ next(iter(cross_ref_type_map)) if len(cross_ref_type_map)==1 and next(iter(cross_ref_type_map.values()),{}).get('isrequired') else None }
+  - Reference text: cross_references.new_item_value
+validation code: |
+  regex_str = cross_ref_type_map[cross_references.new_item_name]['validationregex']
+  if not re.search(regex_str, cross_references.new_item_value):
+    validation_error(cross_ref_type_map[cross_references.new_item_name]['customvalidationfailuremessage'], field="cross_references.new_item_value")
+---
+code: |
+  service_contact_options = parse_service_contacts(proxy_conn.get_service_contact_list().data)
+---
+code: |
+  admin_interview = "docassemble.EFSPIntegration:admin_interview.yml"
+---
+############ Payments Stuff ############
+reconsider:
+  - tyler_payment_account_options
+id: payment account
+question: |
+  Payment Account
+subquestion: |
+  Select an existing account below, or add a payment account
+  using the 
+  [Admin Interface](${ interview_url(i=admin_interview, reset=1, jurisdiction_id=jurisdiction_id) }){:target="_blank"}
+  
+  Refresh this page when you have finished adding the account.
+fields:
+  - Payment Account: tyler_payment_id
+    datatype: dropdown
+    code: |
+      tyler_payment_account_options
+---
+code: |
+  default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
+---
+code: |
+  allowable_card_types = full_court_info.get('allowablecardtypes', [])
+  res = proxy_conn.get_payment_account_list().data
+  if res:
+    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
+  else:
+    tyler_payment_account_options = []
+
+  res = proxy_conn.get_global_payment_account_list().data
+  if res:
+    tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
+---
+################################
+## Fees
+id: review_fees
+question: |
+  Review filing fees
+subquestion: |
+  Your payment account will be charged the following fees:
+  
+  % if has_fees:
+  ${ fees_table }
+  
+  **Total: ${ currency(fee_total(fees_resp)) }**
+  % else:
+  There are no fees associated with this filing.
+  % endif  
+fields:
+  - no label: review_fees
+    datatype: checkboxes
+    choices:
+      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
+    minlength: 1
+    validation messages:
+      minlength: |
+        You must agree to pay the fees listed above.
+---
+id: bad fees
+event: bad_fees
+question: |
+  Something went wrong
+subquestion: |
+  Sorry, something went wrong when trying to figure out what fees you might have to pay.
+ 
+  More details: ${ debug_display(fees_resp) }
+---
+depends on:
+  - fees_resp
+code: |
+  has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
+---
+code: |
+  fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
+  if not fees_resp.is_ok():
+    log(f'fees not ok! {fees_resp}')
+---
+depends on:
+  - fees_resp
+table: fees_table
+rows: |
+  [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
+columns:
+  - Reason: |
+      row_item.get('allowanceChargeReason',{}).get('value')
+  - Amount: |
+      currency(row_item.get('amount',{}).get('value',0))
+---
+#############################
+## party lists
+generic object: ALIndividual
+id: user chosen party type
+question: |
+  What is the party type of ${ x }?
+fields:
+  - Filing type: x.user_chosen_party_type
+    datatype: dropdown
+    code: |
+      x.party_type_filtered_options
+---
+generic object: ALIndividual
+code: |
+  x.party_type_filtered_options, x.party_type = filter_codes(
+    party_type_options, x.party_type_filters, x.party_type_default)
+  if x.party_type is None:
+    del x.party_type
+    x.party_type = x.user_chosen_party_type
+---
+generic object: ALIndividual
+if: can_check_efile
+code: |
+  str(x.name)
+  x.party_type
+  x.is_new
+  x.complete = True
+---
+generic object: ALIndividual
+if: not can_check_efile
+code: |
+  str(x.name)
+  x.complete = True
+---
+if: can_check_efile
+code: |
+  users[i].is_form_filler
+  str(users[i].name)
+  if i == 0:
+    users[i].email
+  users[i].party_type
+  users[i].is_new
+  if users[i].is_new:
+    users[i].attorney_ids
+  users[i].complete = True
+---
+if: not can_check_efile
+code: |
+  users[i].is_form_filler
+  str(users[i].name)
+  if i == 0:
+    users[i].email
+  users[i].complete = True
+---
+comment: |
+  If `is_new` is ever sought, means it wasn't set from
+  a parsed person from the existing case, so it should
+  always be new
+generic object: ALIndividual
+code: |
+  x.is_new = True
+---
+code: |
+  users[i].is_new = True
+---
+#############################
+## is_form_filler
+id: is_form_filler
+question: |
+  Are you this party?
+subquestion: |
+  If you are ${ users[0] }, and logged in as yourself, your information in the E-file system will be used.
+fields:
+  - You are this party: users[0].is_form_filler
+    datatype: yesnoradio
+---
+code: |
+  if i > 0:
+    users[i].is_form_filler = False
+---
+code: |
+  # Can only get the attorney list for firm users, which can't be form fillers
+  if not can_check_efile:
+    users[0].is_form_filler = False
+  elif proxy_conn.get_attorney_list().is_ok():
+    users[0].is_form_filler = False
+---
+need: proxy_conn
+if: users[0].is_form_filler
+code: |
+  tyler_info = proxy_conn.get_user()
+  users[0].email = tyler_info.data.get('email')
+---
+need: proxy_conn
+if: users[0].is_form_filler
+code: |
+  tyler_info = proxy_conn.get_user()
+  users[0].name.first = tyler_info.data.get('firstName')
+  users[0].name.middle = tyler_info.data.get('middleName', '')
+  users[0].name.last = tyler_info.data.get('lastName', '')
+---
+########################
+## disclaimer
+id: disclaimers
+question: |
+  Disclaimers
+subquestion: |
+  % if not disclaimers:
+  No Disclaimers!
+  % endif
+fields:
+  - no label: acknowledge_disclaimers
+    datatype: checkboxes
+    choices:
+      - I certify that I have read and followed the instructions below: user_agrees_to_disclaimers
+    minlength: 1
+    show if:
+      code: |
+        len(disclaimers)
+    validation messages:
+      minlength: |
+        You must acknowledge the disclaimers in order to continue
+        with your filing.
+under: |
+  % if disclaimers:
+  %for dis in disclaimers: 
+  
+  * ${ dis.get('requirementText') }
+  % endfor
+  % endif
+continue button field: show_disclaimers
+---
+code: |
+  disclaimers = proxy_conn.get_disclaimers(court_id).data
+---
+only sets: show_any_disclaimers
+code: |
+  if disclaimers:
+    show_disclaimers
+  show_any_disclaimers = True
+---
+id: user chosen casetype
+question: |
+  What case type is this case?
+fields:
+  - Case type: user_chosen_case_type
+    datatype: dropdown
+    code: |
+      efile_case_filtered_options
+---
+code: |
+  efile_case_category_filtered_options, efile_case_category = filter_codes(case_category_options,
+      efile_case_category_filters, efile_case_category_default)
+  if efile_case_category is None:
+    del efile_case_category
+    efile_case_category = user_chosen_case_category
+---
+code: |
+  efile_case_filtered_options, efile_case_type = filter_codes(case_type_options,
+    efile_case_type_filters, efile_case_type_default)
+  if efile_case_type is None:
+    del efile_case_type
+    efile_case_type = user_chosen_case_type

@@ -88,7 +88,7 @@ message.
       """)
     }
   ]
-  if is_admin:
+  if is_admin or not can_check_efile:
     return contact_fields
 
   user_info = proxy_conn.get_user()

@@ -1,4 +1,8 @@
 ---
+comment: |
+  Used for searching or looking through and handling existing cases.
+
+---
 modules:
   - .efm_client
   - .conversions
@@ -15,6 +19,11 @@ objects:
 generic object: EFCaseSearch
 objects:
   - x.found_cases: DAList.using(gathered=True)
+---
+generic object: EFCaseSearch
+code: |
+  x.full_court_info = get_full_court_info(proxy_conn, x.court_id)
+  x.court_name = x.full_court_info.get('name', x.court_id)
 ---
 id: interview order
 generic object: EFCaseSearch
@@ -113,9 +122,10 @@ code: |
 generic object: EFCaseSearch
 id: no non-indexed cases
 question: |
-  ${ x.court_id} does not allow filing into non-indexed cases
+  ${ x.court_name } does not allow filing into non-indexed cases
 continue button field: x.no_non_indexed_cases
 ---
+if: x.can_file_non_indexed_case
 generic object: EFCaseSearch
 id: no cases found
 question: |
@@ -129,13 +139,26 @@ subquestion: |
   Something went wrong with the e-filing system when searching for cases.
   % endif
 
-  % if x.can_file_non_indexed_case:
   You can either continue to file into a non-indexed case or hit "${ word('back') }" to 
   try a new search.
-  % else:
-  Unfortunately, ${ x.court_id } does not allow filing into non-indexed cases.
-  % endif
 continue button field: x.warn_no_results
+---
+if: not x.can_file_non_indexed_case
+generic object: EFCaseSearch
+id: no cases found, fail
+event: x.warn_no_results
+question: |
+  No cases found
+subquestion: |
+  % if x.cms_connection_issue:
+  The court's case management system isn't online, and the case you are searching for might exist.
+  % endif
+
+  % if x.search_went_wrong():
+  Something went wrong with the e-filing system when searching for cases.
+  % endif
+
+  Unfortunately, ${ x.court_name } does not allow filing into non-indexed cases.
 ---
 generic object: EFCaseSearch
 id: case lookup
@@ -539,7 +562,7 @@ code: |
   def is_person_party(p):
     return p.person_type != 'business'
 ---
-if: len(party_type_options) > 1
+if: len(target_case.party_type_options) > 1
 comment: |
   TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
 code: |
@@ -550,10 +573,15 @@ code: |
     is_user_party = is_defendant_party
     is_other_party = is_plaintiff_party
 ---
-if: len(party_type_options) == 1
+if: len(target_case.party_type_options) == 1
 code: |
   is_user_party = lambda p: True
   is_other_party = lambda p: False
+---
+generic object: EFCaseSearch
+code: |
+  x.party_type_options, _ = \
+    choices_and_map(proxy_conn.get_party_types(x.court_id, x.found_case.efile_case_type).data)
 ---
 id: found-this-participant
 generic object: EFCaseSearch
