@@ -13,6 +13,7 @@ import dateutil.parser
 
 __all__ = [
   'convert_court_to_id',
+  'chain_xml',
   'choices_and_map',
   'pretty_display',
   'debug_display',
@@ -129,6 +130,8 @@ def debug_display(resp: ApiResponse) -> str:
     to_return = resp.error_msg if resp.error_msg is not None else ''
     if get_config('debug'):
       to_return += f"\nResponse Code: {resp.response_code}"
+      if hasattr(resp.data):
+        to_return += "({resp.data})"
     return to_return
   log(f"resp.data: {resp.data}")
   return pretty_display(resp.data)
@@ -180,7 +183,7 @@ def chain_xml(xml_val, elems: List[Union[str, int]]):
     if not val:
       return None
     if isinstance(val, dict):
-      val = val.get(elem, {})
+      val = (val.get(elem) or {})
     else:
       val = val[elem]
   return val

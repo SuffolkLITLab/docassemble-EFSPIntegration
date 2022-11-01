@@ -1,0 +1,111 @@
+---
+imports:
+  - os
+---
+if: |
+  new_account_type_code == 'WV'
+code: |
+  # TODO: this isn't wired up yet!
+  resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
+  globals().pop('new_account_name', None)
+  globals().pop('new_account_is_global', None)
+  reconsider('show_resp')
+  new_payment_account = True
+---
+if: |
+  new_account_type_code in ['CC','BankAccount']
+comment: |
+  # Basis from https://stackoverflow.com/a/133997
+  # TODO(brycew): just submit this + actual payment info to the Efile server as a POST,
+  # Then hang on to that data with the transaction Id (created there), and send user to
+  # the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
+  #      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
+  #      ' <button>Click here if not working</button> </input>' +
+question: |
+  New payment account
+# TODO: using url_args this way means you can only create one
+# payment account per session!
+subquestion: |
+  % if defined('creation_status'):
+  % if creation_status == 'success':
+  You've created your new payment account!
+  % endif
+  % if creation_status == 'failure':
+  An error has occured. Please try again.
+  % endif
+  % endif
+script: |
+  % if not defined('creation_status'):
+  <script>
+      //data = '<PaymentRequest></PaymentRequest>'; 
+      
+      const form = document.createElement('form');
+      form.method = 'post';
+      //form.target = '_blank';
+      form.action = '${ proxy_conn.full_url('payments/new-toga-account') }';
+
+      const nameField = document.createElement('input');
+      nameField.type = 'hidden';
+      nameField.name = 'account_name';
+      nameField.value = '${ new_account_name }';
+      form.appendChild(nameField);
+      const isglobal = document.createElement('input');
+      isglobal.type = 'hidden';
+      isglobal.name = 'global';
+      isglobal.value = ${ 'true' if new_account_is_global == 'on' else 'false'};
+      form.appendChild(isglobal);
+      const typeCode = document.createElement('input');
+      typeCode.type = 'hidden';
+      typeCode.name = 'type_code';
+      typeCode.value = '${ new_account_type_code }';
+      form.appendChild(typeCode);
+      // TODO(brycew): HACKY: how to propery add Headers here?
+      const tylerInfo = document.createElement('input');
+      tylerInfo.type = 'hidden';
+      tylerInfo.name = 'tyler_info';
+      tylerInfo.value = '${ proxy_conn.tyler_token() }';
+      form.appendChild(tylerInfo);
+      const url = document.createElement('input');
+      url.type = 'hidden';
+      url.name = 'original_url';
+      url.value = '${ interview_url_action('completed_payment_account', creation_status='success') }';
+      form.appendChild(url);
+      const errorUrl = document.createElement('input');
+      errorUrl.type = 'hidden';
+      errorUrl.name = 'error_url';
+      errorUrl.value = '${ interview_url_action('completed_payment_account', creation_status='failure') }';
+      form.appendChild(errorUrl);
+      document.body.appendChild(form);
+      form.submit();
+  </script>
+  % endif
+  ${ log(proxy_conn.proxy_client.headers)}
+  ${ log(proxy_conn.proxy_client.headers.get('TYLER-TOKEN'))}
+continue button field: new_payment_account
+---
+event: completed_payment_account
+code: |
+  if 'creation_status' in action_arguments():
+    creation_status = action_argument('creation_status')
+---
+id: new payment account
+question: |
+  New payment account info
+fields:
+  - Global: new_account_is_global
+    datatype: yesno
+    default: False
+    show if:
+      code: |
+        logged_in_user_is_global_admin
+  - Name of account: new_account_name
+  - Type: new_account_type_code
+    datatype: radio
+    choices:
+      - Waiver account: WV
+      - eCheck: BankAccount
+      - Credit Card: CC
+---
+code: |
+  if not logged_in_user_is_global_admin:
+    new_account_is_global = False

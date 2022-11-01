@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 from datetime import datetime
 
 from docassemble.base.util import DAObject, DAList, log, word
-from .conversions import parse_case_info, fetch_case_info
+from .conversions import parse_case_info, fetch_case_info, chain_xml
 from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 class EFCaseSearch(DAObject):
@@ -36,6 +36,10 @@ class EFCaseSearch(DAObject):
 
 def address_fields_with_defaults(proxy_conn, person:ALIndividual, is_admin:bool, **kwargs):
   address_fields = person.address_fields(**kwargs)
+  # Efiling requires zip most of the time, enough for us to require it
+  for field in address_fields:
+    if field.get('field', '').endswith('.zip'):
+      field['required'] = True # type: ignore
   if is_admin:
     # Don't autofill if the person is an admin
     return address_fields
@@ -171,10 +175,11 @@ def exactly_one_required_filing_component(fc_opts, fc_map) -> bool:
 def matching_tuple_option(option:str, options):
   return next(iter([o for o in options if option in o[1].lower()]),[None])[0]
 
-def fee_total(fee_resp) -> str:
+def fee_total(fee_resp) -> Optional[float]:
   if fee_resp.data:
-    return fee_resp.data.get('feesCalculationAmount',{}).get('value', 'N/A')
-  return 'N/A'
+    val = fee_resp.data.get('feesCalculationAmount',{}).get('value')
+    return float(val) if val else None
+  return None
 
 def get_full_court_info(proxy_conn, court_id:str) -> Dict:
   """Gets all of the information about the court from the id"""
@@ -184,6 +189,40 @@ def get_full_court_info(proxy_conn, court_id:str) -> Dict:
   else:
     log(f"Couldn't get full court info for {court_id}")
     return {}
+
+def _scale_byte_units(value: Union[str, int], unit: str) -> int:
+  """Idk if these are right, but there's no examples out there.
+  Niem suggests they might not matter: 
+  https://docs.oasis-open.org/legalxml-courtfiling/ecf/v5.0/csprd03/model/class137602.html"""
+  if isinstance(value, str):
+    value = int(value)
+  if unit.lower() == 'kilobyte' or unit == 'kB':
+    return value * 1000
+  if unit == 'KB' or unit == 'KiB':
+    return value * 1024
+  if unit == 'MB':
+    return value * 1000 * 1000
+  return value 
+
+
+def get_max_allowed_sizes(proxy_conn, court_id:str) -> Optional[Tuple[int, int]]:
+  """Returns attachment max size, then message max size"""
+  policy_resp = proxy_conn.get_policy(court_id)
+  if policy_resp.is_ok():
+    dev_params = chain_xml(policy_resp.data, ['developmentPolicyParameters', 'value'])
+    attachment_obj = chain_xml(dev_params, ['maximumAllowedAttachmentSize'])
+    attachment_max = _scale_byte_units(
+        chain_xml(attachment_obj, ['measureValue', 'value', 'value']),
+        chain_xml(attachment_obj, ['measureUnitText', 'value'])
+    )
+    message_obj = chain_xml(dev_params, ['maximumAllowedMessageSize'])
+    message_max = _scale_byte_units(
+        chain_xml(message_obj, ['measureValue', 'value', 'value']),
+        chain_xml(message_obj, ['measureUnitText', 'value'])
+    )
+    return attachment_max, message_max
+  else:
+    return None
 
 
 class CodeType(str):
@@ -213,7 +252,7 @@ def make_filters(filters:Iterable[Union[Callable[..., bool], str, CodeType]]) ->
       filter_lambdas.append(func_in_str)
   return filter_lambdas
 
-def filter_codes(options, filters:Iterable[Callable[..., bool]], default:str) -> Tuple[List[Any], Optional[str]]:
+def filter_codes(options: Iterable, filters:Iterable[Callable[..., bool]], default:str) -> Tuple[List[Any], Optional[str]]:
   """Given a list of filter functions from most specific to least specific,
   (if true, use that code), filters a total list of codes"""
   codes_tmp: List[Any] = []
@@ -223,13 +262,28 @@ def filter_codes(options, filters:Iterable[Callable[..., bool]], default:str) ->
       break
     codes_tmp = [opt for opt in options if filter_fn(opt)]
 
-  codes = sorted(codes_tmp, key=lambda option: option[1])
+  codes = sorted(codes_tmp, key=lambda option: option[1] + str(option[0]))
   if len(codes) == 1:
     return codes, codes[0][0]
   elif len(codes) == 0:
     return options, default
   else:
     return codes, None
+
+def check_duplicate_codes(options: List) -> bool:
+  if not options or len(options) <= 1:
+    return False
+  example = options[0]
+  for opt in options:
+    if isinstance(opt, dict):
+      for key, val in opt.values():
+        if key != "code" and val != example[key]:
+          return False
+    if isinstance(opt, tuple):
+      # The first element in the tuple is usually the code itself
+      if example[1:] != opt[1:]:
+        return False
+  return True
 
 def case_labeler(case):
   docket_number = ''

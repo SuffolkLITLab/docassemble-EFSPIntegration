@@ -121,10 +121,7 @@ code: |
     #TODO(qs): if not a waiver account...
     all_required_screens_shown
     ready_to_efile
-    if fees_resp.is_ok():
-      review_fees
-    else:
-      bad_fees
+    review_fees
 
   efile
   summary_page
