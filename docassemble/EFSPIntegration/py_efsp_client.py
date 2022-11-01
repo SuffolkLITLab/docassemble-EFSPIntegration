@@ -117,6 +117,9 @@ class EfspConnection:
     if endpoint.startswith('authenticate_user') or endpoint.startswith('messages'):
       return self.base_url + endpoint
     return self.base_url + f'/jurisdictions/{jurisdiction}/{endpoint}'
+  
+  def tyler_token(self) -> Optional[str]:
+    return self.proxy_client.headers.get('TYLER-TOKEN-' + str(self.default_jurisdiction).upper())
 
   def authenticate_user(self, *, tyler_email:Optional[str]=None, tyler_password:Optional[str]=None, jeffnet_key:Optional[str]=None, jurisdiction:str=None) -> ApiResponse:
     """

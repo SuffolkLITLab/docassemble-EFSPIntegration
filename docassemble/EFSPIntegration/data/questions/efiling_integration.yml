@@ -209,6 +209,7 @@ code: |
   efile_case_type
   cross_references.gather()
   show_any_disclaimers
+  review_fees
   all_required_screens_shown = True
 ---
 if: not can_check_efile
@@ -567,6 +568,22 @@ code: |
     x.filing_component = x.user_chosen_filing_component
 ---
 generic object: DAObject
+need:
+  - x.document_type_default
+  - x.document_type_filters
+code: |
+  x.filtered_document_type_options, x.document_type = \
+      filter_codes(x.document_type_options, x.document_type_filters, x.document_type_default)
+  if x.document_type is None:
+    del x.document_type
+    x.document_type = x.user_chosen_document_type
+---
+generic object: DAObject
+if: len(x.document_type_options) == 1
+code: |
+  x.document_type = x.document_type_options[0][0]
+---
+generic object: DAObject
 id: filing component
 question: |
   Filing component
@@ -583,6 +600,9 @@ need:
 code: |
   x.filtered_filing_type_options, x.filing_type = \
       filter_codes(filing_type_options, x.filing_type_filters, x.filing_type_default)
+  if x.filing_type is None and check_duplicate_codes(x.filtered_filing_type_options):
+    # choices are the same from the user's view
+    x.filing_type = x.filtered_filing_type_options[0][0]
   if x.filing_type is None:
     del x.filing_type
     x.filing_type = x.user_chosen_filing_type
@@ -592,7 +612,7 @@ id: filing type question
 question: |
   What type of filing will you be making?
 subquestion: |
-  We found a few filing codes that could be used to file your ${ x.title }. Choose the one that you think best fits your case.
+  We found a few filing codes that could be used to file your **${ x.title }**. Choose the one that you think best fits your case.
 fields:
   - Filing Type: x.user_chosen_filing_type
     datatype: dropdown
@@ -766,7 +786,7 @@ code: |
 ---
 ################################
 ## Fees
-id: review_fees
+id: review_fees_screen
 question: |
   Review filing fees
 subquestion: |
@@ -778,9 +798,9 @@ subquestion: |
   **Total: ${ currency(fee_total(fees_resp)) }**
   % else:
   There are no fees associated with this filing.
-  % endif  
+  % endif
 fields:
-  - no label: review_fees
+  - no label: review_fees_screen
     datatype: checkboxes
     choices:
       - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
@@ -794,14 +814,14 @@ event: bad_fees
 question: |
   Something went wrong
 subquestion: |
-  Sorry, something went wrong when trying to figure out what fees you might have to pay.
+  Sorry, something went wrong when trying to figure out if you have to pay fees.
  
   More details: ${ debug_display(fees_resp) }
 ---
 depends on:
   - fees_resp
 code: |
-  has_fees = fee_total(fees_resp) and float(fee_total(fees_resp)) > 0
+  has_fees = fee_total(fees_resp) and fee_total(fees_resp) > 0
 ---
 code: |
   fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
@@ -818,6 +838,13 @@ columns:
       row_item.get('allowanceChargeReason',{}).get('value')
   - Amount: |
       currency(row_item.get('amount',{}).get('value',0))
+---
+code: |
+  if fees_resp.is_ok():
+    review_fees_screen
+  else:
+    bad_fees
+  review_fees = True
 ---
 #############################
 ## party lists
@@ -913,7 +940,7 @@ code: |
   users[0].email = tyler_info.data.get('email')
 ---
 need: proxy_conn
-if: users[0].is_form_filler
+if: hasattr(users[0], 'is_form_filler') and users[0].is_form_filler
 code: |
   tyler_info = proxy_conn.get_user()
   users[0].name.first = tyler_info.data.get('firstName')
@@ -942,13 +969,16 @@ fields:
       minlength: |
         You must acknowledge the disclaimers in order to continue
         with your filing.
-under: |
-  % if disclaimers:
-  %for dis in disclaimers: 
+  - note: |
+      % if disclaimers:
+      %for dis in disclaimers: 
   
-  * ${ dis.get('requirementText') }
-  % endfor
-  % endif
+      * ${ dis.get('requirementText') }
+      % endfor
+      % endif
+    show if:
+      code: |
+        len(disclaimers)
 continue button field: show_disclaimers
 ---
 code: |

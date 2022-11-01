@@ -446,9 +446,9 @@ code: |
     if hasattr(users[-1].address, 'address'):
       users[-1].address.geocode()
     if is_plaintiff_party(users[0]):
-      user_role = 'plaintiff'
+      user_ask_role = 'plaintiff'
     elif is_defendant_party(users[0]):
-      user_role = 'defendant'
+      user_ask_role = 'defendant'
     to_add_participants = [p for p in target_case.found_case.participants if p.instanceName != target_case.self_partip_choice.instanceName and not is_unused_party(p)]
 ---
 need:
@@ -493,25 +493,25 @@ subquestion: |
   However, editing this information will not change the copy of this information
   that the court has.
 
-  % if user_role == "plaintiff":
+  % if user_started_case:
   <h2 class="h4">Plaintiffs (your side)</h2>
   % else:
   <h2 class="h4">Plaintiffs (the other side)</h2>
   % endif
 
-  % for p in plaintiffs:
+  % for p in plaintiffs.complete_elements():
   * ${ p } ${ "(you)" if p == users[0] else "" } ${"(" + p.lawyer + " is their lawyer)" if hasattr(p, "lawyer") else ""}
       * ${ p.address.on_one_line() if hasattr(p.address, 'address') else "No address given" }
 
   % endfor
 
-  % if user_role == "defendant":
+  % if not user_started_case:
   <h2 class="h4">Defendants (your side)</h2>
   % else:
   <h2 class="h4">Defendants (the other side)</h2>
   % endif
 
-  % for d in defendants:
+  % for d in defendants.complete_elements():
   * ${ d } ${"(" + d.lawyer + " is their lawyer)" if hasattr(d, "lawyer") else ""}
 
   % endfor
@@ -551,7 +551,7 @@ code: |
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_unused_filters)])
 ---
 code: |
-  if user_role == 'plaintiff':
+  if user_started_case:
     is_user_filters = is_plaintiff_filters
     is_other_party_filters = is_defendant_filters
   else:
@@ -566,7 +566,7 @@ if: len(target_case.party_type_options) > 1
 comment: |
   TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
 code: |
-  if user_role == 'plaintiff':
+  if user_started_case:
     is_user_party = is_plaintiff_party
     is_other_party = is_defendant_party
   else:
