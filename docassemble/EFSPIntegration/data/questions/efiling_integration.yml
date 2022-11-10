@@ -933,6 +933,10 @@ fields:
   - You are this party: users[0].is_form_filler
     datatype: yesnoradio
 ---
+if: full_court_info.get("efmType", "ecf") != "ecf"
+code: |
+  users[0].is_form_filler = False
+---
 code: |
   if i > 0:
     users[i].is_form_filler = False
