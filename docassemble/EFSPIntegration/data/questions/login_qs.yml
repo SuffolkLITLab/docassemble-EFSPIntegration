@@ -104,15 +104,17 @@ validation code: |
     password_rules
     validation_error(password_rules.data.get("validationmessage"))
 ---
+if: not can_check_efile or full_court_info.get("efmType", "ecf") != "ecf"
+code: |
+  logged_in_user_is_admin = False
+  logged_in_user_is_global_admin = False
+---
 depends on:
   - tyler_login
   - tyler_login_resp
+if: can_check_efile and full_court_info.get("efmType", "ecf") == "ecf"
 code: |
-  if not can_check_efile:
-    logged_in_user_is_admin = False
-    logged_in_user_is_global_admin = False
-  else:
-    logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
 ---
 event: reset_password_screen
 question: |
