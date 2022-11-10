@@ -49,13 +49,13 @@ Feature: Make any type of filing
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
       | al_court_bundle.target_number | 1 | |
       | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
-      | review_fees['agrees_to_pay_fees'] | True | |
+      | review_fees_screen['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
   @any_filing_interview @prose @af2
   Scenario: any_filing_interview can handle a pro-se user
     Given I start the interview at "any_filing_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 50
+    And the maximum seconds for each Step in this Scenario is 100
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I tap to continue
@@ -98,7 +98,7 @@ Feature: Make any type of filing
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
       | al_court_bundle.target_number | 1 | |
       | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
-      | review_fees['agrees_to_pay_fees'] | True | |
+      | review_fees_screen['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
     @any_filing_interview @accessibility @full_accessible_run @af3
@@ -149,5 +149,5 @@ Feature: Make any type of filing
         | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
         | al_court_bundle.target_number | 1 | |
         | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
-        | review_fees['agrees_to_pay_fees'] | True | |
+        | review_fees_screen['agrees_to_pay_fees'] | True | |
       Then I see the phrase "Below is your Lead Filing Doc"

@@ -266,7 +266,7 @@ def filter_codes(options: Iterable, filters:Iterable[Callable[..., bool]], defau
   if len(codes) == 1:
     return codes, codes[0][0]
   elif len(codes) == 0:
-    return options, default
+    return list(options), default
   else:
     return codes, None
 

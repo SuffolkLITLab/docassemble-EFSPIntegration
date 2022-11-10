@@ -567,6 +567,17 @@ code: |
     del x.filing_component
     x.filing_component = x.user_chosen_filing_component
 ---
+id: document type
+generic object: DAObject
+question: |
+  What type of document is this?
+fields:
+  - no label: x.user_chosen_document_type
+    input type: radio
+    code: |
+      list(reversed(x.filtered_document_type_options))
+    default: ${ matching_tuple_option('non-confidential', x.filtered_document_type_options) }
+---
 generic object: DAObject
 need:
   - x.document_type_default
@@ -688,9 +699,9 @@ code: |
   all_case_parties_tmp = []
   for u in users + other_parties:
     if u.is_new:
-      all_case_parties.append([u.instanceName, str(u)])
+      all_case_parties_tmp.append([u.instanceName, str(u)])
     else:
-      all_case_parties.append([u.tyler_id, str(u)])
+      all_case_parties_tmp.append([u.tyler_id, str(u)])
   
   all_case_parties = all_case_parties_tmp
   del all_case_parties_tmp
