@@ -127,6 +127,12 @@ code: |
   summary_page
 ---
 code: |
+  lead_doc.optional_services_defaults = []
+  lead_doc.optional_services_filters = []
+  lead_doc.document_type_default = None
+  lead_doc.document_type_filters = []
+---
+code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
 ---
 features:

@@ -7,3 +7,9 @@
 *.egg-info/**
 rcfile
 **/.mypy_cache/**
+
+# Kiln stuff
+alkiln_tests_*
+cucumber-report.txt
+debug_log.txt
+runtime_config.json

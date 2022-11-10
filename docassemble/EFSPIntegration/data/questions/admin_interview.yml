@@ -1186,7 +1186,7 @@ fields:
   - no label: case_party_id
     required: False
     code: |
-      all_case_parties  
+      all_case_parties
 ---  
 code: |
   all_case_parties = [(party.tyler_id, str(party.name)) for party in case_search.found_case.participants]
