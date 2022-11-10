@@ -123,9 +123,12 @@ class EfspConnection:
         return self.base_url + f"/jurisdictions/{jurisdiction}/{endpoint}"
 
     def tyler_token(self) -> Optional[str]:
-        return self.proxy_client.headers.get(
+        token = self.proxy_client.headers.get(
             "TYLER-TOKEN-" + str(self.default_jurisdiction).upper()
         )
+        if isinstance(token, bytes):
+          return token.decode()
+        return token
 
     def authenticate_user(
         self,
