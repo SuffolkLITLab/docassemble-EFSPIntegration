@@ -127,7 +127,7 @@ class EfspConnection:
             "TYLER-TOKEN-" + str(self.default_jurisdiction).upper()
         )
         if isinstance(token, bytes):
-          return token.decode()
+            return token.decode()
         return token
 
     def authenticate_user(
