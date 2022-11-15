@@ -30,13 +30,13 @@ subquestion: |
 ---
 id: unauth-reset-completed
 question: |
-  % if resp.get("response_code") == 200:
+  % if resp.is_ok():
   You have been sent an email to reset your password
   % else:
   Something went wrong when trying to reset your password
   % endif
 subquestion: |
-  % if resp.get("response_code") != 200:
+  % if not resp.is_ok():
   Error message: ${ pretty_display(resp) }
   % endif
 continue button field: show_reset_resp
