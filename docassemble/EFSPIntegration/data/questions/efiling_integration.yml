@@ -251,21 +251,23 @@ code: |
 ---
 id: actually efile
 depends on:
-- can_check_efile
-- user_wants_efile
+  - can_check_efile
+  - user_wants_efile
+if: can_check_efile and user_wants_efile and ready_to_efile
 code: |
-  if can_check_efile and user_wants_efile and ready_to_efile:
-    efile_user_reviewed
-    if not efile_author_mode:
-      prevent_going_back()
-    efile_resp
-    show_resp
-    # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
-    if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana' and submitted_court_reserve_resp.is_ok():
-      show_court_reserve_resp
-    efile = True
-  else:
-    efile = False
+  efile_user_reviewed
+  if not efile_author_mode:
+    prevent_going_back()
+  efile_resp
+  show_resp
+  # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
+  if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana' and submitted_court_reserve_resp.is_ok():
+    show_court_reserve_resp
+  efile = efile_resp.is_ok()
+---
+if: not can_check_efile or not user_wants_efile or not ready_to_efile
+code: |
+  efile = False
 ---
 comment: |
   There are two "operating modes" for the reserve court date API on Tyler's
@@ -273,9 +275,10 @@ comment: |
   hearing date. TBH, the former isn't super useful as a standalone thing, so
   we're only going to handle, "here are some choices", followed by requesting 
   a specific one.
+need:
+  - envelope_id
 id: handle court date reserve
 code: |
-  envelope_id = efile_resp.data['envelopeId']
   have_valid_date = False
   reserve_choice_resp = proxy_conn.reserve_court_date(court_id, envelope_id)
   if not reserve_choice_resp.is_ok() or not reserve_choice_resp.data:
@@ -304,6 +307,11 @@ code: |
     else:
       have_valid_date = False
   submitted_court_reserve_resp = court_reserve_resp
+---
+# Don't trigger efile_resp by tring to show the envelope id
+if: defined('efile_resp') and efile_resp.is_ok()
+code: |
+  envelope_id = efile_resp.data['envelopeId']
 ---
 id: separate efile
 code: |
@@ -997,7 +1005,7 @@ fields:
 continue button field: show_disclaimers
 ---
 code: |
-  disclaimers = proxy_conn.get_disclaimers(court_id).data
+  disclaimers = sorted(proxy_conn.get_disclaimers(court_id).data, key=lambda yy: yy.get("listorder", yy.get("code")))
 ---
 only sets: show_any_disclaimers
 code: |
