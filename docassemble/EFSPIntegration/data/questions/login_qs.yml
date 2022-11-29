@@ -44,6 +44,8 @@ code: |
     if not tyler_login_resp.is_ok():
       log(f'Failed to login: {tyler_login_resp}')
       login_failed_screen
+    else:
+      log(word("You are now connected to your e-filing account"), "primary")
   tyler_login = True
 ---
 code: |

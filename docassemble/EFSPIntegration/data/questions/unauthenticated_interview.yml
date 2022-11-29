@@ -19,7 +19,7 @@ event: main_unauth_page
 question: |
   eFile${ state_name_to_code(jurisdiction_id) } User Management
 subquestion: |
-  You aren't logged in, but you can take any of the below actions
+  You are not logged in. Please select one of the options below.
 
   % for var, disp in account_action_list.items():
   ${ action_button_html(url_ask(
