@@ -107,14 +107,14 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "87-SC-01549"
     And I tap to continue
-    And I see the phrase "Adoption"
-    And I see the phrase "CONFIDENTIAL"
+    And I see the phrase "Small Claims"
+    And I see the phrase "TOURAINE PAINTS"
     And I tap to continue
     And I set the variable "service_contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I tap to continue
-    And I set the variable "case_party_id" to "66488af3-c376-4500-b99e-3ff665fcc5fd"
+    And I set the variable "case_party_id" to "87bfa962-ce95-43c7-8370-021828672a38"
     And I tap to continue
     And I tap to continue
     And I tap the "Tests-Service_contacts-tab" tab 
@@ -123,14 +123,14 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "87-SC-01549"
     And I tap to continue
-    And I see the phrase "Adoption"
-    And I see the phrase "CONFIDENTIAL"
+    And I see the phrase "Small Claims"
+    And I see the phrase "TOURAINE PAINTS"
     And I tap to continue
     And I set the variable "service_contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I tap to continue
-    And I set the variable "case_party_id" to "66488af3-c376-4500-b99e-3ff665fcc5fd"
+    And I set the variable "case_party_id" to "87bfa962-ce95-43c7-8370-021828672a38"
     And I tap to continue
     And I see the phrase "All ok! (204)"
 
@@ -149,9 +149,9 @@ Feature: The interviews run without erroring
     And I tap to continue
     And I set the variable "x.do_what_choice" to "docket_lookup"
     And I tap to continue
-    And I set the variable "x.docket_number_from_user" to "22-AD-00005"
+    And I set the variable "x.docket_number_from_user" to "87-SC-01549"
     And I tap to continue
-    And I see the phrase "Adoption"
-    And I see the phrase "CONFIDENTIAL"
+    And I see the phrase "Small Claims"
+    And I see the phrase "TOURAINE PAINTS"
     And I tap to continue
     Then I see the phrase "You don’t have any service contacts you can add."

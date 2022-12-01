@@ -18,11 +18,12 @@ Feature: Make any type of filing
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
-      | x.docket_number_from_user | 22-AD-00005 | case_search.docket_number_from_user |
+      | x.docket_number_from_user | 87-SC-01549 | case_search.docket_number_from_user |
       | x.self_in_case | is_filing | case_search.self_in_case |
       | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
       | user_ask_role | defendant | |
       | other_parties.there_are_any | False | |
+      | other_parties.there_is_another | False | |
       | users.there_is_another | False | |
       | existing_parties_new_atts.there_are_any | False | |
       | lead_contact.email | example@example.com | |
@@ -34,13 +35,13 @@ Feature: Make any type of filing
       | x.document_type | 7688 | lead_doc.document_description |
       | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
-      | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
+      | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
       | contacts_to_attach.there_are_any | False | |
       | service_contacts.there_are_any | True | |
     And I set the var "service_contacts[i].contact_id" to "d19d0890-05c2-4aa6-942f-4834e73bcea2"
     And I set the var "service_contacts[i].service_type" to "-580"
     And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
-    And I set the var "service_contacts[i].party_association" to "3d5553d6-112f-4aec-894f-a5441c1fc304"
+    And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
     And I tap to continue
     And I get to the question id "ready to efile" with this data:
       | var | value | trigger |
@@ -67,13 +68,14 @@ Feature: Make any type of filing
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
       | x.do_what_choice | docket_lookup | case_search.do_what_choice |
-      | x.docket_number_from_user | 22-AD-00005 | case_search.docket_number_from_user |
+      | x.docket_number_from_user | 87-SC-01549 | case_search.docket_number_from_user |
       | x.self_in_case | is_self | case_search.self_in_case |
       | x.self_partip_choice | case_search.found_case.participants[0] | case_search.self_in_case |
       | users[0].is_form_filler | False | |
       | user_ask_role | defendant | |
       | users.there_is_another | False | |
       | other_parties.there_are_any | False | |
+      | other_parties.there_is_another | False | |
       | existing_parties_new_atts.there_are_any | False | |
       | lead_contact.email | example@example.com | |
       | lead_contact.name.first | Bob | |
@@ -84,12 +86,12 @@ Feature: Make any type of filing
       | x.document_type | 7688 | lead_doc.document_type |
       | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
-      | x.existing_parties_payment_dict['3d5553d6-112f-4aec-894f-a5441c1fc304'] | True | lead_doc.existing_parties_payment_dict |
+      | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
       | service_contacts.there_are_any | True | |
     And I set the var "service_contacts[i].contact_id" to "d19d0890-05c2-4aa6-942f-4834e73bcea2"
     And I set the var "service_contacts[i].service_type" to "-580"
     And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
-    And I set the var "service_contacts[i].party_association" to "3d5553d6-112f-4aec-894f-a5441c1fc304"
+    And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
     And I tap to continue
     And I get to the question id "ready to efile" with this data:
       | var | value | trigger |
