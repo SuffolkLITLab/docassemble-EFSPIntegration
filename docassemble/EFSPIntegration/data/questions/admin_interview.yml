@@ -89,6 +89,9 @@ code: |
     ('remove_global_payment_account', 'Remove Global Payment Account'),
   ]
 ---
+need:
+  - tyler_login
+  - logged_in_user_is_global_admin
 id: Admin tasks
 question: | 
   ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
@@ -1321,6 +1324,15 @@ code: |
 ---
 code: |
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=False, timing=None).data)
+---
+comment: |
+  Overrides login_qs: all jurisdictions allowed here are Tyler
+depends on:
+  - tyler_login
+  - tyler_login_resp
+if: can_check_efile
+code: |
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
 ---
 mandatory: True
 code: |
