@@ -415,7 +415,7 @@ template: x.not_actually_case
 subject: |
   This isn't my case!
 content: |
-  If we found the wrong case, you can press the "undo" button to go back and find a different case
+  If we found the wrong case, you can press the "${ all_variables(special="titles").get("back button label", "back") }" button to go back and find a different case
 ---
 generic object: EFCaseSearch
 code: |
