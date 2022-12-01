@@ -49,7 +49,7 @@ Feature: Make any type of filing
       | x.filing_action | efile_and_serve | lead_doc.filing_action |
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
       | al_court_bundle.target_number | 1 | |
-      | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
+      | tyler_payment_id | 3edbc236-14e1-4850-b101-50c1da073e30 | |
       | review_fees_screen['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
@@ -99,7 +99,7 @@ Feature: Make any type of filing
       | x.filing_action | efile_and_serve | lead_doc.filing_action |
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
       | al_court_bundle.target_number | 1 | |
-      | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
+      | tyler_payment_id | 3edbc236-14e1-4850-b101-50c1da073e30 | |
       | review_fees_screen['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
@@ -150,6 +150,6 @@ Feature: Make any type of filing
         | x.filing_action | efile_and_serve | lead_doc.filing_action |
         | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
         | al_court_bundle.target_number | 1 | |
-        | tyler_payment_id | 75950d4b-f3c3-4748-8bfb-0e22790d19d7 | |
+        | tyler_payment_id | 3edbc236-14e1-4850-b101-50c1da073e30 | |
         | review_fees_screen['agrees_to_pay_fees'] | True | |
       Then I see the phrase "Below is your Lead Filing Doc"
