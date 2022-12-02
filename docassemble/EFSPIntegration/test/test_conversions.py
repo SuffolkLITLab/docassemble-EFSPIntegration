@@ -38,7 +38,7 @@ class TestConversions(unittest.TestCase):
                 self.assertEqual(partip.name.first[1], partip.name.first[1].lower())
                 self.assertTrue(hasattr(partip, "address"))
                 self.assertEqual(partip.address.city, "RADOM")
-                self.assertEqual(partip.address.zip_code, "62876")
+                self.assertEqual(partip.address.zip, "62876")
                 self.assertFalse(hasattr(partip, "phone_number"))
                 self.assertFalse(hasattr(partip, "email"))
             self.assertTrue(hasattr(partip, "party_type"))

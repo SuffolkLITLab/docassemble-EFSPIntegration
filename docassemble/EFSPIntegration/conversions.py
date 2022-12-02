@@ -294,7 +294,7 @@ def _parse_address(address_xml: Mapping) -> ALAddress:
         address.city = city_xml.get("value")
     zip_xml = chain_xml(address_xml, ["value", "locationPostalCode"]) or {}
     if zip_xml and "value" in zip_xml:
-        address.zip_code = zip_xml.get("value")
+        address.zip = zip_xml.get("value")
     state_xml = chain_xml(address_xml, ["value", "locationState"]) or {}
     if state_xml and state_xml.get("value", {}).get("value"):
         address.state = state_xml.get("value", {}).get("value")
