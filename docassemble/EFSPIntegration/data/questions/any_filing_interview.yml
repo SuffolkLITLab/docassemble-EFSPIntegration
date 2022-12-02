@@ -450,7 +450,7 @@ fields:
     code: |
       tyler_filing_attorney_options
 ---
-generic object: ALIndividual
+generic object: DAObject
 code: |
   x.attorney_ids = x.attorney_adding_opts.true_values()
 ---

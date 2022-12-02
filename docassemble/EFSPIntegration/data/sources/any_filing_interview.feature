@@ -29,7 +29,7 @@ Feature: Make any type of filing
       | lead_contact.email | example@example.com | |
       | lead_contact.name.first | Bob | |
       | lead_contact.name.last | Ma | |
-      | x.filing_type | 145436 | |
+      | x.filing_type | 145495 | |
       | x.filing_description | example description | |
       | x.exhibits[0].pages | example_upload.pdf | |
       | x.document_type | 7688 | lead_doc.document_description |
@@ -38,7 +38,7 @@ Feature: Make any type of filing
       | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
       | contacts_to_attach.there_are_any | False | |
       | service_contacts.there_are_any | True | |
-    And I set the var "service_contacts[i].contact_id" to "d19d0890-05c2-4aa6-942f-4834e73bcea2"
+    And I set the var "service_contacts[i].contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I set the var "service_contacts[i].service_type" to "-580"
     And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
     And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
@@ -80,7 +80,7 @@ Feature: Make any type of filing
       | lead_contact.email | example@example.com | |
       | lead_contact.name.first | Bob | |
       | lead_contact.name.last | Ma | |
-      | x.filing_type | 145436 | |
+      | x.filing_type | 145495 | |
       | x.filing_description | example description | |
       | x.exhibits[0].pages | example_upload.pdf | |
       | x.document_type | 7688 | lead_doc.document_type |
@@ -88,7 +88,7 @@ Feature: Make any type of filing
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
       | service_contacts.there_are_any | True | |
-    And I set the var "service_contacts[i].contact_id" to "d19d0890-05c2-4aa6-942f-4834e73bcea2"
+    And I set the var "service_contacts[i].contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
     And I set the var "service_contacts[i].service_type" to "-580"
     And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
     And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
