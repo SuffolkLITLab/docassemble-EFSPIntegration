@@ -120,9 +120,7 @@ message.
     firm_info = proxy_conn.get_firm()
     if firm_info.is_ok() and "phoneNumber" in firm_info.data:
         for field in contact_fields:
-            if (
-                field.get("field", "").endswith(".phone_number")
-            ):
+            if field.get("field", "").endswith(".phone_number"):
                 field["default"] = firm_info.data.get("phoneNumber")
     return contact_fields
 
