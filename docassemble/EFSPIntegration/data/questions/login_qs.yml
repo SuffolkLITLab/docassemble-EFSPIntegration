@@ -225,9 +225,9 @@ id: you-will-not-be-able-to-efile
 question: |
   You will *not* be able to e-file this document
 subquestion: |
-  Unfortunately, you won't be able to e-file this document at ${ trial_court }.
+  Unfortunately, you cannot e-file this document at ${ trial_court } through this program.
 
-  However, you are still be able to continue and download a completed form.
+  However, you can still continue and download a completed form at the end.
 continue button field: show_no_efile
 ---
 depends on:

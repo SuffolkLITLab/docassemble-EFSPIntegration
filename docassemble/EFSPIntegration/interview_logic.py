@@ -113,14 +113,15 @@ message.
         return contact_fields
 
     user_info = proxy_conn.get_user()
-    firm_info = proxy_conn.get_firm()
-    if user_info.is_ok() and firm_info.is_ok():
+    if user_info.is_ok() and "email" in user_info.data:
         for field in contact_fields:
-            if field.get("field", "").endswith(".email") and "email" in user_info.data:
+            if field.get("field", "").endswith(".email"):
                 field["default"] = user_info.data.get("email")
+    firm_info = proxy_conn.get_firm()
+    if firm_info.is_ok() and "phoneNumber" in firm_info.data:
+        for field in contact_fields:
             if (
                 field.get("field", "").endswith(".phone_number")
-                and "phoneNumber" in firm_info.data
             ):
                 field["default"] = firm_info.data.get("phoneNumber")
     return contact_fields

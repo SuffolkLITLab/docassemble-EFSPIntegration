@@ -9,7 +9,7 @@ code: |
   resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
   globals().pop('new_account_name', None)
   globals().pop('new_account_is_global', None)
-  reconsider('show_resp')
+  # reconsider('show_resp')
   new_payment_account = True
 ---
 if: |

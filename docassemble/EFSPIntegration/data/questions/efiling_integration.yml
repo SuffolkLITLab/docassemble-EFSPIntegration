@@ -59,7 +59,7 @@ subquestion: |
 
   ${ collapse_template(debug_details) }
 
-continue button field: show_resp
+continue button field: show_efile_resp
 continue button label: Back to download screen
 ---
 template: debug_details
@@ -259,7 +259,7 @@ code: |
   if not efile_author_mode:
     prevent_going_back()
   efile_resp
-  show_resp
+  show_efile_resp
   # TODO(brycew): This is a bit hacky. Should have a proxy call for enabled features
   if efile_resp.is_ok() and proxy_conn.default_jurisdiction != 'louisiana' and submitted_court_reserve_resp.is_ok():
     show_court_reserve_resp
