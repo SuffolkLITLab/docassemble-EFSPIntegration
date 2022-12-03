@@ -4,13 +4,27 @@ imports:
 ---
 if: |
   new_account_type_code == 'WV'
+need:
+  - new_account_name
+  - new_account_is_global
 code: |
   # TODO: this isn't wired up yet!
-  resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
+  waiver_resp = proxy_conn.create_waiver_account(new_account_name, new_account_is_global)
   globals().pop('new_account_name', None)
   globals().pop('new_account_is_global', None)
-  # reconsider('show_resp')
-  new_payment_account = True
+---
+if: new_account_type_code == 'WV'
+need:
+  - waiver_resp
+question: |
+  % if waiver_resp.is_ok():
+  Waiver account created!
+  % else:
+  Something went wrong creating your Waiver account
+  % endif
+subquestion: |
+  ${ debug_display(waiver_resp) }
+continue button field: new_payment_account
 ---
 if: |
   new_account_type_code in ['CC','BankAccount']
@@ -107,3 +121,4 @@ fields:
 code: |
   if not logged_in_user_is_global_admin:
     new_account_is_global = False
+---
