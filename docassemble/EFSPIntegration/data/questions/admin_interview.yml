@@ -6,6 +6,7 @@ modules:
 include:
   - login_qs.yml
   - case_search.yml
+  - toga_payments.yml
   - docassemble.AssemblyLine:al_package.yml
 ---
 features:

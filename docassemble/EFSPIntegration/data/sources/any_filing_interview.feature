@@ -99,7 +99,7 @@ Feature: Make any type of filing
       | x.filing_action | efile_and_serve | lead_doc.filing_action |
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
       | al_court_bundle.target_number | 1 | |
-      | tyler_payment_id | 3edbc236-14e1-4850-b101-50c1da073e30 | |
+      | tyler_payment_id | e9cd74e2-ee91-4706-a25c-cac6865013c8 | |
       | review_fees_screen['agrees_to_pay_fees'] | True | |
     Then I see the phrase "Below is your Lead Filing Doc"
 
@@ -124,7 +124,7 @@ Feature: Make any type of filing
       And I set the variable "case_search.somebody.name.first" to "John"
       And I set the variable "case_search.somebody.name.last" to "Brown"
       And I tap to continue
-      And I wait 30 seconds
+      And I wait 60 seconds
       And I get to the question id "ready to efile" with this data:
         | var | value | trigger |
         | x.case_choice | case_search.found_cases[1] | case_search.case_choice |
@@ -150,6 +150,6 @@ Feature: Make any type of filing
         | x.filing_action | efile_and_serve | lead_doc.filing_action |
         | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
         | al_court_bundle.target_number | 1 | |
-        | tyler_payment_id | 3edbc236-14e1-4850-b101-50c1da073e30 | |
+        | tyler_payment_id | e9cd74e2-ee91-4706-a25c-cac6865013c8 | |
         | review_fees_screen['agrees_to_pay_fees'] | True | |
       Then I see the phrase "Below is your Lead Filing Doc"

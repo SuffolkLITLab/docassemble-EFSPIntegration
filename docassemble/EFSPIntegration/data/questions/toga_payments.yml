@@ -79,8 +79,6 @@ script: |
       form.submit();
   </script>
   % endif
-  ${ log(proxy_conn.proxy_client.headers)}
-  ${ log(proxy_conn.proxy_client.headers.get('TYLER-TOKEN'))}
 continue button field: new_payment_account
 ---
 event: completed_payment_account
