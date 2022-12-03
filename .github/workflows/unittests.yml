@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip'
-      - run: pip install -r docassemble/EFSPINtegration/requirements.txt
       - run: pip install --editable .
+      - run: pip install -r docassemble/*/requirements.txt
       - run: python -m mypy .
       - run: python -m unittest discover
