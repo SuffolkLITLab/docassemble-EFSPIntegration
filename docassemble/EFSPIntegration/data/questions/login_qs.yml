@@ -129,8 +129,6 @@ question: |
 subquestion: |
   You can also [resend your activation email](${ url_ask(
       [{'recompute': ['self_resend_activation','show_activation_resp']}]) }).
-buttons:
-  - restart
 ---
 id: results
 question: |
