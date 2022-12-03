@@ -27,16 +27,3 @@ subquestion: |
       label=disp) }
 
   % endfor
----
-id: unauth-reset-completed
-question: |
-  % if reset_password_resp.is_ok():
-  You have been sent an email to reset your password
-  % else:
-  Something went wrong when trying to reset your password
-  % endif
-subquestion: |
-  % if not reset_password_resp.is_ok():
-  Error message: ${ debug_display(reset_password_resp) }
-  % endif
-continue button field: show_reset_resp

@@ -61,7 +61,7 @@ subquestion: |
   % if register_resp.is_ok():
   You will get an email from efile${ state_name_to_code(jurisdiction_id) } asking you to activate your account.
 
-  [Resend activation email](${ url_ask([{'recompute': ['self_resend_activation','show_resend_resp']}]) })
+  You can resend this activation email from the next screen.
 
   % else:
   ${ debug_display(register_resp) }
@@ -139,3 +139,16 @@ code: |
   register_resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=showifdef('person_to_reg.firm_name', ''))
   del new_password
   register = True
+---
+id: unauth-reset-completed
+question: |
+  % if reset_password_resp.is_ok():
+  You have been sent an email to reset your password
+  % else:
+  Something went wrong when trying to reset your password
+  % endif
+subquestion: |
+  % if not reset_password_resp.is_ok():
+  Error message: ${ debug_display(reset_password_resp) }
+  % endif
+continue button field: show_reset_resp
