@@ -77,7 +77,7 @@ question: |
   Something went wrong when we tried to resend your activation email
   % endif
 subquestion: |
-  % if resent_activation_resp.is_ok():
+  % if not resent_activation_resp.is_ok():
   Error message: ${ debug_display(resent_activation_resp) }
   % endif
 continue button field: show_resend_resp
