@@ -1,10 +1,12 @@
 import os
+import sys
 from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
 standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG-INFO', '*.egg-info')
+
 def find_package_data(where='.', package='', exclude=standard_exclude, exclude_directories=standard_exclude_directories):
     out = {}
     stack = [(convert_path(where), '', package)]
@@ -42,7 +44,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.EFSPIntegration',
-      version='1.0.0',
+      version='1.0.1',
       description=(''),
       long_description='# docassemble-EFSPIntegration\r\n\r\nA docassemble extension that talks to [a proxy e-filing server](https://github.com/SuffolkLITLab/EfileProxyServer/) easily within a docassemble interview.\r\n\r\nMain interviews of import:\r\n\r\n* any_filing_interview.yml: allows you to make any type of filing, initial or subsequent\r\n* admin_interview.yml: lets you handle admin / user functionality, outside of the context of cases and filings\r\n\r\nIn progress!\r\n\r\n## Authors\r\n\r\nQuinten Steenhuis (qsteenhuis@suffolk.edu)\r\nBryce Willey (bwilley@suffolk.edu)\r\n',
       long_description_content_type='text/markdown',
@@ -52,7 +54,7 @@ setup(name='docassemble.EFSPIntegration',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.AssemblyLine>=2.18.0', 'docassemble.ALToolbox>=0.6.2', 'requests>=2.25.1'],
+      install_requires=['docassemble.ALToolbox>=0.6.2', 'docassemble.AssemblyLine>=2.19.0', 'requests>=2.27.1'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
      )

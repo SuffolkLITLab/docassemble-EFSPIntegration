@@ -632,6 +632,9 @@ question: |
   What type of filing will you be making?
 subquestion: |
   We found a few filing codes that could be used to file your **${ x.title }**. Choose the one that you think best fits your case.
+  
+  If you need help, contact the ${ trial_court } circuit clerk${ " at " + trial_court.phone if hasattr(trial_court, 'phone') else ""}. You can also visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
+
 fields:
   - Filing Type: x.user_chosen_filing_type
     datatype: dropdown
