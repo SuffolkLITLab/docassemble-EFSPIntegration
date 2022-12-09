@@ -293,7 +293,7 @@ def make_filters(
             # unfortunately mypy doesn't work work well with lambdas, so use a def instead
             # https://github.com/python/mypy/issues/4226
             def func_from_str(opt, filter_str=filter_fn):
-                return opt[1].lower() == filter_str.lower()
+                return opt[1].lower().strip() == filter_str.lower().strip()
 
             filter_lambdas.append(func_from_str)
         elif isinstance(filter_fn, Iterable):
@@ -320,7 +320,7 @@ def make_filters(
 
 
 def filter_codes(
-    options: Iterable, filters: Iterable[Callable[..., bool]], default: str
+    options: Iterable, filters: Iterable, default: str
 ) -> Tuple[List[Any], Optional[str]]:
     """Given a list of filter functions from most specific to least specific,
     (if true, use that code), filters a total list of codes"""
