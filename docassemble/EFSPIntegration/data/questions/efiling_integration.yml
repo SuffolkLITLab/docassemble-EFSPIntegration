@@ -603,6 +603,14 @@ code: |
   x.document_type = x.document_type_options[0][0]
 ---
 generic object: DAObject
+code: |
+  x.document_type_default = None
+---
+generic object: DAObject
+code: |
+  x.filing_type_default = None
+---
+generic object: DAObject
 id: filing component
 question: |
   Filing component
