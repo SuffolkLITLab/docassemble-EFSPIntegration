@@ -604,11 +604,18 @@ code: |
 ---
 generic object: DAObject
 code: |
+  x.document_type_filters = []
   x.document_type_default = None
 ---
 generic object: DAObject
 code: |
+  x.filing_type_filters = []
   x.filing_type_default = None
+---
+generic object: DAObject
+code: |
+  x.filing_component_filters = []
+  x.filing_component_default = None
 ---
 generic object: DAObject
 id: filing component
