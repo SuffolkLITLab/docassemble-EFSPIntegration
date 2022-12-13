@@ -1,0 +1,220 @@
+{
+  "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}CivilCase",
+  "declaredType": "oasis.names.tc.legalxml_courtfiling.schema.xsd.civilcase_4.CivilCaseType",
+  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+  "value": {
+    "id": null,
+    "metadata": [],
+    "linkMetadata": [],
+    "activityIdentification": [],
+    "activityDateRepresentation": null,
+    "activityDescriptionText": null,
+    "activityStatus": null,
+    "activityDisposition": [],
+    "caseTitleText": {
+      "value": "The State of IllinoisVSBART, BRENDA L",
+      "id": null,
+      "metadata": [],
+      "linkMetadata": []
+    },
+    "caseCategoryText": {
+      "value": "135493",
+      "id": null,
+      "metadata": [],
+      "linkMetadata": []
+    },
+    "caseTrackingID": {
+      "value": "29da1f1d-4b7e-4cd7-8c6a-8a35328e3ef0",
+      "id": null,
+      "metadata": [],
+      "linkMetadata": []
+    },
+    "caseDocketID": {
+      "value": "02-CM-02778-1",
+      "id": null,
+      "metadata": [],
+      "linkMetadata": []
+    },
+    "rest": [
+      {
+        "name": "{http://niem.gov/niem/domains/jxdm/4.0}CaseAugmentation",
+        "declaredType": "gov.niem.niem.domains.jxdm._4.CaseAugmentationType",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "id": null,
+          "metadata": [],
+          "caseCharge": [],
+          "caseCourt": {
+            "id": null,
+            "metadata": [],
+            "linkMetadata": [],
+            "organizationIdentification": {
+              "name": "{http://niem.gov/niem/niem-core/2.0}OrganizationIdentification",
+              "declaredType": "gov.niem.niem.niem_core._2.IdentificationType",
+              "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+              "value": {
+                "id": null,
+                "metadata": [],
+                "linkMetadata": [],
+                "identificationID": {
+                  "value": "peoriacr",
+                  "id": null,
+                  "metadata": [],
+                  "linkMetadata": []
+                },
+                "identificationCategory": null,
+                "identificationJurisdiction": null,
+                "identificationSourceText": null
+              },
+              "nil": false,
+              "globalScope": true,
+              "typeSubstituted": false
+            },
+            "organizationLocation": null,
+            "organizationName": null,
+            "organizationPrimaryContactInformation": null,
+            "organizationSubUnitName": null,
+            "organizationTaxIdentification": null,
+            "organizationUnitName": null,
+            "courtName": {
+              "value": "",
+              "id": null,
+              "metadata": [],
+              "linkMetadata": []
+            }
+          },
+          "caseCourtEvent": [],
+          "caseDefendantParty": [],
+          "caseDefenseAttorney": [],
+          "caseInitiatingParty": [],
+          "caseJudge": [],
+          "caseLineageCase": [],
+          "caseOfficial": [],
+          "caseOtherEntity": [],
+          "caseProsecutionAttorney": [],
+          "caseRespondentAttorney": [],
+          "caseRespondentParty": [],
+          "caseInitiatingAttorney": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      },
+      {
+        "name": "{urn:tyler:ecf:extensions:Common}CaseAugmentation",
+        "declaredType": "tyler.ecf.extensions.common.CaseAugmentationType",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "id": null,
+          "metadata": [],
+          "linkMetadata": [],
+          "language": null,
+          "alias": [],
+          "caseOfficial": [],
+          "caseOtherEntityAttorney": [],
+          "caseParticipant": [],
+          "caseShortTitleText": null,
+          "organizationAssociation": [],
+          "personAssociation": [],
+          "personOrganizationAssociation": [],
+          "relatedCaseAssociation": [],
+          "caseTypeText": {
+            "value": "136431",
+            "id": null,
+            "metadata": [],
+            "linkMetadata": []
+          },
+          "filerTypeText": null,
+          "lowerCourtText": null,
+          "lowerCourtJudgeText": null,
+          "attachServiceContactIndicator": null,
+          "procedureRemedy": null,
+          "providerCharge": null,
+          "propertyAccountNumber": [],
+          "civilClaimAmount": null,
+          "probateEstateAmount": null,
+          "filingAssociation": [],
+          "partyService": [],
+          "extendedData": [],
+          "maxFeeAmount": null,
+          "caseSecurity": null,
+          "caseSubTypeText": null,
+          "physicalFeature": [],
+          "returnDate": null,
+          "hearingSchedule": null,
+          "outOfStateIndicator": null,
+          "citationAugmentation": [],
+          "willFiledDate": null,
+          "decedentPartyAssociation": [],
+          "questionAnswer": [],
+          "agency": [],
+          "lowerCourtCaseTypeText": null,
+          "caseAddress": null,
+          "feeSplit": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      },
+      {
+        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CommonTypes-4.0}CauseOfActionCode",
+        "declaredType": "gov.niem.niem.niem_core._2.TextType",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "value": "",
+          "id": null,
+          "metadata": [],
+          "linkMetadata": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      },
+      {
+        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}ClassActionIndicator",
+        "declaredType": "gov.niem.niem.proxy.xsd._2.Boolean",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "value": false,
+          "id": null,
+          "metadata": [],
+          "linkMetadata": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      },
+      {
+        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}JuryDemandIndicator",
+        "declaredType": "gov.niem.niem.proxy.xsd._2.Boolean",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "value": false,
+          "id": null,
+          "metadata": [],
+          "linkMetadata": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      },
+      {
+        "name": "{urn:oasis:names:tc:legalxml-courtfiling:schema:xsd:CivilCase-4.0}ReliefTypeCode",
+        "declaredType": "gov.niem.niem.niem_core._2.TextType",
+        "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+        "value": {
+          "value": "",
+          "id": null,
+          "metadata": [],
+          "linkMetadata": []
+        },
+        "nil": false,
+        "globalScope": true,
+        "typeSubstituted": false
+      }
+    ]
+  },
+  "nil": false,
+  "globalScope": true,
+  "typeSubstituted": false
+}

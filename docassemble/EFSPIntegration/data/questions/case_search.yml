@@ -31,6 +31,10 @@ comment: |
   Main API of this YAML file. You should only depend on variables declared in this block.
   To account for being able to search for multiple different cases in different courts,
   all of these attributes are in a `EFCaseSearch` object.
+
+  NOTE: x.court_id can be different from x.found_case.court_id (a sub court)
+  In your interview order, you need to set court_id = x.found_case.court_id,
+  if this case and court are the one you are filing into (i.e. not appealing a case)
 need:
   - x.court_id
 code: |

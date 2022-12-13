@@ -45,6 +45,8 @@ class TestConversions(unittest.TestCase):
             self.assertTrue(hasattr(partip, "party_type_name"))
             self.assertTrue(hasattr(partip, "tyler_id"))
         self.assertEqual(case.participants[0].instanceName, "case.participants[0]")
+        self.assertEqual(case.docket_number, "2020SC12")
+        self.assertEqual(case.category, "6198")
 
     def test_parse_service_contact(self):
         no_contacts = parse_service_contacts([])
@@ -54,6 +56,49 @@ class TestConversions(unittest.TestCase):
         self.assertEqual(len(service_contacts), 1)
         self.assertEqual(service_contacts[0][0], "6707a4f8-9f4c-4bbb-8498-ed4890208c6d")
         self.assertEqual(service_contacts[0][1], "Bryce Willey")
+
+class TestNoneResp(unittest.TestCase):
+    """Tests with none responses conversions.py on the "vars.json" file"""
+
+    def setUp(self):
+        with open(Path(__file__).parent / "vars.json", "r") as file:
+            full_json = json.load(file).get("variables")
+            self.my_var = full_json.get("my_var").get("data")
+        self.my_service_contacts = full_json.get("my_service_contacts")
+        self.proxy_conn = ProxyConnection()
+        self.proxy_conn.get_case = MagicMock(
+            "get_case", return_value=ApiResponse(200, "", None)
+        )
+
+    def test_none(self):
+        """Makes sure that participants of the case are parsed fully, needed"""
+        case = DAObject("case")
+        parse_case_info(self.proxy_conn, case, None, "peoria")
+        # no throw!
+
+
+class TestCourtSwitching(unittest.TestCase):
+    """Tests that if we search a case in a grouped court (say peoria) and
+    get back a court from a sub court (peariacr), that the
+    court_id from the found case reflects the sub court.
+
+    This is necessary, as filings can't be accepted to the grouped court."""
+
+    def setUp(self):
+        with open(Path(__file__).parent / "peoria_to_cr.json", "r") as file:
+            self.my_var = json.load(file)
+        self.proxy_conn = ProxyConnection()
+        self.proxy_conn.get_case = MagicMock(
+            "get_case", return_value=ApiResponse(200, "", self.my_var)
+        )
+
+    def test_switched_court(self):
+        """Makes sure that participants of the case are parsed fully, needed"""
+        case = DAObject("case")
+        parse_case_info(self.proxy_conn, case, self.my_var, "peoria")
+        self.assertEqual(case.court_id, "peoriacr")
+        self.assertEqual(case.docket_number, "02-CM-02778-1")
+        self.assertEqual(case.category, "135493")
 
 
 class TestConversionIgnoreAttorneys(unittest.TestCase):

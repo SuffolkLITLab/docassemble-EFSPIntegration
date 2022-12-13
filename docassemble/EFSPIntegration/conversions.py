@@ -230,7 +230,10 @@ def chain_xml(xml_val, elems: List[Union[str, int]]):
         if isinstance(val, dict):
             val = val.get(elem) or {}
         else:
-            val = val[elem]
+            try:
+                val = val[elem]
+            except:
+                val = {}
     return val
 
 
@@ -483,8 +486,8 @@ def parse_case_info(
     new_case.court_id = court_id
     new_case.title = chain_xml(entry, ["value", "caseTitleText", "value"])
     new_case.tracking_id = chain_xml(entry, ["value", "caseTrackingID", "value"])
-    new_case.docket_number = entry.get("value", {}).get("caseDocketID", {}).get("value")
-    new_case.category = entry.get("value", {}).get("caseCategoryText", {}).get("value")
+    new_case.docket_number = chain_xml(entry, ["value", "caseDocketID", "value"])
+    new_case.category = chain_xml(entry, ["value", "caseCategoryText", "value"])
 
     if fetch:
         fetch_case_info(proxy_conn, new_case, roles)
@@ -506,6 +509,8 @@ def fetch_case_info(
     if not roles:
         roles = {}
 
+    # NOTE: case court can change from searched location (i.e. search in peoria can find cases
+    # in peoriacr); using the original here, but can change it here if necessary
     full_case_details = proxy_conn.get_case(new_case.court_id, new_case.tracking_id)
     if not full_case_details.is_ok():
         log(
@@ -530,16 +535,33 @@ def fetch_case_info(
         .get("caseTypeText", {})
         .get("value")
     )
+    maybe_court = chain_xml(
+        new_case.case_details,
+        [
+            "value",
+            "rest",
+            0,
+            "value",
+            "caseCourt",
+            "organizationIdentification",
+            "value",
+            "identificationID",
+            "value",
+        ],
+    )
+    if maybe_court:
+        new_case.court_id = maybe_court
     new_case.efile_case_type = new_case.case_type
     new_case.title = chain_xml(
         new_case.case_details, ["value", "caseTitleText", "value"]
     )
-    new_case.title = re.sub(
-        r"([A-Z])In the Matter of the Estate of([A-Z])",
-        r"\1 In the Matter of the Estate of \2",
-        new_case.title,
-    )
-    new_case.title = re.sub(r"([A-Z])vs([A-Z])", r"\1 vs \2", new_case.title)
+    if new_case.title:
+        new_case.title = re.sub(
+            r"([A-Z])In the Matter of the Estate of([A-Z])",
+            r"\1 In the Matter of the Estate of \2",
+            new_case.title,
+        )
+        new_case.title = re.sub(r"([A-Z])vs([A-Z])", r"\1 vs \2", new_case.title)
     new_case.date = tyler_daterep_to_datetime(
         chain_xml(
             new_case.case_details, ["value", "activityDateRepresentation", "value"]
