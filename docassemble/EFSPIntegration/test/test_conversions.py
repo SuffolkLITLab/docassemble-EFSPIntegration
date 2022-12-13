@@ -57,6 +57,7 @@ class TestConversions(unittest.TestCase):
         self.assertEqual(service_contacts[0][0], "6707a4f8-9f4c-4bbb-8498-ed4890208c6d")
         self.assertEqual(service_contacts[0][1], "Bryce Willey")
 
+
 class TestNoneResp(unittest.TestCase):
     """Tests with none responses conversions.py on the "vars.json" file"""
 
