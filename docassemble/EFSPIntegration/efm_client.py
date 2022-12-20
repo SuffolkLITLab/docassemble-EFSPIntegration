@@ -11,6 +11,7 @@ from docassemble.base.util import (
     log,
     Person,
     Individual,
+    DAStore,
     DADateTime,
     as_datetime,
     reconsider,
@@ -182,12 +183,17 @@ class ProxyConnection(EfspConnection):
             tyler_password = temp_efile_config.get("tyler password")
         if jeffnet_key is None:
             jeffnet_key = temp_efile_config.get("jeffnet api token")
-        return super().authenticate_user(
+        resp = super().authenticate_user(
             tyler_email=tyler_email,
             tyler_password=tyler_password,
             jeffnet_key=jeffnet_key,
             jurisdiction=jurisdiction,
         )
+        if resp.is_ok():
+            store = DAStore(encrypted=True)
+            for k, v in resp.data.get("tokens", {}).items():
+                store.set(f"EFSP-{k}", v)
+        return resp
 
     def register_user(
         self,
