@@ -47,6 +47,8 @@ subquestion: |
   % if creation_status == 'failure':
   An error has occured. Please try again.
   % endif
+  % else:
+  <i class="fas fa-cog fa-spin"></i>Sending you to a secure payments site . . .<i class="fas fa-cog fa-spin"></i>
   % endif
 script: |
   % if not defined('creation_status'):

@@ -293,7 +293,7 @@ def make_filters(
             # unfortunately mypy doesn't work work well with lambdas, so use a def instead
             # https://github.com/python/mypy/issues/4226
             def func_from_str(opt, filter_str=filter_fn):
-                return opt[1].lower().strip() == filter_str.lower().strip()
+                return (opt[1] or "").lower().strip() == filter_str.lower().strip()
 
             filter_lambdas.append(func_from_str)
         elif isinstance(filter_fn, Iterable):
@@ -301,7 +301,7 @@ def make_filters(
             def func_from_iter(opt, filter_list=filter_fn):
                 return all(
                     [
-                        filter_item.lower() in opt[1].lower()
+                        filter_item.lower() in (opt[1] or "").lower()
                         for filter_item in filter_list
                     ]
                 )
@@ -313,7 +313,7 @@ def make_filters(
         if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
 
             def func_in_str(opt, filter_str=filter_fn):
-                return filter_str.lower() in opt[1].lower()
+                return filter_str.lower() in (opt[1] or "").lower()
 
             filter_lambdas.append(func_in_str)
     return filter_lambdas
