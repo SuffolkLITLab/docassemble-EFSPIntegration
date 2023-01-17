@@ -104,7 +104,8 @@ code: |
 ---
 id: new payment account
 question: |
-  New payment account info
+  What type of payment account do you want to make?
+subquestion: |
 fields:
   - Global: new_account_is_global
     datatype: yesno
@@ -119,8 +120,169 @@ fields:
       - Waiver account: WV
       - eCheck: BankAccount
       - Credit Card: CC
+  - note: |
+      On the next screen, you'll be sent to a secure payments site to enter your credit card information.
+    show if:
+      variable: new_account_type_code
+      is: CC
+  - note: |
+      On the next screen, you'll be sent to a secure payments site to enter your bank information.
+    show if:
+      variable: new_account_type_code
+      is: BankAccount
 ---
 code: |
   if not logged_in_user_is_global_admin:
     new_account_is_global = False
 ---
+template: payment_template
+subject: |
+  Payment accounts
+content: |
+  ${ action_button_html(url_ask([
+      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
+      {'recompute': ['new_payment_account']}
+    ]),
+    label='New payment Account') }
+
+  % for elem in firm_admin_payment_list:
+  ${ action_button_html(url_ask(
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1]) }
+  
+  % endfor
+---
+template: global_admin_payment_template
+subject: |
+  Payment accounts
+content: |
+  ${ action_button_html(url_ask([
+      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
+      {'recompute': ['new_payment_account']}
+    ]),
+    label='New payment Account', id_tag='new_payment_account') }
+
+  % for elem in global_admin_payment_list:
+  ${ action_button_html(url_ask(
+      [{'recompute': [elem[0], 'show_resp']}]), 
+      label=elem[1], id_tag=elem[0]) }
+  
+  % endfor
+---
+id: payment account id
+question: |
+  Payment account id?
+subquestion: |
+  Enter a payment account GUID or select from existing
+  payment accounts in your firm.
+fields:
+  - Payment account id: payment_account_id
+    datatype: combobox
+    code: |
+      payment_account_labels(proxy_conn.get_payment_account_list())
+---
+depends on: payment_account_id
+code: |
+  payment_account_id_resp = proxy_conn.get_payment_account(payment_account_id)
+---
+depends on: global_payment_account_id
+code: |
+  global_account_id_resp = proxy_conn.get_global_payment_account(global_payment_account_id)
+---
+reconsider:
+  - payment_account_id_resp
+depends on:
+  - payment_account_id
+id: update payment account
+question: |
+  Update payment account
+fields:
+  - Account name: payment_account_name
+    default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
+  - Active?: payment_account_active
+    datatype: yesno
+    default: ${ payment_account_id_resp.data.get('active',{}).get('value') if payment_account_id_resp.data else False}
+---
+reconsider:
+  - global_account_id_resp
+depends on:
+  - global_payment_account_id
+id: update payment account
+question: |
+  Update global payment account
+fields:
+  - Account name: global_account_name
+    default: ${ global_account_id_resp.data.get('accountName') if global_account_id_resp.data else '' }
+  - Active?: global_account_active
+    datatype: yesno
+    default: ${ global_account_id_resp.data.get('active',{}).get('value') if global_account_id_resp.data else False}
+---
+id: global payment account id
+question: |
+  Global payment account id?
+fields:
+  - Global payment account id: global_payment_account_id
+---
+code: |
+  service_contact_options = proxy_conn.get_service_contact_list().data or []
+---
+code: |
+  firm_admin_payment_list = [ 
+    ('get_payment_account_type_list', 'Get Payment Account Type List'),
+    ('get_payment_account', 'Get Payment Account'),
+    ('update_payment_account', 'Update Payment Account'),
+    ('remove_payment_account', 'Remove Payment Account'),
+    ('get_global_payment_account_list', 'Get Global Payment Account List'),
+    ('get_global_payment_account', 'Get Global Payment Account'),
+  ]
+---
+code: |
+  global_admin_payment_list = [
+    *firm_admin_payment_list,
+    ('update_global_payment_account', 'Update Global Payment Account'),
+    ('remove_global_payment_account', 'Remove Global Payment Account'),
+  ]
+---
+code: |
+  resp = proxy_conn.get_payment_account_type_list()
+  get_payment_account_type_list = True
+---
+code: |
+  resp = proxy_conn.get_payment_account_list()
+  get_payment_account_list = True
+---
+code: |
+  resp = proxy_conn.get_payment_account(payment_account_id)
+  del payment_account_id
+  get_payment_account = True
+---
+code: |
+  resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
+  globals().pop('payment_account_id', None)
+  globals().pop('payment_account_name', None)
+  globals().pop('payment_account_active', None)
+  update_payment_account = True
+---
+code: |
+  resp = proxy_conn.remove_payment_account(payment_account_id)
+  del payment_account_id
+  remove_payment_account = True
+---
+code: |
+  resp = proxy_conn.get_global_payment_account_list()
+  get_global_payment_account_list = True
+---
+code: |
+  resp = proxy_conn.get_global_payment_account(global_payment_account_id)
+  del global_payment_account_id
+  get_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.update_global_payment_account(global_payment_account_id, global_account_name, global_account_active)
+  del global_payment_account_id
+  update_global_payment_account = True
+---
+code: |
+  resp = proxy_conn.remove_global_payment_account(global_payment_account_id)
+  del global_payment_account_id
+  remove_global_payment_account = True

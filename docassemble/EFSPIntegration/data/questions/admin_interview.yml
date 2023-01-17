@@ -1333,7 +1333,7 @@ depends on:
   - tyler_login_resp
 if: can_check_efile
 code: |
-  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, {"TYLER-ID": tyler_user_id})
 ---
 mandatory: True
 code: |
