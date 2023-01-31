@@ -29,7 +29,7 @@ subquestion: |
 fields:
   - email/username: my_username
   - password: my_password
-    datatype: password
+    datatype: VisiblePassword
     hide if: user_forgot_password
   - I forgot my password: user_forgot_password
     datatype: yesno
@@ -82,9 +82,9 @@ question: |
   New Password?
 fields:
   - New password: new_user_password
-    datatype: password
+    datatype: VisiblePassword
   - Confirm new password: confirm_new_password
-    datatype: password
+    datatype: VisiblePassword
 validation code: |
   if not new_user_password == confirm_new_password:
     validation_error("Your passwords do not match.", field="confirm_new_password")    
@@ -94,11 +94,11 @@ question: |
   Change password
 fields:
   - Current password: current_password
-    datatype: password
+    datatype: VisiblePassword
   - New password: new_user_password
-    datatype: password
+    datatype: VisiblePassword
   - Confirm new password: confirm_new_password
-    datatype: password
+    datatype: VisiblePassword
 validation code: |
   if not new_user_password == confirm_new_password:
     validation_error(word("Your passwords do not match."), field="confirm_new_password")
@@ -127,6 +127,8 @@ question: |
   Something went wrong when we tried to reset your password
   % endif
 subquestion: |
+  ${ tyler_reset_password_resp.error_msg + "." if not tyler_reset_password_resp.is_ok() else ""}
+
   You can also [resend your activation email](${ url_ask(
       [{'recompute': ['self_resend_activation','show_activation_resp']}]) }).
 ---
@@ -149,8 +151,6 @@ subquestion: |
   % else:
   Something went wrong when logging you in. We will not be able to e-file your form.  
   % endif
-buttons:
-  - restart
 ---
 ##########
 ## As a result of logging in, we can use defaults. That's why they're in this file.
