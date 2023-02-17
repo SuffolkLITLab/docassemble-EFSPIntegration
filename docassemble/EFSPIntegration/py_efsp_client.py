@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+The base python client used to communicate with the E-file proxy server.
+
+Doesn't include anything from docassemble, and can be used without having it installed.
+"""
+
 import re
 import json
 import logging
@@ -51,7 +57,7 @@ def _user_visible_resp(resp: Union[Response, str, None]) -> ApiResponse:
 class EfspConnection:
     def __init__(self, *, url: str, api_key: str, default_jurisdiction: str = None):
         """
-        Params:
+        Args:
           url (str)
           api_key (str)
           default_jurisdiction (str)
@@ -139,10 +145,7 @@ class EfspConnection:
         jurisdiction: str = None,
     ) -> ApiResponse:
         """
-        Params:
-            tyler_email (str)
-            tyler_password (str)
-            jeffnet_key (str)
+        Authenticates the user with the EFM server (not the E-file proxy).
         """
 
         if jurisdiction is None:

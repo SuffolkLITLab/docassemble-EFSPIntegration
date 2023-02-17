@@ -119,6 +119,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
 
 
 class ProxyConnection(EfspConnection):
+    """The main class you use to communicate with the E-file proxy server from docassemble."""
     def __init__(
         self,
         *,
@@ -128,11 +129,8 @@ class ProxyConnection(EfspConnection):
         default_jurisdiction: str = None,
     ):
         """
-        Params:
-          url (str)
-          api_key (str)
-          credentials_code_block (str)
-          default_jurisdiction (str)
+        Creates the connection. Tries to get params from docassemble's config, but can
+        be overriden with parameters to __init__.
         """
         temp_efile_config = get_config("efile proxy", {})
         if url is None:
