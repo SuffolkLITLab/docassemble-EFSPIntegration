@@ -244,7 +244,8 @@ def get_full_court_info(proxy_conn, court_id: str) -> Dict:
 def _scale_byte_units(value: Union[str, int], unit: str) -> int:
     """Idk if these are right, but there's no examples out there.
     Niem suggests they might not matter:
-    https://docs.oasis-open.org/legalxml-courtfiling/ecf/v5.0/csprd03/model/class137602.html"""
+    https://docs.oasis-open.org/legalxml-courtfiling/ecf/v5.0/csprd03/model/class137602.html
+    """
     if isinstance(value, str):
         value = int(value)
     if unit.lower() == "kilobyte" or unit == "kB":
