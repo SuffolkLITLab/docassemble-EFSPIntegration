@@ -12,6 +12,8 @@ from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 
 class EFCaseSearch(DAObject):
+    """A data-class that has holds all of the information and state for a single case search"""
+
     court_id: str
     can_file_non_indexed_case: bool
     do_what_choice: str

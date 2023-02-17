@@ -9,7 +9,7 @@ from ..conversions import parse_case_info, parse_service_contacts
 
 
 class TestConversions(unittest.TestCase):
-    """Tests conversions.py on the "vars.json" file"""
+    # Tests conversions.py on the "vars.json" file
 
     def setUp(self):
         with open(Path(__file__).parent / "vars.json", "r") as file:
@@ -22,7 +22,7 @@ class TestConversions(unittest.TestCase):
         )
 
     def test_parse_case_info(self):
-        """Makes sure that participants of the case are parsed fully, needed"""
+        # Makes sure that participants of the case are parsed fully, needed
         case = DAObject("case")
         parse_case_info(self.proxy_conn, case, self.my_var, "adams")
         self.assertEqual(len(case.participants), 2)
@@ -59,7 +59,7 @@ class TestConversions(unittest.TestCase):
 
 
 class TestNoneResp(unittest.TestCase):
-    """Tests with none responses conversions.py on the "vars.json" file"""
+    # Tests with none responses conversions.py on the "vars.json" file
 
     def setUp(self):
         with open(Path(__file__).parent / "vars.json", "r") as file:
@@ -72,18 +72,18 @@ class TestNoneResp(unittest.TestCase):
         )
 
     def test_none(self):
-        """Makes sure that participants of the case are parsed fully, needed"""
+        # Makes sure that participants of the case are parsed fully, needed
         case = DAObject("case")
         parse_case_info(self.proxy_conn, case, None, "peoria")
         # no throw!
 
 
 class TestCourtSwitching(unittest.TestCase):
-    """Tests that if we search a case in a grouped court (say peoria) and
-    get back a court from a sub court (peariacr), that the
-    court_id from the found case reflects the sub court.
-
-    This is necessary, as filings can't be accepted to the grouped court."""
+    # Tests that if we search a case in a grouped court (say peoria) and
+    # get back a court from a sub court (peariacr), that the
+    # court_id from the found case reflects the sub court.
+    #
+    # This is necessary, as filings can't be accepted to the grouped court."""
 
     def setUp(self):
         with open(Path(__file__).parent / "peoria_to_cr.json", "r") as file:
@@ -94,7 +94,7 @@ class TestCourtSwitching(unittest.TestCase):
         )
 
     def test_switched_court(self):
-        """Makes sure that participants of the case are parsed fully, needed"""
+        # Makes sure that participants of the case are parsed fully, needed
         case = DAObject("case")
         parse_case_info(self.proxy_conn, case, self.my_var, "peoria")
         self.assertEqual(case.court_id, "peoriacr")
@@ -114,7 +114,7 @@ class TestConversionIgnoreAttorneys(unittest.TestCase):
         )
 
     def test_ignore_attorneys(self):
-        """Attorneys are just stuck in the middle with normal case participants. You can't attach service contacts to them, so"""
+        # Attorneys are just stuck in the middle with normal case participants. You can't attach service contacts to them, so
         case = DAObject("case")
         parse_case_info(self.proxy_conn, case, self.first_resp, "peoria")
         self.assertEqual(len(case.attorneys.keys()), 2)
