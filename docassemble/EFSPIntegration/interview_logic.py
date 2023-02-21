@@ -45,7 +45,7 @@ class EFCaseSearch(DAObject):
 
 _visible_password_js = """
   $(document).on('daPageLoad', function() {
-    $('input[type="VisiblePassword"]').each(function() {
+    $('input[type="ALVisiblePassword"]').each(function() {
       var thisElement = this;
       $(thisElement).attr("type", "password");
       var checkbox_div = $('<div></div>');
@@ -65,9 +65,9 @@ _visible_password_js = """
   });
 """
 
-class VisiblePassword(CustomDataType):
-    name = "VisiblePassword"
-    input_type = "VisiblePassword"
+class ALVisiblePassword(CustomDataType):
+    name = "ALVisiblePassword"
+    input_type = "ALVisiblePassword"
     javascript = _visible_password_js
 
 

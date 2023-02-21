@@ -29,7 +29,7 @@ subquestion: |
 fields:
   - email/username: my_username
   - password: my_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
     hide if: user_forgot_password
   - I forgot my password: user_forgot_password
     datatype: yesno
@@ -82,9 +82,9 @@ question: |
   New Password?
 fields:
   - New password: new_user_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
   - Confirm new password: confirm_new_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
 validation code: |
   if not new_user_password == confirm_new_password:
     validation_error("Your passwords do not match.", field="confirm_new_password")    
@@ -94,11 +94,11 @@ question: |
   Change password
 fields:
   - Current password: current_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
   - New password: new_user_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
   - Confirm new password: confirm_new_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
 validation code: |
   if not new_user_password == confirm_new_password:
     validation_error(word("Your passwords do not match."), field="confirm_new_password")

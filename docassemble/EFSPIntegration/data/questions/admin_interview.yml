@@ -431,7 +431,7 @@ question: |
   Password?
 fields:
   - Password: new_password
-    datatype: VisiblePassword
+    datatype: ALVisiblePassword
 ---
 id: user id
 question: |
