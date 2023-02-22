@@ -43,6 +43,7 @@ class EFCaseSearch(DAObject):
             lookup_choices.append({"non_indexed_case": str(self.non_indexed_choice)})
         return lookup_choices
 
+
 _visible_password_js = """
   $(document).on('daPageLoad', function() {
     $('input[type="ALVisiblePassword"]').each(function() {
@@ -65,11 +66,11 @@ _visible_password_js = """
   });
 """
 
+
 class ALVisiblePassword(CustomDataType):
     name = "ALVisiblePassword"
     input_type = "ALVisiblePassword"
     javascript = _visible_password_js
-
 
 
 def address_fields_with_defaults(
@@ -270,7 +271,8 @@ def get_full_court_info(proxy_conn, court_id: str) -> Dict:
 def _scale_byte_units(value: Union[str, int], unit: str) -> int:
     """Idk if these are right, but there's no examples out there.
     Niem suggests they might not matter:
-    https://docs.oasis-open.org/legalxml-courtfiling/ecf/v5.0/csprd03/model/class137602.html"""
+    https://docs.oasis-open.org/legalxml-courtfiling/ecf/v5.0/csprd03/model/class137602.html
+    """
     if isinstance(value, str):
         value = int(value)
     if unit.lower() == "kilobyte" or unit == "kB":
