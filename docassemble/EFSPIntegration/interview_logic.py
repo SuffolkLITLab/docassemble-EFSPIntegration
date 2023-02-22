@@ -6,7 +6,7 @@ package, but for better python tooling support, were moved here.
 from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
 from datetime import datetime
 
-from docassemble.base.util import DAObject, DAList, log, word
+from docassemble.base.util import CustomDataType, DAObject, DAList, log, word
 from .conversions import parse_case_info, fetch_case_info, chain_xml
 from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
@@ -42,6 +42,34 @@ class EFCaseSearch(DAObject):
         if can_file_non_indexed_case:
             lookup_choices.append({"non_indexed_case": str(self.non_indexed_choice)})
         return lookup_choices
+
+_visible_password_js = """
+  $(document).on('daPageLoad', function() {
+    $('input[type="ALVisiblePassword"]').each(function() {
+      var thisElement = this;
+      $(thisElement).attr("type", "password");
+      var checkbox_div = $('<div></div>');
+      var checkbox_input = $('<input type="checkbox" id="idk-check">');
+      var checkbox_label = $('<label for="idk-check" style="margin-left:7px">Show password</label>');
+      $(checkbox_input).on('change', function() {
+        if (this.checked) {
+          $(thisElement).attr('type', 'text');
+        } else {
+          $(thisElement).attr('type', 'password');
+        }
+      })
+      $(thisElement).after(checkbox_div);
+      $(checkbox_div).append(checkbox_input);
+      $(checkbox_div).append(checkbox_label);
+    })
+  });
+"""
+
+class ALVisiblePassword(CustomDataType):
+    name = "ALVisiblePassword"
+    input_type = "ALVisiblePassword"
+    javascript = _visible_password_js
+
 
 
 def address_fields_with_defaults(

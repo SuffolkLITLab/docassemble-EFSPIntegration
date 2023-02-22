@@ -113,7 +113,7 @@ fields:
   - note: |
       ${ password_rules.data.get("validationmessage") }
   - Password: new_password
-    datatype: password
+    datatype: ALVisiblePassword
     validate: proxy_conn.is_valid_password
   - note: |
       ---
