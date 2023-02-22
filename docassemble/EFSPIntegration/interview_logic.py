@@ -50,7 +50,7 @@ _visible_password_js = """
       $(thisElement).attr("type", "password");
       var checkbox_div = $('<div></div>');
       var checkbox_input = $('<input type="checkbox" id="idk-check">');
-      var checkbox_label = $('<label for="idk-check">Show password</label>');
+      var checkbox_label = $('<label for="idk-check" style="margin-left:7px">Show password</label>');
       $(checkbox_input).on('change', function() {
         if (this.checked) {
           $(thisElement).attr('type', 'text');
