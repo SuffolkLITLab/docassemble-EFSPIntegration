@@ -336,6 +336,7 @@ def _parse_participant_id(entity):
 def _parse_name(name_obj, name_val):
     if not name_val:
         name_val = {}
+
     # TODO(brycew): some french last names are all caps? It could happen, but this is best for now.
     def make_readable(name):
         if len(name) > 1 and name.isupper():
