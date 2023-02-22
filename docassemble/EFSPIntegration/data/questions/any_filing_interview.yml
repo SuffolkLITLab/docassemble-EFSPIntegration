@@ -99,7 +99,7 @@ code: |
   if needs_all_info:
     lead_contact.email
 
-  if case_category_map[efile_case_category]['ecfcasetype'] == 'AppellateCase':
+  if (case_category_map.get(efile_case_category) or {}).get('ecfcasetype') == 'AppellateCase':
     lower_court_case
     lower_court_case.docket_number
     lower_court_case.judge

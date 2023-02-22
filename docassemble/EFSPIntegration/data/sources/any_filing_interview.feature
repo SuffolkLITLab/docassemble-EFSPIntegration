@@ -127,7 +127,7 @@ Feature: Make any type of filing
       And I wait 60 seconds
       And I get to the question id "ready to efile" with this data:
         | var | value | trigger |
-        | x.case_choice | case_search.found_cases[1] | case_search.case_choice |
+        | x.case_choice | case_search.found_cases[0] | case_search.case_choice |
         | user_ask_role | defendant | |
         | other_parties.there_are_any | False | |
         | existing_parties_new_atts.there_are_any | False | |
@@ -139,13 +139,13 @@ Feature: Make any type of filing
         | other_parties.there_is_another | False | |
         | lead_contact.name.first | Bob | |
         | lead_contact.name.last | Ma | |
-        | x.filing_type | 142264 | |
+        | x.filing_type | 29643 | |
         | x.filing_description | example description | |
         | x.exhibits[0].pages | example_upload.pdf | |
         | x.document_type | 5766 | lead_doc.document_type |
         | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
         | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
-        | x.existing_parties_payment_dict['350e3cb1-616b-493a-96a0-fca7492dd29b'] | True | lead_doc.existing_parties_payment_dict |
+        | x.existing_parties_payment_dict['d67992cb-e6a6-4d7d-a623-972e8074353e'] | True | lead_doc.existing_parties_payment_dict |
         | service_contacts.there_are_any | False | |
         | x.filing_action | efile_and_serve | lead_doc.filing_action |
         | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |

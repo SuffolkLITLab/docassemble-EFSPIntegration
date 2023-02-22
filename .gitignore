@@ -10,6 +10,7 @@ rcfile
 
 # Kiln stuff
 alkiln_tests_*
+alkiln-*
 cucumber-report.txt
 debug_log.txt
 runtime_config.json
