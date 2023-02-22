@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-from docassemble.base.util import Address, Person, Individual, IndividualName, Address
-from docassemble.AssemblyLine.al_general import ALIndividual
 from ..py_efsp_client import EfspConnection, ApiResponse
 import sys
 import subprocess
@@ -144,19 +142,20 @@ class TestClass:
         public = self.basic_assert(
             self.proxy_conn.get_public_service_contacts(first_name="John")
         )
-        new_contact = {}
-        new_contact["firstName"] = "Ella"
-        new_contact["lastName"] = "Doe"
-        new_contact["email"] = "ella.doe@example.com"
-        new_contact["address"] = {
-            "addressLine1": "123 Fakestreet Ave",
-            "addressLine2": "Unit 999",
-            "city": "Boston",
-            "state": "MA",
-            "zipCode": "12345",
-            "country": "US",
-        } 
-        new_contact["phoneNumber"] = "9727133770"
+        new_contact = {
+            "firstName": "Ella",
+            "lastName": "Doe",
+            "email": "ella.doe@example.com",
+            "address": {
+              "addressLine1": "123 Fakestreet Ave",
+              "addressLine2": "Unit 999",
+              "city": "Boston",
+              "state": "MA",
+              "zipCode": "12345",
+              "country": "US"
+            },
+            "phoneNumber": "9727133770"
+        }
         new_c = self.basic_assert(
             self.proxy_conn.create_service_contact(
                 new_contact,
