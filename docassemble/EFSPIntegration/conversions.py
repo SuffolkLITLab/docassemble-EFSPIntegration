@@ -697,7 +697,9 @@ def filing_id_and_label(case: Mapping, style="FILING_ID") -> Dict[str, str]:
 
 
 def get_tyler_roles(
-    proxy_conn: ProxyConnection, login_data: Mapping, user_details: Optional[ApiResponse] = None
+    proxy_conn: ProxyConnection,
+    login_data: Mapping,
+    user_details: Optional[ApiResponse] = None,
 ) -> Tuple[bool, bool]:
     """Gets whether or not the user of this interview is a Tyler Admin, and a 'global' admin.
     The global admin means that they are allowed to change specific Global payment methods,
@@ -705,11 +707,11 @@ def get_tyler_roles(
     DAConfig"""
 
     if not user_details:
-      if not login_data:
-        return False, False
-      user_details = proxy_conn.get_user(
-          login_data.get("TYLER-ID", login_data.get("TYLER_ID"))
-      )
+        if not login_data:
+            return False, False
+        user_details = proxy_conn.get_user(
+            login_data.get("TYLER-ID", login_data.get("TYLER_ID"))
+        )
 
     if not user_details.data:
         return False, False
