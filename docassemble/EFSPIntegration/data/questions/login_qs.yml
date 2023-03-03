@@ -168,11 +168,11 @@ subquestion: |
 
   You can reset your password if you think your password is wrong.
   
-  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Reset your password")}
+  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Reset your password", new_window=True)}
 
   You can also register for an account if you don't have one yet.
 
-  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Register for a new account")}
+  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Register for a new account", new_window=True)}
 
   % else:
   Something went wrong when logging you in. We will not be able to e-file your form.
