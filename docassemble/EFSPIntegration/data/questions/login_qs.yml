@@ -158,12 +158,21 @@ continue button field: show_activation_resp
 id: Login failed
 event: login_failed_screen
 question: |
-  Tyler Login failed
+  eFile${ state_name_to_code(jurisdiction_id) } Login failed
 subquestion: |
   % if int(tyler_login_resp.response_code) == 403:
   Your login information was not correct. Go back and try again.
+
+  You can reset your password if you think your password is wrong.
+  
+  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Reset your password")}
+
+  You can also register for an account if you don't have one yet.
+
+  ${ action_button_html(interview_url(i=logged_out_interview, reset=1, jurisdiction_id=jurisdiction_id), label="Register for a new account")}
+
   % else:
-  Something went wrong when logging you in. We will not be able to e-file your form.  
+  Something went wrong when logging you in. We will not be able to e-file your form.
   % endif
 ---
 ##########
