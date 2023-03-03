@@ -52,15 +52,18 @@ code: |
   tyler_login = True
 ---
 code: |
-  tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
-  if da_store.defined("EFSP-" + tyler_header_name):
-    proxy_conn.proxy_client.headers[tyler_header_name] = da_store.get("EFSP-" + tyler_header_name)
-    tyler_user = proxy_conn.get_user()
-    if tyler_user.is_ok():
-      my_username = tyler_user.data.get('email')
-      log(word("You are now connected to your e-filing account") + f" ({my_username})", "primary")
-      logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, None, tyler_user)
-      tyler_login = True
+    tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
+    try:
+      if da_store.defined("EFSP-" + tyler_header_name):
+        proxy_conn.proxy_client.headers[tyler_header_name] = da_store.get("EFSP-" + tyler_header_name)
+        tyler_user = proxy_conn.get_user()
+        if tyler_user.is_ok():
+          my_username = tyler_user.data.get('email')
+          log(word("You are now connected to your e-filing account") + f" ({my_username})", "primary")
+          logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, None, tyler_user)
+          tyler_login = True
+    except Exception as ex:
+      log(f"Error when trying to get da_store Tyler token: {ex}")
 ---
 code: |
   change_resp = proxy_conn.self_change_password(current_password, new_user_password)
