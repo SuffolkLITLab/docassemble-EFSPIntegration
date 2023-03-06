@@ -42,6 +42,19 @@ TypeType = type(type(None))
 
 
 def convert_court_to_id(trial_court) -> str:
+    """Converts a court type to the specific id string expected by Tyler.
+
+    A fairly ad-hoc function; it will check if the object has several attributes
+    ("tyler_court_code", "tyler_code", or "name"), or if it's already a string, it
+    tries to just make a lower case on the string. We strongly recommend that
+    your court object use the "tyler_court_code" attribute though.
+
+    Args:
+      trial_court: the court object
+    
+    Returns:
+      the string that should be the Tyler EFM court id, i.e. `adams` or `peoria:cr`
+    """
     if hasattr(trial_court, "tyler_court_code"):
         return trial_court.tyler_court_code
     if hasattr(trial_court, "tyler_code"):
@@ -62,10 +75,22 @@ class SafeDict(dict):
 
 
 def choices_and_map(
-    codes_list: List, display: str = None, backing: str = None
+    codes_list: List[Dict[str, Any]], display: str = None, backing: str = None
 ) -> Tuple[List[Any], Dict]:
     """Takes the responses from the 'codes' service and make a DA ready list of choices and a map back
-    to the full code object"""
+    to the full code object
+    
+    Args:
+      codes_list: should be the direct response from a 'codes' service, i.e. `proxy_conn.get_case_categories(court_id).data`
+      display: a python format string, where the input variables are the keys of the individual code elements. By
+          default, it's "{name}", but could be something else like "{name} ({code})"
+      backing: the key to each dict element in the codes_list that you want to use as the "canonical" representation
+          of the code, i.e. each is unique, and there aren't conflicts
+    Returns:
+      a tuple; first, a list of the codes that can be used at the `choices` in a docassemble field,
+          second, a map of each code, from the backing key to the full code element. Useful for getting
+          all of the information about a code after a user has selected it.
+    """
     if display is None:
         display = "{name}"
     if backing is None:
