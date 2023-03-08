@@ -120,7 +120,11 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
 
 
 class ProxyConnection(EfspConnection):
-    """The main class you use to communicate with the E-file proxy server from docassemble."""
+    """The main class you use to communicate with the E-file proxy server from docassemble.
+
+    Many methods are unchanged from the parent class, [EfspConnection](py_efsp_client#EfspConnection),
+    and are documented there.
+    """
     def __init__(
         self,
         *,

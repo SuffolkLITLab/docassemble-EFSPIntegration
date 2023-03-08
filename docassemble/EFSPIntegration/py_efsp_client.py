@@ -55,6 +55,8 @@ def _user_visible_resp(resp: Union[Response, str, None]) -> ApiResponse:
 
 
 class EfspConnection:
+    """A python client that communicates with the E-file proxy server.
+    """
     def __init__(self, *, url: str, api_key: str, default_jurisdiction: str = None):
         """
         Args:
@@ -384,6 +386,9 @@ class EfspConnection:
 
     ### Managing a Firm
     def get_firm(self) -> ApiResponse:
+        """Gets info about the "firm" for an associated user. If a user is a pro-se, this
+        contains their address information.
+        """
         send = lambda: self.proxy_client.get(self.full_url("firmattorneyservice/firm"))
         return self._call_proxy(send)
 
@@ -648,6 +653,7 @@ class EfspConnection:
     def get_courts(
         self, fileable_only: bool = False, with_names: bool = False
     ) -> ApiResponse:
+        """Gets the list of courts."""
         params = {"fileable_only": fileable_only, "with_names": with_names}
         send = lambda: self.proxy_client.get(
             self.full_url("codes/courts"), params=params
@@ -655,12 +661,15 @@ class EfspConnection:
         return self._call_proxy(send)
 
     def get_court(self, court_id: str) -> ApiResponse:
+        """Gets codes for a specific court"""
         send = lambda: self.proxy_client.get(
             self.full_url(f"codes/courts/{court_id}/codes")
         )
         return self._call_proxy(send)
 
-    def get_court_list(self):
+    def get_court_list(self) -> ApiResponse:
+        """Gets a list of all of the courts that you can file into. Slightly more limited than
+        [get_courts](#get_courts)"""
         send = lambda: self.proxy_client.get(self.full_url(f"filingreview/courts"))
         return self._call_proxy(send)
 
@@ -671,6 +680,8 @@ class EfspConnection:
         start_date: datetime = None,
         before_date: datetime = None,
     ) -> ApiResponse:
+        """Returns a list of filings that a particular user has made with a court.
+        """
         params = {
             "user_id": user_id,
             "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
