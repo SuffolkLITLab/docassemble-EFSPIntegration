@@ -111,8 +111,19 @@ def choices_and_map(
 
 
 def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
-    """Given an arbitrarily nested JSON structure, print it nicely.
-    Recursive, for subsequent calls `tab_depth` increases."""
+    """Given an arbitrarily nested JSON structure, print it nicely as markdown.
+    Recursive, for subsequent calls `tab_depth` increases.
+    
+    Args:
+      data: the JSON structure (python dicts, lists, strings and ints) to print
+      tab_depth: how many spaces to add before each new line, to make the markdown correct
+      skip_xml: this function is mostly for printing responses from the EfileProxyServer, which
+          lazily returns XML as JSON. If this is true, we won't show the useless XML cruft
+      item_name: when recursing, will show the parent's name when showing elements in a list
+   
+    Returns:
+      The string of markdown text that displays info about the given JSON structure
+    """
     tab_inc = 4
     out = ""
     tab_str = " " * tab_depth
@@ -183,7 +194,8 @@ def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
 
 def debug_display(resp: ApiResponse) -> str:
     """Returns a string with either the error of the response,
-    or it's data run through pretty_display"""
+       or it's data run through [pretty_display](#pretty_display)
+    """
     if resp.is_ok() and resp.data is None:
         return f"All ok! ({resp.response_code})"
     if not resp.is_ok():
@@ -211,7 +223,7 @@ def tyler_timestamp_to_datetime(timestamp_ms: int) -> DADateTime:
     return as_datetime(datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc))
 
 
-def validate_tyler_regex(data_field: Mapping) -> Callable:
+def validate_tyler_regex(data_field: Mapping) -> Callable[[str], Any]:
     """
     Return a function that validates a given input with the provided regex,
     suitable for use with Docassemble's `validate:` question modifier
@@ -241,7 +253,7 @@ def validate_tyler_regex(data_field: Mapping) -> Callable:
     return fn_validate
 
 
-def _is_person(possible_person_entity: dict):
+def _is_person(possible_person_entity: dict) -> bool:
     """Helper for getting party ID"""
     # TODO(brycew): could also check the declaredType?
     return possible_person_entity.get("personOtherIdentification") is not None
@@ -506,6 +518,18 @@ def parse_case_info(
     fetch: bool = True,
     roles: dict = None,
 ):
+    """Given sparse information about a case, gets the full details about it
+
+    Args:
+      proxy_conn: the connection to the EFileProxyServer
+      new_case: the object to hold all of the information about the case
+      entry: the information we have about the case, usually from a call to `get_cases`
+      court_id: the id of the court that we searched in to get this info
+      fetch: if true, will fetch more detailed information about the case,
+          include the case title
+      roles: a dictionary of the party type codes to the party type name.
+          Used so we can filter and sort participants later
+    """
     if not roles:
         roles = {}
     new_case.details = entry
@@ -520,8 +544,8 @@ def parse_case_info(
 
 
 def fetch_case_info(
-    proxy_conn: ProxyConnection, new_case: DAObject, roles: dict = None
-):
+    proxy_conn: ProxyConnection, new_case: DAObject, roles: Optional[dict] = None
+) -> None:
     """Fills in these attributes with the full case details:
     * attorneys
     * party_to_attorneys
@@ -650,9 +674,20 @@ def _payment_labels(acc: Mapping) -> str:
         return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
 
 
-def filter_payment_accounts(account_list, allowable_card_types) -> List:
+def filter_payment_accounts(account_list, allowable_card_types:List) -> List:
     """Gets a list of all payment accounts and filters them by if the card is
-    accepted at a particular court"""
+    accepted at a particular court.
+    
+    Args:
+      account_list:
+      allowable_card_types: a list of the accepted card types at a court, usually
+        from the 'allowablecardtypes' dict entry in
+        [get_full_court_info](interview_logic#get_full_court_info)'s response
+    
+    Returns:
+      the list of payment account choices that are valid for a particular court
+    
+    """
     allowed_card = lambda acc: acc.get("paymentAccountTypeCode") != "CC" or (
         acc.get("paymentAccountTypeCode") == "CC"
         and acc.get("cardType", {}).get("value") in allowable_card_types
@@ -664,7 +699,9 @@ def filter_payment_accounts(account_list, allowable_card_types) -> List:
     ]
 
 
-def payment_account_labels(resp):
+def payment_account_labels(resp:ApiResponse) -> Optional[List[Dict]]:
+    """Returns all payment accounts as choices, without filters.
+    """
     if resp.data:
         return [
             {account.get("paymentAccountID"): _payment_labels(account)}
@@ -674,7 +711,11 @@ def payment_account_labels(resp):
         return None
 
 
-def filing_id_and_label(case: Mapping, style="FILING_ID") -> Dict[str, str]:
+def filing_id_and_label(case: Mapping, style:str="FILING_ID") -> Dict[str, str]:
+    """Converts a raw case information from [proxy_conn.get_filing_list()](py_efsp_client#get_filing_list)
+      into a key-value pair, where the key is the filing id and the value is the user-facing label
+      for that filing.
+    """
     tracking_id = case.get("caseTrackingID", {}).get("value")
     try:
         filing_id = (
