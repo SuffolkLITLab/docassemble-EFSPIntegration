@@ -12,6 +12,8 @@ from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 
 class EFCaseSearch(DAObject):
+    """A data-class that has holds all of the information and state for a single case search"""
+
     court_id: str
     can_file_non_indexed_case: bool
     do_what_choice: str
@@ -19,6 +21,7 @@ class EFCaseSearch(DAObject):
     case_was_found: bool
 
     def search_went_wrong(self) -> bool:
+        """Returns true if something errored during the case search process"""
         if (
             hasattr(self, "docket_case_response")
             and not self.docket_case_response.is_ok()
@@ -35,6 +38,14 @@ class EFCaseSearch(DAObject):
     def get_lookup_choices(
         self, can_file_non_indexed_case: bool
     ) -> List[Dict[str, str]]:
+        """Returns the DA choice list of what ways you are allowed to search for a case;
+        By default, this is "party_search", and "docket_lookup", and depending on the
+        court, it could also include "non_indexed_case".
+
+        Not passed as direct arguments, but the object attributes `party_search_choice`,
+        `docket_lookup_choice`, and `non_indexed_choice` are the user-facing labels
+        for each choice.
+        """
         lookup_choices = [
             {"party_search": str(self.party_search_choice)},
             {"docket_lookup": str(self.docket_lookup_choice)},
@@ -264,7 +275,7 @@ def get_full_court_info(proxy_conn, court_id: str) -> Dict:
     if full_court_resp.is_ok():
         return full_court_resp.data
     else:
-        log(f"Couldn't get full court info for {court_id}")
+        log(f"Couldn't get full court info for {court_id}: {full_court_resp}")
         return {}
 
 
