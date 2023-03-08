@@ -51,7 +51,7 @@ def convert_court_to_id(trial_court) -> str:
 
     Args:
       trial_court: the court object
-    
+
     Returns:
       the string that should be the Tyler EFM court id, i.e. `adams` or `peoria:cr`
     """
@@ -79,7 +79,7 @@ def choices_and_map(
 ) -> Tuple[List[Any], Dict]:
     """Takes the responses from the 'codes' service and make a DA ready list of choices and a map back
     to the full code object
-    
+
     Args:
       codes_list: should be the direct response from a 'codes' service, i.e. `proxy_conn.get_case_categories(court_id).data`
       display: a python format string, where the input variables are the keys of the individual code elements. By
@@ -113,14 +113,14 @@ def choices_and_map(
 def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
     """Given an arbitrarily nested JSON structure, print it nicely as markdown.
     Recursive, for subsequent calls `tab_depth` increases.
-    
+
     Args:
       data: the JSON structure (python dicts, lists, strings and ints) to print
       tab_depth: how many spaces to add before each new line, to make the markdown correct
       skip_xml: this function is mostly for printing responses from the EfileProxyServer, which
           lazily returns XML as JSON. If this is true, we won't show the useless XML cruft
       item_name: when recursing, will show the parent's name when showing elements in a list
-   
+
     Returns:
       The string of markdown text that displays info about the given JSON structure
     """
@@ -194,7 +194,7 @@ def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
 
 def debug_display(resp: ApiResponse) -> str:
     """Returns a string with either the error of the response,
-       or it's data run through [pretty_display](#pretty_display)
+    or it's data run through [pretty_display](#pretty_display)
     """
     if resp.is_ok() and resp.data is None:
         return f"All ok! ({resp.response_code})"
@@ -674,19 +674,19 @@ def _payment_labels(acc: Mapping) -> str:
         return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
 
 
-def filter_payment_accounts(account_list, allowable_card_types:List) -> List:
+def filter_payment_accounts(account_list, allowable_card_types: List) -> List:
     """Gets a list of all payment accounts and filters them by if the card is
     accepted at a particular court.
-    
+
     Args:
       account_list:
       allowable_card_types: a list of the accepted card types at a court, usually
         from the 'allowablecardtypes' dict entry in
         [get_full_court_info](interview_logic#get_full_court_info)'s response
-    
+
     Returns:
       the list of payment account choices that are valid for a particular court
-    
+
     """
     allowed_card = lambda acc: acc.get("paymentAccountTypeCode") != "CC" or (
         acc.get("paymentAccountTypeCode") == "CC"
@@ -699,9 +699,8 @@ def filter_payment_accounts(account_list, allowable_card_types:List) -> List:
     ]
 
 
-def payment_account_labels(resp:ApiResponse) -> Optional[List[Dict]]:
-    """Returns all payment accounts as choices, without filters.
-    """
+def payment_account_labels(resp: ApiResponse) -> Optional[List[Dict]]:
+    """Returns all payment accounts as choices, without filters."""
     if resp.data:
         return [
             {account.get("paymentAccountID"): _payment_labels(account)}
@@ -711,10 +710,10 @@ def payment_account_labels(resp:ApiResponse) -> Optional[List[Dict]]:
         return None
 
 
-def filing_id_and_label(case: Mapping, style:str="FILING_ID") -> Dict[str, str]:
+def filing_id_and_label(case: Mapping, style: str = "FILING_ID") -> Dict[str, str]:
     """Converts a raw case information from [proxy_conn.get_filing_list()](py_efsp_client#get_filing_list)
-      into a key-value pair, where the key is the filing id and the value is the user-facing label
-      for that filing.
+    into a key-value pair, where the key is the filing id and the value is the user-facing label
+    for that filing.
     """
     tracking_id = case.get("caseTrackingID", {}).get("value")
     try:

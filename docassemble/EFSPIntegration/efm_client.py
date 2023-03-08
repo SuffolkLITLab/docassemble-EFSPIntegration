@@ -125,6 +125,7 @@ class ProxyConnection(EfspConnection):
     Many methods are unchanged from the parent class, [EfspConnection](py_efsp_client#EfspConnection),
     and are documented there.
     """
+
     def __init__(
         self,
         *,
