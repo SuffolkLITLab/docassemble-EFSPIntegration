@@ -39,12 +39,12 @@ class EFCaseSearch(DAObject):
         self, can_file_non_indexed_case: bool
     ) -> List[Dict[str, str]]:
         """Returns the DA choice list of what ways you are allowed to search for a case;
-           By default, this is "party_search", and "docket_lookup", and depending on the
-           court, it could also include "non_indexed_case".
+        By default, this is "party_search", and "docket_lookup", and depending on the
+        court, it could also include "non_indexed_case".
 
-           Not passed as direct arguments, but the object attributes `party_search_choice`,
-           `docket_lookup_choice`, and `non_indexed_choice` are the user-facing labels
-           for each choice.
+        Not passed as direct arguments, but the object attributes `party_search_choice`,
+        `docket_lookup_choice`, and `non_indexed_choice` are the user-facing labels
+        for each choice.
         """
         lookup_choices = [
             {"party_search": str(self.party_search_choice)},

@@ -55,8 +55,8 @@ def _user_visible_resp(resp: Union[Response, str, None]) -> ApiResponse:
 
 
 class EfspConnection:
-    """A python client that communicates with the E-file proxy server.
-    """
+    """A python client that communicates with the E-file proxy server."""
+
     def __init__(self, *, url: str, api_key: str, default_jurisdiction: str = None):
         """
         Args:
@@ -680,8 +680,7 @@ class EfspConnection:
         start_date: datetime = None,
         before_date: datetime = None,
     ) -> ApiResponse:
-        """Returns a list of filings that a particular user has made with a court.
-        """
+        """Returns a list of filings that a particular user has made with a court."""
         params = {
             "user_id": user_id,
             "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
