@@ -135,7 +135,7 @@ content: |
   Logged in: ${ tyler_login }
 
   ${ action_button_html(url_ask(
-      [{'recompute': ['tyler_login','show_resp']}]),
+      [{'recompute': ['logout', 'tyler_login','show_resp']}]),
       label="Login") }
   
   As ${ my_username }
@@ -164,6 +164,11 @@ content: |
    ${ action_button_html(url_ask(
       [{'recompute': ['update_notification_preferences','show_resp']}]),
       label="Update notification preferences") }
+---
+code: |
+  tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
+  da_store.delete("EFSP-" + tyler_header_name)
+  logout = True
 ---
 template: firm_admin_template
 subject: |
