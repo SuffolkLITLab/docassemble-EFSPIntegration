@@ -16,20 +16,14 @@ code: |
   if 'jurisdiction_id' in url_args:
     jurisdiction_id = url_args['jurisdiction_id']
 ---
-mandatory: True
+need:
+  - tyler_login
+event: payment_main_screen
 id: Payment Main screen
 question: |
-  ${ payment_template.subject }
+  Payment methods for ${ my_username }
 subquestion: |
-  % for vv in proxy_conn.get_payment_account_list().data or []:
-  * ${ vv }
-  
-  % endfor
-
   ${ payment_template.content }
----
-code: |
-  all_payments = proxy_conn.get_payment_account_list()
 ---
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
@@ -49,3 +43,8 @@ depends on:
 if: can_check_efile
 code: |
   logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, {"TYLER-ID": tyler_user_id})
+---
+mandatory: True
+code: |
+  payment_main_screen
+---

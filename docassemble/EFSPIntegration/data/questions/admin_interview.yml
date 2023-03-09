@@ -303,27 +303,6 @@ content: |
     [{'recompute': ['get_attached_cases', 'show_resp']}]),
     label='View attached cases', id_tag='get_attached_cases') }
 ---
-template: payment_template
-subject: |
-  Payment accounts
-content: |
-  * Credit card
-  * Waiver
-  * eCheck
-
-  ${ action_button_html(url_ask([
-      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
-      {'recompute': ['new_payment_account']}
-    ]),
-    label='New payment Account') }
-
-  % for elem in firm_admin_payment_list:
-  ${ action_button_html(url_ask(
-      [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
-  
-  % endfor
----
 template: global_admin_payment_template
 subject: |
   Payment accounts

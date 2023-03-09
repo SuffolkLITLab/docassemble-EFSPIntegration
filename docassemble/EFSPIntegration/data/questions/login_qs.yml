@@ -51,6 +51,9 @@ code: |
       log(word("You are now connected to your e-filing account"), "primary")
   tyler_login = True
 ---
+need:
+  - proxy_conn
+  - da_store
 code: |
     tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
     try:

@@ -36,13 +36,13 @@ comment: |
   #      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
   #      ' <button>Click here if not working</button> </input>' +
 question: |
-  New payment account
+  New payment method
 # TODO: using url_args this way means you can only create one
-# payment account per session!
+# payment method per session!
 subquestion: |
   % if defined('creation_status'):
   % if creation_status == 'success':
-  You've created your new payment account!
+  You've created your new payment method (${new_account_name})!
   % endif
   % if creation_status == 'failure':
   An error has occured. Please try again.
@@ -102,9 +102,9 @@ code: |
   if 'creation_status' in action_arguments():
     creation_status = action_argument('creation_status')
 ---
-id: new payment account
+id: new payment method
 question: |
-  What type of payment account do you want to make?
+  What type of payment method do you want to make?
 subquestion: |
 fields:
   - Global: new_account_is_global
@@ -135,15 +135,17 @@ code: |
   if not logged_in_user_is_global_admin:
     new_account_is_global = False
 ---
-template: payment_template
-subject: |
-  Payment accounts
-content: |
-  ${ action_button_html(url_ask([
+code: |
+  new_payment_account_url = url_ask([
       {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
       {'recompute': ['new_payment_account']}
-    ]),
-    label='New payment Account') }
+    ])
+---
+template: payment_template
+subject: |
+  Payment methods 
+content: |
+  ${ action_button_html(new_payment_account_url, label='New payment method', id_tag="new_payment_account") }
 
   % for elem in firm_admin_payment_list:
   ${ action_button_html(url_ask(
@@ -154,13 +156,9 @@ content: |
 ---
 template: global_admin_payment_template
 subject: |
-  Payment accounts
+  Payment methods
 content: |
-  ${ action_button_html(url_ask([
-      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
-      {'recompute': ['new_payment_account']}
-    ]),
-    label='New payment Account', id_tag='new_payment_account') }
+  ${ action_button_html(new_payment_account_url, label='New payment method', id_tag='new_payment_account') }
 
   % for elem in global_admin_payment_list:
   ${ action_button_html(url_ask(
@@ -169,14 +167,15 @@ content: |
   
   % endfor
 ---
-id: payment account id
+if: len(proxy_conn.get_payment_account_list().data or []) > 0
+id: payment method id
 question: |
-  Payment account id?
+  Payment method id?
 subquestion: |
-  Enter a payment account GUID or select from existing
-  payment accounts in your firm.
+  Enter a payment method GUID or select from existing
+  payment method in your firm.
 fields:
-  - Payment account id: payment_account_id
+  - Payment method id: payment_account_id
     datatype: combobox
     code: |
       payment_account_labels(proxy_conn.get_payment_account_list())
@@ -193,9 +192,9 @@ reconsider:
   - payment_account_id_resp
 depends on:
   - payment_account_id
-id: update payment account
+id: update payment method
 question: |
-  Update payment account
+  Update payment method
 fields:
   - Account name: payment_account_name
     default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
@@ -207,9 +206,9 @@ reconsider:
   - global_account_id_resp
 depends on:
   - global_payment_account_id
-id: update payment account
+id: update payment method 
 question: |
-  Update global payment account
+  Update global payment method 
 fields:
   - Account name: global_account_name
     default: ${ global_account_id_resp.data.get('accountName') if global_account_id_resp.data else '' }
@@ -217,30 +216,30 @@ fields:
     datatype: yesno
     default: ${ global_account_id_resp.data.get('active',{}).get('value') if global_account_id_resp.data else False}
 ---
-id: global payment account id
+id: global payment method id
 question: |
-  Global payment account id?
+  Global payment method id?
 fields:
-  - Global payment account id: global_payment_account_id
+  - Global payment method id: global_payment_account_id
 ---
 code: |
   service_contact_options = proxy_conn.get_service_contact_list().data or []
 ---
 code: |
   firm_admin_payment_list = [ 
-    ('get_payment_account_type_list', 'Get Payment Account Type List'),
-    ('get_payment_account', 'Get Payment Account'),
-    ('update_payment_account', 'Update Payment Account'),
-    ('remove_payment_account', 'Remove Payment Account'),
-    ('get_global_payment_account_list', 'Get Global Payment Account List'),
-    ('get_global_payment_account', 'Get Global Payment Account'),
+    ('get_payment_account_type_list', 'Get payment method type list'),
+    ('get_payment_account', 'Get payment method'),
+    ('update_payment_account', 'Update payment method'),
+    ('remove_payment_account', 'Remove payment method'),
+    ('get_global_payment_account_list', 'Get global payment method list'),
+    ('get_global_payment_account', 'Get global payment method'),
   ]
 ---
 code: |
   global_admin_payment_list = [
     *firm_admin_payment_list,
-    ('update_global_payment_account', 'Update Global Payment Account'),
-    ('remove_global_payment_account', 'Remove Global Payment Account'),
+    ('update_global_payment_account', 'Update global payment method'),
+    ('remove_global_payment_account', 'Remove global payment method'),
   ]
 ---
 code: |
@@ -286,3 +285,76 @@ code: |
   resp = proxy_conn.remove_global_payment_account(global_payment_account_id)
   del global_payment_account_id
   remove_global_payment_account = True
+---
+code: |
+  def payment_list_table(payment_list_resp):
+      ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", color="primary", size="md")}</span>'
+      if not payment_list_resp.data:
+          return ret + "\n<div>You don't currently have any payment methods. Add some using above button.</div>"
+      ret += f"""
+      <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <th scope="col">
+            {word("Payment name")}
+          </th>
+          <th scope="col">{word("Payment type")}</th>
+          <th scope="col">{word("Expiration date")}</th>
+          <th scope="col">{word("Active")}</th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </thead>
+        <tbody>
+        """
+      for payment in payment_list_resp.data:
+          acc_id = payment.get("paymentAccountID")
+          ret += f'<tr><td class="text-break">{payment.get("accountName")}</td>'
+          ret += f'<td>{_payment_type(payment)}</td>'
+          ret += f'<td>{_payment_expiration(payment)}</td>'
+          ret += f'<td>{(payment.get("active") or {}).get("value", False)}</td>'
+          edit_qs = [
+              {"set": [{"payment_account_id": acc_id}]},
+              {"recompute": ["payment_account_name", "payment_account_edit"]}
+          ]
+          ret += f'<td>{action_button_html(url_ask(edit_qs), label="Edit", color="info", icon="pencil")}</td>'
+          rm_qs = [
+              {"set": [{"payment_account_id": acc_id}]},
+              "are_you_sure_remove",
+              {"action": "payment_account_remove", "arguments": {"account_id": acc_id}}
+          ]
+          ret += f'<td>{action_button_html(url_ask(rm_qs), label="Remove", color="danger", icon="trash")}</td></tr>'
+      ret += "</tbody></table></div>"
+      return ret
+---
+event: payment_account_remove
+code: |
+  rm_payment_account_resp = proxy_conn.remove_payment_account(action_argument('account_id'))
+  if rm_payment_account_resp.is_ok():
+    log("Removed payment method", "success")
+  else:
+    log(f"Wasn't able to remove payment method: {rm_payment_account_resp}")
+    log("Wasn't able to remove payment method", "error")
+---
+question: Are you sure you want to remove your ${ _payment_labels(proxy_conn.get_payment_account(payment_account_id).data) }?
+subquestion: |
+  You won't be able to get it back, and will have to enter all of it's details again.
+continue button field: are_you_sure_remove
+---
+code: |
+  payment_account_name
+  payment_account_active
+  log(f"payment_account_id: {payment_account_id}, {payment_account_name}, {payment_account_active}")
+  updated_payment_account_resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
+  log(updated_payment_account_resp)
+  if updated_payment_account_resp.is_ok():
+    log("Updated payment method", "success")
+  else:
+    log(f"Wasn't able to update payment method: {update_payment_account_resp}")
+    log("Wasn't able to update payment method", "error")
+  payment_account_edit = True
+---
+template: payment_template
+subject: |
+  Payment methods
+content: |
+  ${ payment_list_table(proxy_conn.get_payment_account_list()) }
