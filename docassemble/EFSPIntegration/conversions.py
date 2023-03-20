@@ -780,7 +780,7 @@ def filing_id_and_label(case: Mapping, style: str = "FILING_ID") -> Dict[str, st
 
 def get_tyler_roles(
     proxy_conn: ProxyConnection,
-    login_data: Mapping,
+    login_data: Optional[Mapping],
     user_details: Optional[ApiResponse] = None,
 ) -> Tuple[bool, bool]:
     """Gets whether or not the user of this interview is a Tyler Admin, and a 'global' admin.
