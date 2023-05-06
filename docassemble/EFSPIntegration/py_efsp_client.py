@@ -128,7 +128,7 @@ class EfspConnection:
             jurisdiction = self.default_jurisdiction
         if endpoint.startswith("authenticate_user") or endpoint.startswith("messages"):
             return self.base_url + endpoint
-        return self.base_url + f"/jurisdictions/{jurisdiction}/{endpoint}"
+        return self.base_url + f"jurisdictions/{jurisdiction}/{endpoint}"
 
     def tyler_token(self) -> Optional[str]:
         token = self.proxy_client.headers.get(
