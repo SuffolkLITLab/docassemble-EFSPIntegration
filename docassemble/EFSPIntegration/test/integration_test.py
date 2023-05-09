@@ -35,9 +35,9 @@ def mock_person():
     per["email"] = "fakeemail@example.com"
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
     per["name"] = {
-      "first": "B",
-      "middle": "S",
-      "last": "W",
+        "first": "B",
+        "middle": "S",
+        "last": "W",
     }
     per["address"] = {
         "addressLine1": "123 Fakestreet Ave",
@@ -66,7 +66,7 @@ class TestClass:
         print("\n\n### Authenticate ###\n\n")
         empty_resp = self.proxy_conn.authenticate_user()
         self.basic_assert(empty_resp)
-        assert len(empty_resp.data['tokens']) == 0
+        assert len(empty_resp.data["tokens"]) == 0
         resp = self.proxy_conn.authenticate_user(
             tyler_email=os.getenv("bryce_user_email"),
             tyler_password=os.getenv("bryce_user_password"),
@@ -147,14 +147,14 @@ class TestClass:
             "lastName": "Doe",
             "email": "ella.doe@example.com",
             "address": {
-              "addressLine1": "123 Fakestreet Ave",
-              "addressLine2": "Unit 999",
-              "city": "Boston",
-              "state": "MA",
-              "zipCode": "12345",
-              "country": "US"
+                "addressLine1": "123 Fakestreet Ave",
+                "addressLine2": "Unit 999",
+                "city": "Boston",
+                "state": "MA",
+                "zipCode": "12345",
+                "country": "US",
             },
-            "phoneNumber": "9727133770"
+            "phoneNumber": "9727133770",
         }
         new_c = self.basic_assert(
             self.proxy_conn.create_service_contact(
@@ -168,7 +168,9 @@ class TestClass:
         new_contact["middleName"] = '"Lorde"'
         new_contact["email"] = "different@example.com"
         self.basic_assert(
-            self.proxy_conn.update_service_contact(contact_id, new_contact, is_public=False, is_in_master_list=True)
+            self.proxy_conn.update_service_contact(
+                contact_id, new_contact, is_public=False, is_in_master_list=True
+            )
         )
 
         my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
@@ -195,7 +197,7 @@ class TestClass:
     def test_firm(self):
         print("\n\n### Firm ###\n\n")
         update_firm = {}
-        update_firm['firmName'] = "Suffolk FIT Lab"
+        update_firm["firmName"] = "Suffolk FIT Lab"
         update_firm["address"] = {"addressLine1": "121 Tremont Street"}
         resp = self.proxy_conn.update_firm(update_firm)
         assert resp.response_code == 200
@@ -204,8 +206,8 @@ class TestClass:
         assert new_firm.data["firmName"] == "Suffolk FIT Lab"
         assert new_firm.data["address"]["addressLine1"] == "121 Tremont Street"
 
-        update_firm['firmName'] = "Suffolk LIT Lab"
-        update_firm["address"]['addressLine1'] = "120 Tremont Street"
+        update_firm["firmName"] = "Suffolk LIT Lab"
+        update_firm["address"]["addressLine1"] = "120 Tremont Street"
         self.basic_assert(self.proxy_conn.update_firm(update_firm))
 
         firm = self.basic_assert(self.proxy_conn.get_firm())
@@ -218,8 +220,8 @@ class TestClass:
         all_initial_users = self.basic_assert(self.proxy_conn.get_users())
         person = mock_person()
         for u in all_initial_users.data:
-            if u['email'] == person['email']:
-                self.basic_assert(self.proxy_conn.remove_user(u['userID']))
+            if u["email"] == person["email"]:
+                self.basic_assert(self.proxy_conn.remove_user(u["userID"]))
                 all_initial_users = self.basic_assert(self.proxy_conn.get_users())
                 break
         firm_id = self.proxy_conn.get_firm().data["firmID"]
@@ -337,7 +339,9 @@ class TestClass:
         contact = {}
         contact["first"] = "John"
         contact["last"] = "Brown"
-        cases = self.basic_assert(self.proxy_conn.get_cases_raw("adams", person_name=contact))
+        cases = self.basic_assert(
+            self.proxy_conn.get_cases_raw("adams", person_name=contact)
+        )
         assert len(cases.data) > 0
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
         case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
@@ -443,7 +447,7 @@ class TestClass:
         server_id = self.basic_assert(self.proxy_conn.get_server_id()).data
         all_logs = self.basic_assert(self.proxy_conn.get_logs())
         for l in all_logs.data:
-          assert l.split("|")[1].strip() == server_id
+            assert l.split("|")[1].strip() == server_id
 
 
 def main(args):
