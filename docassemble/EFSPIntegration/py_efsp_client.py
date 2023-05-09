@@ -1016,7 +1016,7 @@ class EfspConnection:
         )
         # This resp has the logs as the error message: split by line and put in data
         resp = self._call_proxy(send)
-        if resp.is_ok() and resp.error_msg != "":
+        if resp.is_ok() and resp.error_msg and resp.error_msg != "":
             resp.data = resp.error_msg[1:].split("|\n|")
             resp.error_msg = None
         return resp
