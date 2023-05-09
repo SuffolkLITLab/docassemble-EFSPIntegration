@@ -18,9 +18,9 @@ need:
   - waiver_resp
 question: |
   % if waiver_resp.is_ok():
-  Waiver account created!
+  Waiver payment method created!
   % else:
-  Something went wrong creating your Waiver account
+  Something went wrong creating your Waiver payment method
   % endif
 subquestion: |
   ${ debug_display(waiver_resp) }
@@ -113,11 +113,11 @@ fields:
     show if:
       code: |
         logged_in_user_is_global_admin
-  - Name of account: new_account_name
+  - Name of payment method: new_account_name
   - Type: new_account_type_code
     datatype: radio
     choices:
-      - Waiver account: WV
+      - Fee Waiver: WV
       - eCheck: BankAccount
       - Credit Card: CC
   - note: |
@@ -196,7 +196,7 @@ id: update payment method
 question: |
   Update payment method
 fields:
-  - Account name: payment_account_name
+  - Payment method name: payment_account_name
     default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
   - Active?: payment_account_active
     datatype: yesno
@@ -208,9 +208,9 @@ depends on:
   - global_payment_account_id
 id: update payment method 
 question: |
-  Update global payment method 
+  Update global payment method
 fields:
-  - Account name: global_account_name
+  - Payment method name: global_account_name
     default: ${ global_account_id_resp.data.get('accountName') if global_account_id_resp.data else '' }
   - Active?: global_account_active
     datatype: yesno
