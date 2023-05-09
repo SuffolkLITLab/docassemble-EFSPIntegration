@@ -236,7 +236,7 @@ code: |
   else:
     if efile_author_mode:
       show_remaining
-      follow_up_setup 
+      follow_up_setup
       for key in follow_up_vars.keys():
         define(follow_up_vars[key].name, follow_up_vars[key].value)
       ready_to_efile = True

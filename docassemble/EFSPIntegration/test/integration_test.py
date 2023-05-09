@@ -2,7 +2,7 @@
 
 from docassemble.base.util import Address, Person, Individual, IndividualName, Address
 from docassemble.AssemblyLine.al_general import ALIndividual
-from ..efm_client import ProxyConnection, ApiResponse
+from ..py_efsp_client import EfspConnection, ApiResponse
 import sys
 import subprocess
 import json
@@ -21,9 +21,8 @@ def get_proxy_server_ip():
         info_dict = json.loads(info_json)
         base_url = (
             "http://"
-            + info_dict[0]["NetworkSettings"]["Networks"]["efileproxyserver_default"][
-                "IPAddress"
-            ]
+            # + info_dict[0]["NetworkSettings"]["Networks"]["efileproxyserver_default"]["IPAddress"]
+            + "localhost"
             + ":9000/"
         )
         print("Using URL: " + base_url)
@@ -33,23 +32,25 @@ def get_proxy_server_ip():
         return None
 
 
-class MockPerson(ALIndividual):
-    def __init__(self):
-        self.email = "fakeemail@example.com"
-        self.instanceName = "mock_person"
-        # Neat trick: https://stackoverflow.com/a/24448351/11416267
-        self.name = IndividualName()
-        self.name.first = "B"
-        self.name.middle = "S"
-        self.name.last = "W"
-        self.address = Address()
-        self.address.address = "123 Fakestreet Ave"
-        self.address.unit = "Apt 1"
-        self.address.city = "Boston"
-        self.address.state = "MA"
-        self.address.zip = "12345"
-        self.address.country = "US"
-        self.mobile_number = "1234567890"
+def mock_person():
+    per = {}
+    per["email"] = "fakeemail@example.com"
+    # Neat trick: https://stackoverflow.com/a/24448351/11416267
+    per["name"] = {
+      "first": "B",
+      "middle": "S",
+      "last": "W",
+    }
+    per["address"] = {
+        "addressLine1": "123 Fakestreet Ave",
+        "addressLine2": "Apt 1",
+        "city": "Boston",
+        "state": "MA",
+        "zipCode": "12345",
+        "country": "US",
+    }
+    per["phoneNumber"] = "1234567890"
+    return per
 
 
 class TestClass:
@@ -63,7 +64,19 @@ class TestClass:
         assert resp.is_ok()
         return resp
 
+    def test_authenticate(self):
+        print("\n\n### Authenticate ###\n\n")
+        empty_resp = self.proxy_conn.authenticate_user()
+        self.basic_assert(empty_resp)
+        assert len(empty_resp.data['tokens']) == 0
+        resp = self.proxy_conn.authenticate_user(
+            tyler_email=os.getenv("bryce_user_email"),
+            tyler_password=os.getenv("bryce_user_password"),
+        )
+        self.basic_assert(resp)
+
     def test_hateos(self):
+        print("\n\n### Hateos ###\n\n")
         base_url = self.proxy_conn.base_url
         base_send = lambda: self.proxy_conn.proxy_client.get(base_url)
         next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
@@ -74,6 +87,7 @@ class TestClass:
             self.basic_assert(self.proxy_conn._call_proxy(send))
 
     def test_self_user(self):
+        print("\n\n### Self user ###\n\n")
         myself = self.basic_assert(self.proxy_conn.get_user())
         assert myself.data["middleName"] == "Steven"
         nm = self.basic_assert(
@@ -126,20 +140,23 @@ class TestClass:
         assert last_update.response_code == 200
 
     def test_service_contacts(self):
+        print("\n\n### Service Contacts ###\n\n")
         public = self.basic_assert(
             self.proxy_conn.get_public_service_contacts(first_name="John")
         )
-        new_contact = Individual()
-        new_contact.name.first = "Ella"
-        new_contact.name.last = "Doe"
-        new_contact.email = "ella.doe@example.com"
-        new_contact.address.address = "123 Fakestreet Ave"
-        new_contact.address.unit = "Unit 999"
-        new_contact.address.city = "Boston"
-        new_contact.address.state = "MA"
-        new_contact.address.zip = "12345"
-        new_contact.address.country = "US"
-        new_contact.phone_number = "9727133770"
+        new_contact = {}
+        new_contact["firstName"] = "Ella"
+        new_contact["lastName"] = "Doe"
+        new_contact["email"] = "ella.doe@example.com"
+        new_contact["address"] = {
+            "addressLine1": "123 Fakestreet Ave",
+            "addressLine2": "Unit 999",
+            "city": "Boston",
+            "state": "MA",
+            "zipCode": "12345",
+            "country": "US",
+        } 
+        new_contact["phoneNumber"] = "9727133770"
         new_c = self.basic_assert(
             self.proxy_conn.create_service_contact(
                 new_contact,
@@ -149,10 +166,10 @@ class TestClass:
             )
         )
         contact_id = new_c.data
-        new_contact.name.middle = '"Lorde"'
-        new_contact.email = "different@example.com"
+        new_contact["middleName"] = '"Lorde"'
+        new_contact["email"] = "different@example.com"
         self.basic_assert(
-            self.proxy_conn.update_service_contact(contact_id, new_contact, False, True)
+            self.proxy_conn.update_service_contact(contact_id, new_contact, is_public=False, is_in_master_list=True)
         )
 
         my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
@@ -177,9 +194,10 @@ class TestClass:
         self.basic_assert(self.proxy_conn.remove_service_contact(contact_id))
 
     def test_firm(self):
-        update_firm = Person()
-        update_firm.name.text = "Suffolk FIT Lab"
-        update_firm.address.address = "121 Tremont Street"
+        print("\n\n### Firm ###\n\n")
+        update_firm = {}
+        update_firm['firmName'] = "Suffolk FIT Lab"
+        update_firm["address"] = {"addressLine1": "121 Tremont Street"}
         resp = self.proxy_conn.update_firm(update_firm)
         assert resp.response_code == 200
 
@@ -187,8 +205,8 @@ class TestClass:
         assert new_firm.data["firmName"] == "Suffolk FIT Lab"
         assert new_firm.data["address"]["addressLine1"] == "121 Tremont Street"
 
-        update_firm.name.text = "Suffolk LIT Lab"
-        update_firm.address.address = "120 Tremont Street"
+        update_firm['firmName'] = "Suffolk LIT Lab"
+        update_firm["address"]['addressLine1'] = "120 Tremont Street"
         self.basic_assert(self.proxy_conn.update_firm(update_firm))
 
         firm = self.basic_assert(self.proxy_conn.get_firm())
@@ -197,10 +215,17 @@ class TestClass:
         assert firm.data["address"]["addressLine1"] == "120 Tremont Street"
 
     def test_users(self):
-        mock_person = MockPerson()
+        print("\n\n### Users ###\n\n")
+        all_initial_users = self.basic_assert(self.proxy_conn.get_users())
+        person = mock_person()
+        for u in all_initial_users.data:
+            if u['email'] == person['email']:
+                self.basic_assert(self.proxy_conn.remove_user(u['userID']))
+                all_initial_users = self.basic_assert(self.proxy_conn.get_users())
+                break
         firm_id = self.proxy_conn.get_firm().data["firmID"]
         new_user = self.proxy_conn.register_user(
-            mock_person,
+            person,
             registration_type="FIRM_ADMIN_NEW_MEMBER",
             firm_name_or_id=firm_id,
         )
@@ -213,7 +238,7 @@ class TestClass:
         assert full_user.data["middleName"] == "S"
 
         all_users = self.basic_assert(self.proxy_conn.get_users())
-        assert len(all_users.data) >= 2
+        assert len(all_users.data) == len(all_initial_users.data) + 1
 
         roles = self.basic_assert(self.proxy_conn.get_user_roles(new_id))
         assert len(roles.data) == 1
@@ -242,6 +267,7 @@ class TestClass:
         assert "jefferson" in courts.data
 
     def test_global_payment_accounts(self):
+        print("\n\n### Global payment accounts ###\n\n")
         all_accounts = self.proxy_conn.get_global_payment_account_list()
         if self.verbose:
             print(all_accounts)
@@ -281,6 +307,7 @@ class TestClass:
         )
 
     def test_payment_accounts(self):
+        print("\n\n### Payment accounts ###\n\n")
         self.basic_assert(self.proxy_conn.get_payment_account_type_list())
         self.basic_assert(self.proxy_conn.get_payment_account_list())
         self.basic_assert(self.proxy_conn.get_payment_account_list("adams"))
@@ -307,11 +334,11 @@ class TestClass:
         self.basic_assert(self.proxy_conn.remove_payment_account(new_account.data))
 
     def test_court_record(self):
-        contact = ALIndividual()
-        contact.name.first = "John"
-        contact.name.last = "Brown"
-        contact.person_type = "ALIndividual"
-        cases = self.basic_assert(self.proxy_conn.get_cases("adams", person=contact))
+        print("\n\n### Court record ###\n\n")
+        contact = {}
+        contact["first"] = "John"
+        contact["last"] = "Brown"
+        cases = self.basic_assert(self.proxy_conn.get_cases_raw("adams", person_name=contact))
         assert len(cases.data) > 0
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
         case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
@@ -333,6 +360,7 @@ class TestClass:
                 print(attach_cases)
 
     def test_attorneys(self):
+        print("\n\n### Attorneys ###\n\n")
         new_attorney = self.proxy_conn.create_attorney(
             bar_number="6224951",
             first_name="Valarie",
@@ -359,6 +387,7 @@ class TestClass:
         assert deleted_maybe.response_code == 200
 
     def test_filings(self):
+        print("\n\n### Filings ###\n\n")
         filing_list = self.basic_assert(
             self.proxy_conn.get_filing_list(
                 "illinois",
@@ -406,38 +435,52 @@ class TestClass:
             )
 
     def test_codes(self):
+        print("\n\n### Codes ###\n\n")
         self.basic_assert(self.proxy_conn.get_court_list())
         self.basic_assert(self.proxy_conn.get_case_categories("adams"))
+
+    def test_logs(self):
+        print("\n\n### Test Logs ###\n\n")
+        server_id = self.basic_assert(self.proxy_conn.get_server_id()).data
+        all_logs = self.basic_assert(self.proxy_conn.get_logs())
+        for l in all_logs.data:
+          assert l.split("|")[1].strip() == server_id
 
 
 def main(args):
     base_url = get_proxy_server_ip()
     api_key = os.getenv("PROXY_API_KEY")
-    proxy_conn = ProxyConnection(
+    if not api_key:
+        print("You need to have the PROXY_API_KEY env var set; not running tests")
+        return
+    bad_proxy = EfspConnection(
+        url=base_url, api_key="IntenionallyWrongKey", default_jurisdiction="illinois"
+    )
+    intentional_bad_resp = bad_proxy.authenticate_user()
+    if intentional_bad_resp.response_code != 403:
+        print(intentional_bad_resp)
+    assert intentional_bad_resp.response_code == 403
+    proxy_conn = EfspConnection(
         url=base_url, api_key=api_key, default_jurisdiction="illinois"
     )
     proxy_conn.set_verbose_logging(True)
-    intentional_bad_resp = proxy_conn.authenticate_user()
-    assert intentional_bad_resp.response_code == 403
-    resp = proxy_conn.authenticate_user(
-        tyler_email=os.getenv("bryce_user_email"),
-        tyler_password=os.getenv("bryce_user_password"),
-    )
-    assert resp.response_code == 200
     tc = TestClass(proxy_conn, verbose=True)
+    tc.test_authenticate()
     tc.test_hateos()
     tc.test_self_user()
     tc.test_firm()
     tc.test_service_contacts()
     tc.test_get_courts()
-    tc.test_global_payment_accounts()
     tc.test_payment_accounts()
     tc.test_attorneys()
     tc.test_court_record()
     tc.test_users()
     tc.test_codes()
+    tc.test_logs()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
     # tc.test_filings()
+    # TODO(brycew): Tyler issue, have to wait on them
+    # tc.test_global_payment_accounts()
 
 
 if __name__ == "__main__":
