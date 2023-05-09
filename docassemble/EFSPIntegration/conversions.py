@@ -15,7 +15,7 @@ from docassemble.base.util import (
     as_datetime,
 )
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
-from docassemble.base.functions import get_config, illegal_variable_name, TypeType
+from docassemble.base.functions import get_config
 from .efm_client import ApiResponse, ProxyConnection
 import importlib
 import dateutil.parser
@@ -744,7 +744,7 @@ def filing_id_and_label(case: Mapping, style: str = "FILING_ID") -> Dict[str, st
     )
     filing_code = matching_category.get("value", {}).get("value")
     try:
-        filing_date = tyler_timestamp_to_datetime(
+        filing_date: Any = tyler_timestamp_to_datetime(
             case.get("documentFiledDate", {})
             .get("dateRepresentation", {})
             .get("value", {})

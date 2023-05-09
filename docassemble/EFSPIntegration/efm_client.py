@@ -212,9 +212,11 @@ class ProxyConnection(EfspConnection):
         If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
         """
         if isinstance(person, Individual) or isinstance(person, ALIndividual):
-            person = person.as_serializable()
+            person_dict = person.as_serializable()
+        else:
+            person_dict = person
         return super().register_user(
-            person,
+            person_dict,
             registration_type,
             password=password,
             firm_name_or_id=firm_name_or_id,
@@ -222,21 +224,27 @@ class ProxyConnection(EfspConnection):
 
     #### Managing Firm Users
 
-    def update_firm(self, firm: Person) -> ApiResponse:
+    def update_firm(self, firm: Union[Dict, Person]) -> ApiResponse:
         # firm is stateful
-        update = serialize_person(firm)
-        return super().update_firm(update)
+        if isinstance(firm, dict):
+            firm_dict = firm
+        else:
+            firm_dict = serialize_person(firm)
+        return super().update_firm(firm_dict)
 
     # Managing Service Contacts
     def update_service_contact(
         self,
         service_contact_id: str,
-        service_contact: Individual,
+        service_contact: Union[Individual, Dict],
         is_public: bool = None,
         is_in_master_list: bool = None,
         admin_copy: str = None,
     ) -> ApiResponse:
-        service_contact_dict = serialize_person(service_contact)
+        if isinstance(service_contact, dict):
+            service_contact_dict = service_contact
+        else:
+            service_contact_dict = serialize_person(service_contact)
         return super().update_service_contact(
             service_contact_id,
             service_contact_dict,
@@ -247,13 +255,16 @@ class ProxyConnection(EfspConnection):
 
     def create_service_contact(
         self,
-        service_contact: Individual,
+        service_contact: Union[Dict, Individual],
         *,
         is_public: bool,
         is_in_master_list: bool,
         admin_copy: str = None,
     ) -> ApiResponse:
-        service_contact_dict = serialize_person(service_contact)
+        if isinstance(service_contact, dict):
+            service_contact_dict = service_contact
+        else:
+            service_contact_dict = serialize_person(service_contact)
         return super().create_service_contact(
             service_contact_dict,
             is_public=is_public,
