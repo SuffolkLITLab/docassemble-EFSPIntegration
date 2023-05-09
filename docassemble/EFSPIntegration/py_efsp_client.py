@@ -125,7 +125,12 @@ class EfspConnection:
     def full_url(self, endpoint: str, jurisdiction: str = None) -> str:
         if jurisdiction is None:
             jurisdiction = self.default_jurisdiction
-        if any([endpoint.startswith(service) for service in ["authenticate_user", "messages", "api_user_settings"]]):
+        if any(
+            [
+                endpoint.startswith(service)
+                for service in ["authenticate_user", "messages", "api_user_settings"]
+            ]
+        ):
             return self.base_url + endpoint
         return self.base_url + f"jurisdictions/{jurisdiction}/{endpoint}"
 
@@ -962,23 +967,27 @@ class EfspConnection:
         )
         return self._call_proxy(send)
 
-    def get_damage_amounts(self, court_id: str, case_category: Optional[str] = None) -> ApiResponse:
+    def get_damage_amounts(
+        self, court_id: str, case_category: Optional[str] = None
+    ) -> ApiResponse:
         params = {"category_id": case_category}
         send = lambda: self.proxy_client.get(
             self.full_url(
                 f"codes/courts/{court_id}/damage_amounts",
             ),
-            params=params
+            params=params,
         )
         return self._call_proxy(send)
 
-    def get_procedure_or_remedies(self, court_id: str, case_category: Optional[str] = None) -> ApiResponse:
+    def get_procedure_or_remedies(
+        self, court_id: str, case_category: Optional[str] = None
+    ) -> ApiResponse:
         params = {"category_id": case_category}
         send = lambda: self.proxy_client.get(
             self.full_url(
                 f"codes/courts/{court_id}/procedure_or_remedies",
             ),
-            params=params
+            params=params,
         )
         return self._call_proxy(send)
 
@@ -999,20 +1008,18 @@ class EfspConnection:
             self.full_url(f"api_user_settings/serverid")
         )
         return self._call_proxy(send)
-        
+
     def get_server_name(self) -> ApiResponse:
-        send = lambda: self.proxy_client.get(
-            self.full_url(f"api_user_settings/name")
-        )
+        send = lambda: self.proxy_client.get(self.full_url(f"api_user_settings/name"))
         return self._call_proxy(send)
 
     def get_logs(self) -> ApiResponse:
         send = lambda: self.proxy_client.get(
             self.full_url(f"api_user_settings/logs"),
-            headers = {
+            headers={
                 "Accept": "application/octet-stream",
                 "X-API-KEY": self.proxy_client.headers["X-API-KEY"],
-            }
+            },
         )
         # This resp has the logs as the error message: split by line and put in data
         resp = self._call_proxy(send)
