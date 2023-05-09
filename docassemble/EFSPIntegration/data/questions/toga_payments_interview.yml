@@ -1,0 +1,50 @@
+include:
+  - login_qs.yml
+  - toga_payments.yml
+---
+id: which-jurisdiction
+question: |
+  Which jurisdiction are you filing in?
+fields:
+  - no label: jurisdiction_id
+    choices:
+      - Illinois: 'illinois'
+      - Massachusetts: 'massachusetts'
+      - Texas: 'texas'
+---
+code: |
+  if 'jurisdiction_id' in url_args:
+    jurisdiction_id = url_args['jurisdiction_id']
+---
+need:
+  - tyler_login
+event: payment_main_screen
+id: Payment Main screen
+question: |
+  Payment methods for ${ my_username }
+subquestion: |
+  ${ payment_template.content }
+---
+code: |
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
+---
+comment: Don't need to ask about the court id
+code: |
+  efile_setup = len(available_efile_courts) > 0
+---
+code: |
+  user_wants_efile = True
+---
+comment: |
+  Overrides login_qs: all jurisdictions allowed here are Tyler
+depends on:
+  - tyler_login
+  - tyler_login_resp
+if: can_check_efile
+code: |
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, {"TYLER-ID": tyler_user_id})
+---
+mandatory: True
+code: |
+  payment_main_screen
+---

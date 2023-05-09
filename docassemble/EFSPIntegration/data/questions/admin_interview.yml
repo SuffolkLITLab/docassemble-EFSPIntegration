@@ -76,18 +76,18 @@ code: |
   ]
   
   firm_admin_payment_list = [ 
-    ('get_payment_account_type_list', 'Get Payment Account Type List'),
-    ('get_payment_account', 'Get Payment Account'),
-    ('update_payment_account', 'Update Payment Account'),
-    ('remove_payment_account', 'Remove Payment Account'),
-    ('get_global_payment_account_list', 'Get Global Payment Account List'),
-    ('get_global_payment_account', 'Get Global Payment Account'),
+    ('get_payment_account_type_list', 'Get Payment Method Type List'),
+    ('get_payment_account', 'Get Payment Method'),
+    ('update_payment_account', 'Update Payment Method'),
+    ('remove_payment_account', 'Remove Payment Method'),
+    ('get_global_payment_account_list', 'Get Global Payment Method List'),
+    ('get_global_payment_account', 'Get Global Payment Method'),
   ]
   
   global_admin_payment_list = [
     *firm_admin_payment_list,
-    ('update_global_payment_account', 'Update Global Payment Account'),
-    ('remove_global_payment_account', 'Remove Global Payment Account'),
+    ('update_global_payment_account', 'Update Global Payment Method'),
+    ('remove_global_payment_account', 'Remove Global Payment Method'),
   ]
 ---
 need:
@@ -135,7 +135,7 @@ content: |
   Logged in: ${ tyler_login }
 
   ${ action_button_html(url_ask(
-      [{'recompute': ['tyler_login','show_resp']}]),
+      [{'recompute': ['logout', 'tyler_login','show_resp']}]),
       label="Login") }
   
   As ${ my_username }
@@ -164,6 +164,11 @@ content: |
    ${ action_button_html(url_ask(
       [{'recompute': ['update_notification_preferences','show_resp']}]),
       label="Update notification preferences") }
+---
+code: |
+  tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
+  da_store.delete("EFSP-" + tyler_header_name)
+  logout = True
 ---
 template: firm_admin_template
 subject: |
@@ -303,36 +308,15 @@ content: |
     [{'recompute': ['get_attached_cases', 'show_resp']}]),
     label='View attached cases', id_tag='get_attached_cases') }
 ---
-template: payment_template
-subject: |
-  Payment accounts
-content: |
-  * Credit card
-  * Waiver
-  * eCheck
-
-  ${ action_button_html(url_ask([
-      {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
-      {'recompute': ['new_payment_account']}
-    ]),
-    label='New payment Account') }
-
-  % for elem in firm_admin_payment_list:
-  ${ action_button_html(url_ask(
-      [{'recompute': [elem[0], 'show_resp']}]), 
-      label=elem[1]) }
-  
-  % endfor
----
 template: global_admin_payment_template
 subject: |
-  Payment accounts
+  Payment methods
 content: |
   ${ action_button_html(url_ask([
       {'undefine': ['new_payment_account', 'creation_status', 'new_account_type_code', 'new_account_name']},
       {'recompute': ['new_payment_account']}
     ]),
-    label='New payment Account', id_tag='new_payment_account') }
+    label='New payment Method', id_tag='new_payment_account') }
 
   % for elem in global_admin_payment_list:
   ${ action_button_html(url_ask(
@@ -514,14 +498,14 @@ fields:
     code: |
       [{y.get('attorneyID'): f"{y.get('firstName')} {y.get('lastName')}" } for y in proxy_conn.get_attorney_list().data or []]
 ---
-id: payment account id
+id: payment method id
 question: |
-  Payment account id?
+  Payment method id?
 subquestion: |
-  Enter a payment account GUID or select from existing
-  payment accounts in your firm.
+  Enter a payment method GUID or select from existing
+  payment method in your firm.
 fields:
-  - Payment account id: payment_account_id
+  - Payment method id: payment_account_id
     datatype: combobox
     code: |
       payment_account_labels(proxy_conn.get_payment_account_list())
@@ -538,11 +522,11 @@ reconsider:
   - payment_account_id_resp
 depends on:
   - payment_account_id
-id: update payment account
+id: update payment method
 question: |
-  Update payment account
+  Update payment method
 fields:
-  - Account name: payment_account_name
+  - Payment method name: payment_account_name
     default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
   - Active?: payment_account_active
     datatype: yesno
@@ -552,21 +536,21 @@ reconsider:
   - global_account_id_resp
 depends on:
   - global_payment_account_id
-id: update payment account
+id: update global payment method
 question: |
-  Update global payment account
+  Update global payment method
 fields:
-  - Account name: global_account_name
+  - Payment method name: global_account_name
     default: ${ global_account_id_resp.data.get('accountName') if global_account_id_resp.data else '' }
   - Active?: global_account_active
     datatype: yesno
     default: ${ global_account_id_resp.data.get('active',{}).get('value') if global_account_id_resp.data else False}
 ---
-id: global payment account id
+id: global payment method id
 question: |
-  Global payment account id?
+  Global payment method id?
 fields:
-  - Global payment account id: global_payment_account_id
+  - Global payment method id: global_payment_account_id
 ---
 code: |
   service_contact_options = proxy_conn.get_service_contact_list().data or []
@@ -1333,7 +1317,7 @@ depends on:
   - tyler_login_resp
 if: can_check_efile
 code: |
-  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, {"TYLER-ID": tyler_user_id})
 ---
 mandatory: True
 code: |

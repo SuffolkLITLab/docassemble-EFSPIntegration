@@ -32,6 +32,9 @@ __all__ = [
     "validate_tyler_regex",
     "parse_case_info",
     "fetch_case_info",
+    "_payment_type",
+    "_payment_labels",
+    "_payment_expiration",
     "filter_payment_accounts",
     "payment_account_labels",
     "filing_id_and_label",
@@ -665,13 +668,26 @@ def fetch_case_info(
     new_case.attorneys.gathered = True
 
 
-def _payment_labels(acc: Mapping) -> str:
+def _payment_labels(acc: Optional[Mapping]) -> str:
+    if not acc:
+        acc = {}
+    return f"{acc.get('accountName')} ({_payment_type(acc)})"
+
+
+def _payment_type(acc: Mapping) -> str:
     if acc.get("paymentAccountTypeCode") == "CC":
-        return f"{acc.get('accountName')} ({acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')})"
+        return f"{acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')}"
     elif acc.get("paymentAccountTypeCode") == "WV":
-        return f"{acc.get('accountName')} (Waiver account)"
+        return f"Waiver account"
     else:
-        return f"{acc.get('accountName')} ({acc.get('paymentAccountTypeCode')})"
+        return f"{acc.get('paymentAccountTypeCode')}"
+
+
+def _payment_expiration(acc: Mapping) -> str:
+    if acc.get("paymentAccountTypeCode") == "CC":
+        return f"{(acc.get('cardMonth') or {}).get('value', '??')}/{(acc.get('cardYear') or {}).get('value', '????')}"
+    else:
+        return "N/A"
 
 
 def filter_payment_accounts(account_list, allowable_card_types: List) -> List:
@@ -707,7 +723,8 @@ def payment_account_labels(resp: ApiResponse) -> Optional[List[Dict]]:
             for account in resp.data
         ]
     else:
-        return None
+        log(f"payment_account_labels: {resp}")
+        return []
 
 
 def filing_id_and_label(case: Mapping, style: str = "FILING_ID") -> Dict[str, str]:
@@ -763,7 +780,7 @@ def filing_id_and_label(case: Mapping, style: str = "FILING_ID") -> Dict[str, st
 
 def get_tyler_roles(
     proxy_conn: ProxyConnection,
-    login_data: Mapping,
+    login_data: Optional[Mapping],
     user_details: Optional[ApiResponse] = None,
 ) -> Tuple[bool, bool]:
     """Gets whether or not the user of this interview is a Tyler Admin, and a 'global' admin.

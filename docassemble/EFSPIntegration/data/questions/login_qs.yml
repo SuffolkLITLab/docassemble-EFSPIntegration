@@ -51,6 +51,9 @@ code: |
       log(word("You are now connected to your e-filing account"), "primary")
   tyler_login = True
 ---
+need:
+  - proxy_conn
+  - da_store
 code: |
     tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
     try:
@@ -64,6 +67,16 @@ code: |
           tyler_login = True
     except Exception as ex:
       log(f"Error when trying to get da_store Tyler token: {ex}")
+---
+only sets:
+  - tyler_user_id
+code: |
+  tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
+  if da_store.defined(tyler_user_id_key):
+    tyler_user_id = da_store.get(tyler_user_id_key)
+  else:
+    # not there: will need to login to get the same info
+    tyler_user_id = tyler_login_resp.data
 ---
 code: |
   change_resp = proxy_conn.self_change_password(current_password, new_user_password)
@@ -133,7 +146,7 @@ depends on:
   - tyler_login_resp
 if: can_check_efile and full_court_info.get("efmType", "ecf") == "ecf"
 code: |
-  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, tyler_login_resp.data)
+  logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, {"TYLER-ID": tyler_user_id})
 ---
 event: reset_password_screen
 question: |
