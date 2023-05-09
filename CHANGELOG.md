@@ -1,6 +1,18 @@
-
-
 # CHANGELOG
+
+## Version v1.2.0
+
+### Added
+
+* Payments improvements, including a better UI and clearer user-text in [#203](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/203)
+* Logs API by @BryceStevenWilley in [#199](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/199/commits/acb4c946d227359633fe85b145b690a0ff83dd08)
+
+### Fixed
+
+* Will actually log you out of the admin interview when you click logout (broken by [v1.1.0](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/blob/main/CHANGELOG.md#version-v110)) in [#203](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/203)
+* Got integration tests working again, but only locally: [#199](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/199/commits/2283e46b71ba69c0e4bc6eefc8197942092c6c60)
+  * Slightly cleaner integration testing in [#202](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/202)
+* Trying to make better doc strings: [#190](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/pull/190)
 
 ## Version v1.1.0
 
