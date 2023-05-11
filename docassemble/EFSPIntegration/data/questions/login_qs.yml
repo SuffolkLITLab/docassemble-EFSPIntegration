@@ -62,16 +62,38 @@ code: |
         tyler_user = proxy_conn.get_user()
         if tyler_user.is_ok():
           my_username = tyler_user.data.get('email')
-          log(word("You are now connected to your e-filing account") + f" ({my_username})", "primary")
-          logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, None, tyler_user)
-          tyler_login = True
+          if continue_stored_login:
+            log(word("You are now connected to your e-filing account") + f" ({my_username})", "primary")
+            logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, None, tyler_user)
+            tyler_login = True
+          else:
+            da_store.set("EFSP-" + tyler_header_name, '')
+            da_store.set(tyler_user_id_key, '')
+    except NameError as err:
+      # Re-raise only name errors, so DA can work correctly
+      raise err
     except Exception as ex:
       log(f"Error when trying to get da_store Tyler token: {ex}")
+---
+continue button field: continue_stored_login
+question: Login as ${my_username}?
+subquestion: |
+  You recently logged in to eFile${ state_name_to_code(jurisdiction_id) } with the email ${ my_username }.
+
+  Would you like to continue with this email?
+fields:
+  - no label: continue_stored_login
+    input type: radio
+    choices:
+      - Yes, log me in with this email: True
+      - No, I want to use a different login email: False
+---
+code: |
+  tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
 ---
 only sets:
   - tyler_user_id
 code: |
-  tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
   if da_store.defined(tyler_user_id_key):
     tyler_user_id = da_store.get(tyler_user_id_key)
   else:
