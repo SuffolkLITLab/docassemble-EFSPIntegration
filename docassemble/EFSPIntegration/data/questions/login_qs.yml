@@ -85,8 +85,8 @@ fields:
   - no label: continue_stored_login
     input type: radio
     choices:
-      - Yes, log me in with this email: True
-      - No, I want to use a different login email: False
+      - Yes, log me in with this email.: True
+      - No, I want to use a different login email.: False
 ---
 code: |
   tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
