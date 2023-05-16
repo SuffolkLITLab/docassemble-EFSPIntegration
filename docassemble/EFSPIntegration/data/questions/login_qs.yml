@@ -76,7 +76,7 @@ code: |
       log(f"Error when trying to get da_store Tyler token: {ex}")
 ---
 continue button field: continue_stored_login
-question: Login as ${my_username}?
+question: Login to eFile${ state_name_to_code(jurisdiction_id) } as ${my_username}?
 subquestion: |
   You recently logged in to eFile${ state_name_to_code(jurisdiction_id) } with the email ${ my_username }.
 
