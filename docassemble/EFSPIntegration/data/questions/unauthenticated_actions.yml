@@ -131,7 +131,7 @@ fields:
 code: |
   password_rules_resp = proxy_conn.get_password_rules()
   if password_rules_resp.is_ok():
-    password_rules = password_rules.data
+    password_rules = password_rules_resp.data
   else:
     password_rules = {}
 ---
