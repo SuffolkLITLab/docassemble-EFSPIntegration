@@ -605,11 +605,17 @@ code: |
 generic object: DAObject
 code: |
   x.document_type_filters = []
+---
+generic object: DAObject
+code: |
   x.document_type_default = None
 ---
 generic object: DAObject
 code: |
   x.filing_type_filters = []
+---
+generic object: DAObject
+code: |
   x.filing_type_default = None
 ---
 generic object: DAObject

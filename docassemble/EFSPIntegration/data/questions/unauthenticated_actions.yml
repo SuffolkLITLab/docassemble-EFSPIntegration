@@ -17,6 +17,7 @@ modules:
 ---
 include:
   - docassemble.ALToolbox:phone-number-validation.yml
+  - docassemble.AssemblyLine:assembly_line.yml
 ---
 objects:
   person_to_reg: ALIndividual
@@ -111,7 +112,7 @@ fields:
   - Phone number: person_to_reg.phone_number
     datatype: al_international_phone
   - note: |
-      ${ password_rules.data.get("validationmessage") }
+      ${ password_rules.get("validationmessage") }
   - Password: new_password
     datatype: ALVisiblePassword
     validate: proxy_conn.is_valid_password
@@ -128,7 +129,11 @@ fields:
       person_to_reg.address_fields()
 ---
 code: |
-  password_rules = proxy_conn.get_password_rules()
+  password_rules_resp = proxy_conn.get_password_rules()
+  if password_rules_resp.is_ok():
+    password_rules = password_rules_resp.data
+  else:
+    password_rules = {}
 ---
 code: |
   resent_activation_resp = proxy_conn.self_resend_activation_email(unauthed_user_email)

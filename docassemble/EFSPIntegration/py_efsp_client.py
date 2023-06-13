@@ -234,10 +234,12 @@ class EfspConnection:
 
     def get_password_rules(self) -> ApiResponse:
         """
-        Password rules are stored in the global court, id 1.
+        Password rules are stored in the global court, id 0.
+
+        TODO: They're in other courts too, including 1. Could they ever be different?
         """
         send = lambda: self.proxy_client.get(
-            self.full_url("codes/courts/1/datafields/GlobalPassword")
+            self.full_url("codes/courts/0/datafields/GlobalPassword")
         )
         return self._call_proxy(send)
 
