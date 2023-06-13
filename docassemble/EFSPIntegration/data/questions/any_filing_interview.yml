@@ -542,7 +542,7 @@ question:  |
   What is your name?
 fields:
   - code: |
-      users[0].name_fields(person_or_business='unknown' if not users[0].is_form_filler else 'ALIndividual', show_suffix=False)
+      users[0].name_fields(person_or_business='ALIndividual' if hasattr(users[0], 'is_form_filler') and users[0].is_form_filler else 'unknown', show_suffix=False)
 ---
 sets:
   - users[i].name.first
