@@ -52,9 +52,11 @@ def mock_person():
 
 
 class TestClass:
-    def __init__(self, proxy_conn, verbose: bool = True):
+    def __init__(self, proxy_conn, verbose: bool = True, user_email = None, user_password = None):
         self.proxy_conn = proxy_conn
         self.verbose = verbose
+        self.user_email = user_email
+        self.user_password = user_password
 
     def basic_assert(self, resp: ApiResponse):
         if self.verbose:
@@ -68,8 +70,8 @@ class TestClass:
         self.basic_assert(empty_resp)
         assert len(empty_resp.data["tokens"]) == 0
         resp = self.proxy_conn.authenticate_user(
-            tyler_email=os.getenv("bryce_user_email"),
-            tyler_password=os.getenv("bryce_user_password"),
+            tyler_email=self.user_email,
+            tyler_password=self.user_password
         )
         self.basic_assert(resp)
 
@@ -78,11 +80,32 @@ class TestClass:
         base_url = self.proxy_conn.base_url
         base_send = lambda: self.proxy_conn.proxy_client.get(base_url)
         next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
-        for url in next_level_urls.values():
+        all_urls = [url for url in next_level_urls.values()]
+        visited_urls = set()
+        while len(all_urls) > 0:
+            url = all_urls.pop(0)
+            if url in visited_urls:
+                continue
+            else:
+                visited_urls.add(url)
             if "authenticate" in url:
                 continue
+            if "logs" in url:
+                continue
+            if "{" in url or "}" in url:
+                continue
+            # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
+            if 'scheduling' in url or 'service-contacts/public' in url:
+                continue
+            print(f"visiting {url}")
             send = lambda: self.proxy_conn.proxy_client.get(url)
-            self.basic_assert(self.proxy_conn._call_proxy(send))
+            resp = self.basic_assert(self.proxy_conn._call_proxy(send)).data
+            if isinstance(resp, dict):
+                for url in resp.values():
+                    if isinstance(url, str) and url.startswith('http'):
+                        all_urls.append(url)
+                    elif isinstance(url, dict) and ('method' in url and url['method'] == 'GET') and 'url' in url:
+                        all_urls.append(url['url'])
 
     def test_self_user(self):
         print("\n\n### Self user ###\n\n")
@@ -94,13 +117,13 @@ class TestClass:
         bad_spelling = self.basic_assert(self.proxy_conn.get_user())
         assert bad_spelling.data["middleName"] == "Stephen"
         self.basic_assert(
-            self.proxy_conn.update_user(myself.data["userID"], middle_name="Steven")
+            self.proxy_conn.self_update_user(middle_name="Steven")
         )
 
         # Password stuff
-        current_password = os.getenv("bryce_user_password")
+        current_password = self.user_password
         new_password = "12345678AbcDe!"
-        email = os.getenv("bryce_user_email")
+        email = self.user_email
         changed_password = self.basic_assert(
             self.proxy_conn.self_change_password(current_password, new_password)
         )
@@ -391,37 +414,36 @@ class TestClass:
 
     def test_filings(self):
         print("\n\n### Filings ###\n\n")
+        court = "adams"
         filing_list = self.basic_assert(
             self.proxy_conn.get_filing_list(
-                "illinois",
-                "adams",
+                court,
                 start_date=datetime.today() - timedelta(days=3),
                 before_date=datetime.today(),
             )
         )
-        policy = self.basic_assert(self.proxy_conn.get_policy("illinois", "adams"))
+        policy = self.basic_assert(self.proxy_conn.get_policy(court))
 
         cdir = Path(__file__).resolve().parent
-        # TODO(brycew): needs a more up to date JSON from any filing interiview
-        all_vars_str = (
-            cdir.joinpath("initial_cook_filing_vars_shorter.json").open("r").read()
-        )
+        with open(cdir.joinpath("opening_affidavit_adams.json"), "r") as f:
+            all_vars_str = f.read()
         base_url = self.proxy_conn.base_url
-        court = "cook:cvd1"
         fees_send = lambda: self.proxy_conn.proxy_client.post(
             base_url
-            + f"filingreview/jurisdictions/illinois/courts/{court}/filing/fees",
+            + f"jurisdictions/illinois/filingreview/courts/{court}/filing/fees",
             data=all_vars_str,
         )
         fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
         check_send = lambda: self.proxy_conn.proxy_client.get(
             base_url
-            + f"filingreview/jurisdictions/illinois/courts/{court}/filing/check",
+            + f"jurisdictions/illinois/filingreview/courts/{court}/filing/check",
             data=all_vars_str,
         )
         checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
+        return
+        # IDK if I want to make a new filing each time, even if we cancel it
         file_send = lambda: self.proxy_conn.proxy_client.post(
-            base_url + f"filingreview/jurisdictions/illinois/courts/{court}/filings",
+            base_url + f"jurisdictions/illinois/filingreview/courts/{court}/filings",
             data=all_vars_str,
         )
         filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send))
@@ -440,7 +462,14 @@ class TestClass:
     def test_codes(self):
         print("\n\n### Codes ###\n\n")
         self.basic_assert(self.proxy_conn.get_court_list())
-        self.basic_assert(self.proxy_conn.get_case_categories("adams"))
+        self.basic_assert(self.proxy_conn.get_court("adams"))
+        self.basic_assert(self.proxy_conn.get_datafield("adams", "GlobalPassword"))
+        self.basic_assert(self.proxy_conn.get_disclaimers("adams"))
+        categories = self.basic_assert(self.proxy_conn.get_case_categories("adams")).data
+        for idx, cat in enumerate(categories):
+            if idx > 5:
+                continue
+            self.basic_assert(self.proxy_conn.get_case_types("adams", cat["code"]))
 
     def test_logs(self):
         print("\n\n### Test Logs ###\n\n")
@@ -450,12 +479,16 @@ class TestClass:
             assert l.split("|")[1].strip() == server_id
 
 
-def main(args):
-    base_url = get_proxy_server_ip()
-    api_key = os.getenv("PROXY_API_KEY")
+def main(*, base_url, api_key, user_email=None, user_password=None):
+    if not base_url:
+        base_url = get_proxy_server_ip()
     if not api_key:
         print("You need to have the PROXY_API_KEY env var set; not running tests")
         return
+    if not user_email:
+        user_email = os.getenv("bryce_user_email")
+    if not user_password:
+        user_password = os.getenv("bryce_user_password")
     bad_proxy = EfspConnection(
         url=base_url, api_key="IntenionallyWrongKey", default_jurisdiction="illinois"
     )
@@ -463,11 +496,12 @@ def main(args):
     if intentional_bad_resp.response_code != 403:
         print(intentional_bad_resp)
     assert intentional_bad_resp.response_code == 403
+    bad_proxy.proxy_client.close()
     proxy_conn = EfspConnection(
         url=base_url, api_key=api_key, default_jurisdiction="illinois"
     )
-    proxy_conn.set_verbose_logging(True)
-    tc = TestClass(proxy_conn, verbose=True)
+    proxy_conn.set_verbose_logging(False)
+    tc = TestClass(proxy_conn, verbose=True, user_email=user_email, user_password=user_password)
     tc.test_authenticate()
     tc.test_hateos()
     tc.test_self_user()
@@ -481,10 +515,11 @@ def main(args):
     tc.test_codes()
     tc.test_logs()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
-    # tc.test_filings()
+    tc.test_filings()
     # TODO(brycew): Tyler issue, have to wait on them
     # tc.test_global_payment_accounts()
+    proxy_conn.proxy_client.close()
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(api_key=os.getenv("PROXY_API_KEY"))
