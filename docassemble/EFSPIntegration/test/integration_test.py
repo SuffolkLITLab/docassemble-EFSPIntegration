@@ -51,7 +51,9 @@ def mock_person():
 
 
 class TestClass:
-    def __init__(self, proxy_conn, verbose: bool = True, user_email = None, user_password = None):
+    def __init__(
+        self, proxy_conn, verbose: bool = True, user_email=None, user_password=None
+    ):
         self.proxy_conn = proxy_conn
         self.verbose = verbose
         self.user_email = user_email
@@ -69,8 +71,7 @@ class TestClass:
         self.basic_assert(empty_resp)
         assert len(empty_resp.data["tokens"]) == 0
         resp = self.proxy_conn.authenticate_user(
-            tyler_email=self.user_email,
-            tyler_password=self.user_password
+            tyler_email=self.user_email, tyler_password=self.user_password
         )
         self.basic_assert(resp)
 
@@ -94,17 +95,21 @@ class TestClass:
             if "{" in url or "}" in url:
                 continue
             # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
-            if 'scheduling' in url or 'service-contacts/public' in url:
+            if "scheduling" in url or "service-contacts/public" in url:
                 continue
             print(f"visiting {url}")
             send = lambda: self.proxy_conn.proxy_client.get(url)
             resp = self.basic_assert(self.proxy_conn._call_proxy(send)).data
             if isinstance(resp, dict):
                 for url in resp.values():
-                    if isinstance(url, str) and url.startswith('http'):
+                    if isinstance(url, str) and url.startswith("http"):
                         all_urls.append(url)
-                    elif isinstance(url, dict) and ('method' in url and url['method'] == 'GET') and 'url' in url:
-                        all_urls.append(url['url'])
+                    elif (
+                        isinstance(url, dict)
+                        and ("method" in url and url["method"] == "GET")
+                        and "url" in url
+                    ):
+                        all_urls.append(url["url"])
 
     def test_self_user(self):
         print("\n\n### Self user ###\n\n")
@@ -115,9 +120,7 @@ class TestClass:
         )
         bad_spelling = self.basic_assert(self.proxy_conn.get_user())
         assert bad_spelling.data["middleName"] == "Stephen"
-        self.basic_assert(
-            self.proxy_conn.self_update_user(middle_name="Steven")
-        )
+        self.basic_assert(self.proxy_conn.self_update_user(middle_name="Steven"))
 
         # Password stuff
         current_password = self.user_password
@@ -464,7 +467,9 @@ class TestClass:
         self.basic_assert(self.proxy_conn.get_court("adams"))
         self.basic_assert(self.proxy_conn.get_datafield("adams", "GlobalPassword"))
         self.basic_assert(self.proxy_conn.get_disclaimers("adams"))
-        categories = self.basic_assert(self.proxy_conn.get_case_categories("adams")).data
+        categories = self.basic_assert(
+            self.proxy_conn.get_case_categories("adams")
+        ).data
         for idx, cat in enumerate(categories):
             if idx > 5:
                 continue
@@ -500,7 +505,9 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
         url=base_url, api_key=api_key, default_jurisdiction="illinois"
     )
     proxy_conn.set_verbose_logging(False)
-    tc = TestClass(proxy_conn, verbose=True, user_email=user_email, user_password=user_password)
+    tc = TestClass(
+        proxy_conn, verbose=True, user_email=user_email, user_password=user_password
+    )
     tc.test_authenticate()
     tc.test_hateos()
     tc.test_self_user()
