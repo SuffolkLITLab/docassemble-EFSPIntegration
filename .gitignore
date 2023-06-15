@@ -8,6 +8,7 @@
 *.egg-info/**
 rcfile
 **/.mypy_cache/**
+build/
 
 # Kiln stuff
 alkiln_tests_*

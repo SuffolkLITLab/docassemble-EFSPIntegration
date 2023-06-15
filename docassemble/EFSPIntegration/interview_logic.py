@@ -3,7 +3,17 @@ A group of methods that were code blocks in various parts of the EFSP
 package, but for better python tooling support, were moved here.
 """
 
-from typing import Any, Callable, Dict, List, Tuple, Optional, Iterable, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Tuple,
+    Optional,
+    Iterable,
+    Union,
+    TypedDict,
+)
 from datetime import datetime
 
 from docassemble.base.util import CustomDataType, DAObject, DAList, log, word
@@ -112,10 +122,32 @@ def address_fields_with_defaults(
     return address_fields
 
 
+FieldEntry = TypedDict(
+    "FieldEntry",
+    {
+        "label": str,
+        "field": str,
+        "datatype": str,
+        "rows": int,
+        "help": str,
+        "show if": Union[str, Dict[str, str]],
+        "hide if": str,
+        "input type": str,
+        "default": str,
+        "code": str,
+        "address autocomplete": bool,
+        "choices": Union[List[str], Dict[str, str]],
+        "required": bool,
+    },
+    total=False,
+)
+Fields = List[FieldEntry]
+
+
 def contact_fields_with_defaults(
     proxy_conn, person: ALIndividual, is_admin: bool, can_check_efile: bool
 ):
-    contact_fields = [
+    contact_fields: List[FieldEntry] = [
         {
             "label": word("Mobile number"),
             "field": person.attr_name("mobile_number"),
