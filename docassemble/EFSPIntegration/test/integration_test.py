@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
-from ..py_efsp_client import EfspConnection, ApiResponse
-import sys
+from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiResponse
 import subprocess
 import json
 import os
