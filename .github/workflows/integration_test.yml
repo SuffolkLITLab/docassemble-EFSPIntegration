@@ -19,4 +19,4 @@ jobs:
         with:
           python-version: '3.9'
       - run: pip install .
-      - run: python -m docassemble.EFSPIntegration.test.integration_test
+      - run: python -m docassemble.EFSPIntegration.test.integration_test https://efile-test.suffolklitlab.org
