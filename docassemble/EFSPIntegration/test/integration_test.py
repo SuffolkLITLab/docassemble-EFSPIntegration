@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 
-from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiResponse
-import subprocess
-import json
 import os
+import json
+import sys
+import subprocess
+from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiResponse
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -528,4 +529,4 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
 
 
 if __name__ == "__main__":
-    main(base_url=None, api_key=os.getenv("PROXY_API_KEY"))
+    main(base_url=sys.argv[1] if len(sys.argv) > 1 else None, api_key=os.getenv("PROXY_API_KEY"))
