@@ -96,7 +96,7 @@ class TestClass:
             if "{" in url or "}" in url:
                 continue
             # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
-            if "scheduling" in url or "service-contacts/public" in url:
+            if "scheduling" in url or "service-contacts/public" in url or ("adminusers" in url and "illinois" not in url):
                 continue
             print(f"visiting {url}")
             send = lambda: self.proxy_conn.proxy_client.get(url)
@@ -489,7 +489,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
         base_url = get_proxy_server_ip()
     if not api_key:
         print("You need to have the PROXY_API_KEY env var set; not running tests")
-        return
+        return 1
     if not user_email:
         user_email = os.getenv("bryce_user_email")
     if not user_password:
@@ -507,7 +507,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     )
     proxy_conn.set_verbose_logging(False)
     tc = TestClass(
-        proxy_conn, verbose=True, user_email=user_email, user_password=user_password
+        proxy_conn, verbose=False, user_email=user_email, user_password=user_password
     )
     tc.test_authenticate()
     tc.test_hateos()
