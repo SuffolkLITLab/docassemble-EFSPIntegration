@@ -13,15 +13,13 @@ include:
 code: |
   user_wants_efile = True # This interview is always for e-filing
 ---
-id: which-jurisdiction
-question: |
-  Which jurisdiction?
-fields:
-  - no label: jurisdiction_id
-    choices:
-      - Illinois: 'illinois'
-      - Massachusetts: 'massachusetts'
-      - Texas: 'texas'
+variable name: jurisdiction_names
+data:
+  illinois: Illinois
+  massachusetts: Massachusetts
+  texas: Texas
+  california: California
+  indiana: Indiana
 ---
 objects:
   - case_search: EFCaseSearch.using(court_id=court_id)

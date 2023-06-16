@@ -42,8 +42,12 @@ code: |
   }
 ---
 code: |
-  proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
+  proxy_conn = ProxyConnection(credentials_code_block='', default_jurisdiction=jurisdiction_id)
 ---
+code: |
+  can_connect_to_proxy = proxy_conn.get_server_name().is_ok()
+---
+if: can_connect_to_proxy
 id: unauth-intro
 question: |
   This website will help you register as an e-filing user in ${ jurisdiction_id.title() }
@@ -51,6 +55,7 @@ subquestion: |
   You will need to provide your email and create a password.
 continue button field: register_introduction
 ---
+if: can_connect_to_proxy
 id: unauth-register-done
 question: |
   % if register_resp.is_ok():

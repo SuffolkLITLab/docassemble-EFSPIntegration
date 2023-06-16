@@ -19,6 +19,7 @@ event: main_unauth_page
 question: |
   eFile${ state_name_to_code(jurisdiction_id) } User Management
 subquestion: |
+  % if can_connect_to_proxy:
   You are not logged in. Please select one of the options below.
 
   % for var, disp in account_action_list.items():
@@ -27,4 +28,7 @@ subquestion: |
       label=disp) }
 
   % endfor
+  % else:
+  Something went wrong when we tried to set up e-filing.
+  % endif
 ---
