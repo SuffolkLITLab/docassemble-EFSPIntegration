@@ -2,19 +2,13 @@ include:
   - login_qs.yml
   - toga_payments.yml
 ---
-id: which-jurisdiction
-question: |
-  Which jurisdiction are you filing in?
-fields:
-  - no label: jurisdiction_id
-    choices:
-      - Illinois: 'illinois'
-      - Massachusetts: 'massachusetts'
-      - Texas: 'texas'
----
-code: |
-  if 'jurisdiction_id' in url_args:
-    jurisdiction_id = url_args['jurisdiction_id']
+variable name: jurisdiction_names
+data:
+  - illinois: Illinois
+  - massachusetts: Massachusetts
+  - texas: Texas
+  - california: California
+  - indiana: Indiana
 ---
 need:
   - tyler_login

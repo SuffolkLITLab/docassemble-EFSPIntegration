@@ -1293,19 +1293,13 @@ question: |
 subquestion: |
   ${ error_message }
 ---
-id: which-jurisdiction
-question: |
-  Which jurisdiction?
-fields:
-  - no label: jurisdiction_id
-    choices:
-      - Illinois: 'illinois'
-      - Massachusetts: 'massachusetts'
-      - Texas: 'texas'
----
-code: |
-  if 'jurisdiction_id' in url_args:
-    jurisdiction_id = url_args['jurisdiction_id']
+variable name: jurisdiction_names
+data:
+  illinois: Illinois
+  massachusetts: Massachusetts
+  texas: Texas
+  california: California
+  indiana: Indiana
 ---
 code: |
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=False, timing=None).data)

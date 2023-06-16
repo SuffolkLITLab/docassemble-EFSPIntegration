@@ -289,10 +289,6 @@ subquestion: |
   However, you can still continue and download a completed form at the end.
 continue button field: show_no_efile
 ---
-depends on:
-  - court_id
-  - available_efile_courts
-only sets: efile_setup
 code: |
   efile_setup = court_id in available_efile_courts
 ---
@@ -311,3 +307,31 @@ only sets: full_court_info
 code: |
   full_court_info = get_full_court_info(proxy_conn, court_id)
 ---
+id: which-jurisdiction
+question: |
+  Which jurisdiction are you filing in?
+fields:
+  - no label: jurisdiction_id
+    code: |
+      [{k: v} for k, v in jurisdiction_names.items() if k in jurisdiction_choices]
+---
+variable name: jurisdiction_names
+data:
+  illinois: Illinois
+  massachusetts: Massachusetts
+  texas: Texas
+  california: California
+  indiana: Indiana
+  louisiana: Louisiana
+---
+imports:
+  - requests
+---
+code: |
+  if 'jurisdiction_id' in url_args:
+    jurisdiction_id = url_args['jurisdiction_id']
+  try:
+    jurisdiction_choices = set(requests.get(get_config("efile proxy", {}).get("url", "") + "/jurisdictions").json().keys())
+  except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.JSONDecodeError) as ex:
+    log(f"Couldn't connect with the efile proxy server! {ex}")
+    jurisdiction_id = ""
