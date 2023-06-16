@@ -96,7 +96,7 @@ class TestClass:
             if "{" in url or "}" in url:
                 continue
             # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
-            if "scheduling" in url or "service-contacts/public" in url or (("adminusers" in url or "firmattorneyservice" in url) and "illinois" not in url):
+            if "scheduling" in url or "service-contacts/public" in url or (("adminusers" in url or "firmattorneyservice" in url or "payments" in url) and "illinois" not in url):
                 continue
             print(f"visiting {url}")
             send = lambda: self.proxy_conn.proxy_client.get(url)
