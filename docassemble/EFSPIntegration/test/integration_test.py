@@ -96,7 +96,18 @@ class TestClass:
             if "{" in url or "}" in url:
                 continue
             # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
-            if "scheduling" in url or "service-contacts/public" in url or (("adminusers" in url or "firmattorneyservice" in url or "payments" in url) and "illinois" not in url):
+            if (
+                "scheduling" in url
+                or "service-contacts/public" in url
+                or (
+                    (
+                        "adminusers" in url
+                        or "firmattorneyservice" in url
+                        or "payments" in url
+                    )
+                    and "illinois" not in url
+                )
+            ):
                 continue
             print(f"visiting {url}")
             send = lambda: self.proxy_conn.proxy_client.get(url)
@@ -529,4 +540,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
 
 
 if __name__ == "__main__":
-    main(base_url=sys.argv[1] if len(sys.argv) > 1 else None, api_key=os.getenv("PROXY_API_KEY"))
+    main(
+        base_url=sys.argv[1] if len(sys.argv) > 1 else None,
+        api_key=os.getenv("PROXY_API_KEY"),
+    )
