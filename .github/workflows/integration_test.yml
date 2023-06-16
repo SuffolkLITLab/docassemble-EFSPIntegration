@@ -1,0 +1,22 @@
+name: Run python-only integration tests
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  PROXY_API_KEY: ${{ secrets.EFILE_PROXY_API_KEY }}
+  bryce_user_email: ${{ secrets.TYLER_EMAIL }}
+  bryce_user_password: ${{ secrets.TYLER_PASSWORD }}
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Run python only integration tests
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install .
+      - run: python -m docassemble.EFSPIntegration.test.integration_test
