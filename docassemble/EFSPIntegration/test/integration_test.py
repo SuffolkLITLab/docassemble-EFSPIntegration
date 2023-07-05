@@ -61,7 +61,7 @@ class TestClass:
         self.user_password = user_password
 
     def basic_assert(self, resp: ApiResponse):
-        if self.verbose:
+        if self.verbose or not resp.is_ok():
             print(resp)
         assert resp.is_ok()
         return resp
@@ -534,6 +534,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     tc.test_logs()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
     tc.test_filings()
+    print("Done!")
     # TODO(brycew): Tyler issue, have to wait on them
     # tc.test_global_payment_accounts()
     proxy_conn.proxy_client.close()

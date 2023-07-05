@@ -4,11 +4,11 @@ include:
 ---
 variable name: jurisdiction_names
 data:
-  - illinois: Illinois
-  - massachusetts: Massachusetts
-  - texas: Texas
-  - california: California
-  - indiana: Indiana
+  illinois: Illinois
+  massachusetts: Massachusetts
+  texas: Texas
+  california: California
+  indiana: Indiana
 ---
 need:
   - tyler_login

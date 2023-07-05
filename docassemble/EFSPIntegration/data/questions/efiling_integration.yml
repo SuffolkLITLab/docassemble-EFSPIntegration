@@ -222,6 +222,7 @@ need:
 id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
+  ready_to_efile_user_hook
   check_resp
   remaining_to_check = check_resp.data
   log('check_resp: ' + str(check_resp))
@@ -249,12 +250,16 @@ code: |
   if not ready_to_efile:
     show_no_efile
 ---
+code: |
+  ready_to_efile_user_hook = True
+---
 id: actually efile
 depends on:
   - can_check_efile
   - user_wants_efile
 if: can_check_efile and user_wants_efile and ready_to_efile
 code: |
+  tyler_payment_id
   efile_user_reviewed
   if not efile_author_mode:
     prevent_going_back()
@@ -819,10 +824,10 @@ code: |
     tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
   else:
     tyler_payment_account_options = []
-
-  res = proxy_conn.get_global_payment_account_list().data
-  if res:
-    tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
+  # For now, don't show global options for payment accounts.
+  #res = proxy_conn.get_global_payment_account_list().data
+  #if res:
+  #  tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
 ---
 ################################
 ## Fees
