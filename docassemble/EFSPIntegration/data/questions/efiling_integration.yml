@@ -796,6 +796,9 @@ code: |
 code: |
   admin_interview = "docassemble.EFSPIntegration:admin_interview.yml"
 ---
+code: |
+  toga_interview = "docassemble.EFSPIntegration:toga_payments_interview.yml"
+---
 ############ Payments Stuff ############
 reconsider:
   - tyler_payment_account_options
@@ -805,7 +808,7 @@ question: |
 subquestion: |
   Select an existing account below, or add a payment account
   using the 
-  [Admin Interface](${ interview_url(i=admin_interview, reset=1, jurisdiction_id=jurisdiction_id) }){:target="_blank"}
+  [payments screen](${ interview_url(i=toga_interview, reset=1, jurisdiction_id=jurisdiction_id) }){:target="_blank"}
   
   Refresh this page when you have finished adding the account.
 fields:
