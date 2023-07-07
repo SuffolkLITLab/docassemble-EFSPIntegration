@@ -356,8 +356,9 @@ def debug_display(resp: ApiResponse) -> str:
 
 def tyler_daterep_to_datetime(tyler_daterep: Mapping) -> DADateTime:
     """
-    Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
-    returns the datetime it repsents.
+    Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate",
+    or "{http://niem.gov/niem/niem-core/4.0}DateTime" and returns the datetime
+    it repsents.
     """
     timestamp = chain_xml(tyler_daterep, ["dateRepresentation", "value", "value"]) or 0
     return tyler_timestamp_to_datetime(timestamp)
@@ -462,9 +463,15 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
         return None
 
 
-def _parse_address(address_xml: Mapping) -> ALAddress:
+def _parse_address(address_wrapper: Mapping) -> ALAddress:
+    address_xml = chain_xml(address_wrapper, ["value"]) or address_wrapper
     address = ALAddress()
-    street_xml = chain_xml(address_xml, ["value", "addressDeliveryPoint", 0, "value"])
+    if 'addressDeliveryPointAbstract' in address_xml:
+        # ECFv5
+        street_xml = chain_xml(address_xml, ["addressDeliveryPointAbstract", "value"])
+    else:
+        # ECFv4
+        street_xml = chain_xml(address_xml, ["addressDeliveryPoint", 0, "value"])
     # TODO(brycew): haven't seen street address IRL yet, not sure how it serializes
     if street_xml:
         street_full = chain_xml(street_xml, ["streetFullText", "value"])
@@ -475,19 +482,24 @@ def _parse_address(address_xml: Mapping) -> ALAddress:
             street_number = chain_xml(street_xml, ["streetNumberText", "value"])
             if street_name and street_number:
                 address.address = f"{street_number} {street_name}"
-    city_xml = chain_xml(address_xml, ["value", "locationCityName"]) or {}
+    city_xml = chain_xml(address_xml, ["locationCityName"]) or {}
     if city_xml and "value" in city_xml:
         address.city = city_xml.get("value")
-    zip_xml = chain_xml(address_xml, ["value", "locationPostalCode"]) or {}
+    zip_xml = chain_xml(address_xml, ["locationPostalCode"]) or {}
     if zip_xml and "value" in zip_xml:
         address.zip = zip_xml.get("value")
-    state_xml = chain_xml(address_xml, ["value", "locationState"]) or {}
-    if state_xml and state_xml.get("value", {}).get("value"):
-        address.state = state_xml.get("value", {}).get("value")
+    state_xml = chain_xml(address_xml, ["locationState"]) or {}
+    if state_xml:
+        if chain_xml(state_xml, ["value", "value"]):
+            address.state = chain_xml(state_xml, ["value", "value"])
+        if chain_xml(state_xml, ["stateRepresentation", "value", "value"]):
+            address.state = chain_xml(state_xml, ["stateRepresentation", "value", "value"])
     return address
 
 
 def _is_attorney(participant_val):
+    # On ECFv5, nothing is here, so it will always be false; that works b/c
+    # the attorneys are in a different place in ECF5
     role_code = chain_xml(
         participant_val, ["value", "caseParticipantRoleCode", "value"]
     )
@@ -497,23 +509,31 @@ def _is_attorney(participant_val):
 def _parse_participant_id(entity):
     """Just get the participant ID from the Participant"""
     if _is_person(entity):
-        return (
-            next(iter(entity.get("personOtherIdentification", {})), {})
-            .get("identificationID", {})
-            .get("value")
-        )
+        if "personAugmentationPoint" in entity:
+            # Ecfv5
+            return chain_xml(entity, ["personAugmentationPoint", 0, "value", "participantID", "identificationID", "value"])
+        else:
+            return (
+                next(iter(entity.get("personOtherIdentification", {})), {})
+                .get("identificationID", {})
+                .get("value")
+            )
     else:
-        return chain_xml(
-            entity,
-            [
-                "organizationIdentification",
-                "value",
-                "identification",
-                0,
-                "identificationID",
-                "value",
-            ],
-        )
+        if "organizationAugmentationPoint" in entity:
+            # ECFv5
+            return chain_xml(entity, ["organizationAugmentationPoint", 0, "value", "participantID", "identificationID", "value"])
+        else:
+            return chain_xml(
+                entity,
+                [
+                    "organizationIdentification",
+                    "value",
+                    "identification",
+                    0,
+                    "identificationID",
+                    "value",
+                ],
+            )
 
 
 def _parse_name(name_obj, name_val):
@@ -537,6 +557,8 @@ def _parse_name(name_obj, name_val):
 def _parse_contact_means(obj, contact_means_xml):
     if not contact_means_xml:
         contact_means_xml = []
+    niem2Mailing = "{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress"
+    niem4Mailing = "{http://release.niem.gov/niem/niem-core/4.0/}ContactMailingAddress"
     for contact_info in contact_means_xml:
         if (
             contact_info.get("name")
@@ -547,13 +569,13 @@ def _parse_contact_means(obj, contact_means_xml):
             )
             if phone:
                 obj.phone_number = phone
-        if (
-            contact_info.get("name")
-            == "{http://niem.gov/niem/niem-core/2.0}ContactMailingAddress"
-        ):
-            address = _parse_address(
-                contact_info.get("value", {}).get("addressRepresentation")
-            )
+        if (contact_info.get("name") in [niem2Mailing, niem4Mailing]):
+            if contact_info.get("name") == niem2Mailing:
+                address = _parse_address(
+                    contact_info.get("value", {}).get("addressRepresentation")
+                )
+            if contact_info.get("name") == niem4Mailing:
+                address = _parse_address(chain_xml(contact_info, ["value"]))
             if address:
                 obj.address = address
                 obj.address.instanceName = obj.instanceName + ".address"
@@ -569,19 +591,36 @@ def _parse_contact_means(obj, contact_means_xml):
 
 def _parse_participant(part_obj, participant_val, roles: dict):
     """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
-    part_obj.party_type = chain_xml(
-        participant_val, ["value", "caseParticipantRoleCode", "value"]
-    )
-    part_obj.party_type_name = roles.get(part_obj.party_type, {}).get("name")
     entity = chain_xml(participant_val, ["value", "entityRepresentation", "value"])
+    if entity and "personAugmentationPoint" in entity:
+        # ECFv5
+        part_obj.party_type = chain_xml(
+            entity, ["personAugmentationPoint", 0, "value", "caseParticipantRoleCode", 0, "value"]
+        )
+    elif entity and "organizationAugmentationPoint" in entity:
+        part_obj.party_type = chain_xml(
+            entity, ["organizationAugmentationPoint", 0, "value", "caseParticipantRoleCode", 0, "value"]
+        )
+    else:
+        part_obj.party_type = chain_xml(
+           participant_val, ["value", "caseParticipantRoleCode", "value"]
+        )
+    part_obj.party_type_name = roles.get(part_obj.party_type, {}).get("name")
+    if entity is None:
+        return part_obj
+
     if _is_person(entity):
         part_obj.person_type = "ALIndividual"
         name = entity.get("personName") or {}
         _parse_name(part_obj.name, name)
         # TODO(brycew): parse the address, phone, and email if possible
-        contact_xml = next(
-            iter(entity.get("personAugmentation", {}).get("contactInformation", []))
-        ).get("contactMeans", [])
+        if "personAugmentationPoint" in entity:
+            # Ecfv5
+            contact_xml = chain_xml(entity, ["personAugmentationPoint", 0, "value", "contactInformation", 0, "contactMeansAbstract"])
+        else:
+            contact_xml = next(
+                iter(entity.get("personAugmentation", {}).get("contactInformation", []))
+            ).get("contactMeans", [])
         _parse_contact_means(part_obj, contact_xml)
     else:
         part_obj.person_type = "business"
@@ -592,13 +631,22 @@ def _parse_participant(part_obj, participant_val, roles: dict):
 
 def _parse_attorney(att_obj, att_val):
     """Given an Attorney (caseOtherEntityAttorney), gets the name and contact info into a docassemble object"""
-    entity = chain_xml(att_val, ["roleOfPersonReference", "ref"])
-    if entity:
-        _parse_name(att_obj.name, entity.get("personName") or {})
-        contact_xml = next(
-            iter(entity.get("personAugmentation", {}).get("contactInformation", []))
-        ).get("contactMeans", [])
-        _parse_contact_means(att_obj, contact_xml)
+    if "roleOfPersonReference" not in att_val and "roleOfPerson" in att_val:
+        # ECFv5
+        entity = chain_xml(att_val, ["roleOfPerson"])
+        if entity:
+            _parse_name(att_obj.name, entity.get("personName") or {})
+            contact_xml = chain_xml(entity, ["personAugmentationPoint", 0, "value", "contactInformation", 0, "contactMeansAbstract"])
+            _parse_contact_means(att_obj, contact_xml)
+    else:
+        # ECFv4
+        entity = chain_xml(att_val, ["roleOfPersonReference", "ref"])
+        if entity:
+            _parse_name(att_obj.name, entity.get("personName") or {})
+            contact_xml = next(
+                iter(entity.get("personAugmentation", {}).get("contactInformation", []))
+            ).get("contactMeans", [])
+            _parse_contact_means(att_obj, contact_xml)
     return att_obj
 
 
@@ -624,18 +672,23 @@ def parse_service_contacts(service_list):
                 ]
             )
         else:
-            serv_id = chain_xml(
-                contact,
-                [
-                    "entityRepresentation",
-                    "value",
-                    "personAugmentation",
-                    "electronicServiceInformation",
-                    "serviceRecipientID",
-                    "identificationID",
-                    "value",
-                ],
-            )
+            entity = chain_xml(contact, ["entityRepresentation", "value"])
+            if entity and "personAugmentationPoint" in entity:
+                # ecfv5
+                serv_id = chain_xml(entity, ["personAugmentationPoint", 0, "value", "electronicServiceInformation", "objectAugmentationPoint", 0, "value", "serviceRecipient", 0, "serviceContactID", "identificationID", "value"])
+            else:
+                serv_id = chain_xml(
+                    contact,
+                    [
+                        "entityRepresentation",
+                        "value",
+                        "personAugmentation",
+                        "electronicServiceInformation",
+                        "serviceRecipientID",
+                        "identificationID",
+                        "value",
+                    ],
+                )
             per_name = chain_xml(
                 contact, ["entityRepresentation", "value", "personName"]
             )
@@ -680,10 +733,18 @@ def parse_case_info(
         roles = {}
     new_case.details = entry
     new_case.court_id = court_id
-    new_case.title = chain_xml(entry, ["value", "caseTitleText", "value"])
-    new_case.tracking_id = chain_xml(entry, ["value", "caseTrackingID", "value"])
-    new_case.docket_number = chain_xml(entry, ["value", "caseDocketID", "value"])
-    new_case.category = chain_xml(entry, ["value", "caseCategoryText", "value"])
+    if 'value' not in entry and 'caseAugmentationPoint' in entry:
+      # ECFv5 version
+      new_case.title = chain_xml(entry, ["caseTitleText", "value"])
+      new_case.tracking_id = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 1, "value", "identificationID", "value"])
+      new_case.docket_number = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 3, "value", "value"])
+      new_case.category = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 0, "value", "value"])
+    else:
+      # ECFv4 version
+      new_case.title = chain_xml(entry, ["value", "caseTitleText", "value"])
+      new_case.tracking_id = chain_xml(entry, ["value", "caseTrackingID", "value"])
+      new_case.docket_number = chain_xml(entry, ["value", "caseDocketID", "value"])
+      new_case.category = chain_xml(entry, ["value", "caseCategoryText", "value"])
 
     if fetch:
         fetch_case_info(proxy_conn, new_case, roles)
@@ -718,6 +779,11 @@ def fetch_case_info(
         object_type=ALIndividual,
         auto_gather=False,
     )
+    new_case.participants = DAList(
+        new_case.instanceName + ".participants",
+        object_type=ALIndividual,
+        auto_gather=False,
+    )
     new_case.party_to_attorneys = {}
     new_case.case_details_worked = (
         full_case_details.response_code,
@@ -725,33 +791,144 @@ def fetch_case_info(
     )
     new_case.case_details = full_case_details.data or {}
     # TODO: is the order of this array predictable? might it break if Tyler changes something?
-    new_case.case_type = (
-        new_case.case_details.get("value", {})
-        .get("rest", [{}, {}])[1]
-        .get("value", {})
-        .get("caseTypeText", {})
-        .get("value")
-    )
-    maybe_court = chain_xml(
-        new_case.case_details,
-        [
-            "value",
-            "rest",
-            0,
-            "value",
-            "caseCourt",
-            "organizationIdentification",
-            "value",
-            "identificationID",
-            "value",
-        ],
-    )
-    if maybe_court:
-        new_case.court_id = maybe_court
-    new_case.efile_case_type = new_case.case_type
-    new_case.title = chain_xml(
-        new_case.case_details, ["value", "caseTitleText", "value"]
-    )
+    if "value" not in new_case.case_details and "caseAugmentationPoint" in new_case.case_details:
+        # ECFv5
+        new_case.case_type = chain_xml(new_case.case_details, ["caseAugmentationPoint", 1, "value", "rest", 4, "value", "value"])
+        maybe_court = chain_xml(
+            new_case.case_details,
+            [
+                "caseAugmentationPoint",
+                0,
+                "value",
+                "caseCourt",
+                "organizationIdentification",
+                "identificationID",
+                "value"
+            ]
+        )
+        if maybe_court:
+            new_case.court_id = maybe_court
+        new_case.efile_case_type = new_case.case_type
+        new_case.title = chain_xml(
+            new_case.case_details, ["caseTitleText", "value"]
+        )
+        new_case.date = tyler_daterep_to_datetime(
+            chain_xml(
+                new_case.case_details, ["caseAugmentationPoint", 2, "value", "filedDate"]
+            )
+        )
+        for aug in chain_xml(new_case.case_details, ["caseAugmentationPoint"]):
+            # TODO(brycew): get the AppellateCaseOriginalCase stuff from ECF5
+            if (
+                aug.get("name")
+                == "{https://docs.oasis-open.org/legalxml-courtfiling/ns/v5.0/ecf}CaseAugmentation"
+            ):
+                # new_case.lower_judge = aug.get("value", {}).get("lowerCourtJudgeText")
+                for r in chain_xml(aug, ["value", "rest"]):
+                    if (r.get("name") == '{https://docs.oasis-open.org/legalxml-courtfiling/ns/v5.0/ecf}CaseParty'):
+                        participant_xml = r
+                        partip_obj = new_case.participants.appendObject()
+                        _parse_participant(partip_obj, participant_xml, roles)
+            if (
+                aug.get("name") == "{http://release.niem.gov/niem/domains/jxdm/6.1/}CaseAugmentation"
+            ):
+    
+                attorneys = chain_xml(aug, ["value", "caseOfficial"])
+                for attorney in attorneys:
+                    entity = chain_xml(attorney, ["roleOfPerson"])
+                    attorney_tyler_id = chain_xml(entity, ["personAugmentationPoint", 0, "value", "participantID", "identificationID", "value"])
+                    new_att_obj = new_case.attorneys.initializeObject(
+                        attorney_tyler_id, ALIndividual
+                    )
+                    _parse_attorney(new_att_obj, attorney)
+                    parties = attorney.get("caseRepresentedPartyReference", [])
+                    for party in parties:
+                        party_id = _parse_participant_id(party.get("ref", {}))
+                        if party_id in new_case.party_to_attorneys:
+                            new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
+                        else:
+                            new_case.party_to_attorneys[party_id] = [attorney_tyler_id]
+                        for participant in new_case.participants.elements:
+                            if participant.tyler_id == party_id:
+                                if hasattr(participant, "existing_attorney_ids"):
+                                    participant.existing_attorney_ids.append(
+                                        attorney_tyler_id
+                                    )
+                                else:
+                                    participant.existing_attorney_ids = [attorney_tyler_id]
+    else:
+        # ECFv4
+        new_case.case_type = (
+            new_case.case_details.get("value", {})
+            .get("rest", [{}, {}])[1]
+            .get("value", {})
+            .get("caseTypeText", {})
+            .get("value")
+        )
+        maybe_court = chain_xml(
+            new_case.case_details,
+            [
+                "value",
+                "rest",
+                0,
+                "value",
+                "caseCourt",
+                "organizationIdentification",
+                "value",
+                "identificationID",
+                "value",
+            ],
+        )
+        if maybe_court:
+            new_case.court_id = maybe_court
+        new_case.efile_case_type = new_case.case_type
+        new_case.title = chain_xml(
+            new_case.case_details, ["value", "caseTitleText", "value"]
+        )
+        new_case.date = tyler_daterep_to_datetime(
+            chain_xml(
+                new_case.case_details, ["value", "activityDateRepresentation", "value"]
+            )
+        )
+        for aug in new_case.case_details.get("value", {}).get("rest", []):
+            if "AppellateCaseOriginalCase" in aug.get("declaredType"):
+                new_case.lower_docket_number = aug.get("value", {}).get("caseDocketID")
+                new_case.lower_case_title = aug.get("value", {}).get("caseTitleText")
+            if (
+                aug.get("declaredType")
+                == "tyler.ecf.extensions.common.CaseAugmentationType"
+            ):
+                new_case.lower_judge = aug.get("value", {}).get("lowerCourtJudgeText")
+                participant_xml = aug.get("value", {}).get("caseParticipant", [])
+                for participant in participant_xml:
+                    if not _is_attorney(participant):
+                        partip_obj = new_case.participants.appendObject()
+                        _parse_participant(partip_obj, participant, roles)
+    
+                attorneys = aug.get("value", {}).get("caseOtherEntityAttorney")
+                for attorney in attorneys:
+                    entity = chain_xml(attorney, ["roleOfPersonReference", "ref"])
+                    tmp: Dict = next(iter(entity.get("personOtherIdentification", {})), {})
+                    attorney_tyler_id = tmp.get("identificationID", {}).get("value", None)
+                    new_att_obj = new_case.attorneys.initializeObject(
+                        attorney_tyler_id, ALIndividual
+                    )
+                    _parse_attorney(new_att_obj, attorney)
+                    parties = attorney.get("caseRepresentedPartyReference", [])
+                    for party in parties:
+                        party_id = _parse_participant_id(party.get("ref", {}))
+                        if party_id in new_case.party_to_attorneys:
+                            new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
+                        else:
+                            new_case.party_to_attorneys[party_id] = [attorney_tyler_id]
+                        for participant in new_case.participants.elements:
+                            if participant.tyler_id == party_id:
+                                if hasattr(participant, "existing_attorney_ids"):
+                                    participant.existing_attorney_ids.append(
+                                        attorney_tyler_id
+                                    )
+                                else:
+                                    participant.existing_attorney_ids = [attorney_tyler_id]
     if new_case.title:
         new_case.title = re.sub(
             r"([A-Z])In the Matter of the Estate of([A-Z])",
@@ -759,55 +936,6 @@ def fetch_case_info(
             new_case.title,
         )
         new_case.title = re.sub(r"([A-Z])vs([A-Z])", r"\1 vs \2", new_case.title)
-    new_case.date = tyler_daterep_to_datetime(
-        chain_xml(
-            new_case.case_details, ["value", "activityDateRepresentation", "value"]
-        )
-    )
-    new_case.participants = DAList(
-        new_case.instanceName + ".participants",
-        object_type=ALIndividual,
-        auto_gather=False,
-    )
-    for aug in new_case.case_details.get("value", {}).get("rest", []):
-        if "AppellateCaseOriginalCase" in aug.get("declaredType"):
-            new_case.lower_docket_number = aug.get("value", {}).get("caseDocketID")
-            new_case.lower_case_title = aug.get("value", {}).get("caseTitleText")
-        if (
-            aug.get("declaredType")
-            == "tyler.ecf.extensions.common.CaseAugmentationType"
-        ):
-            new_case.lower_judge = aug.get("value", {}).get("lowerCourtJudgeText")
-            participant_xml = aug.get("value", {}).get("caseParticipant", [])
-            for participant in participant_xml:
-                if not _is_attorney(participant):
-                    partip_obj = new_case.participants.appendObject()
-                    _parse_participant(partip_obj, participant, roles)
-
-            attorneys = aug.get("value", {}).get("caseOtherEntityAttorney")
-            for attorney in attorneys:
-                entity = chain_xml(attorney, ["roleOfPersonReference", "ref"])
-                tmp: Dict = next(iter(entity.get("personOtherIdentification", {})), {})
-                attorney_tyler_id = tmp.get("identificationID", {}).get("value", None)
-                new_att_obj = new_case.attorneys.initializeObject(
-                    attorney_tyler_id, ALIndividual
-                )
-                _parse_attorney(new_att_obj, attorney)
-                parties = attorney.get("caseRepresentedPartyReference", [])
-                for party in parties:
-                    party_id = _parse_participant_id(party.get("ref", {}))
-                    if party_id in new_case.party_to_attorneys:
-                        new_case.party_to_attorneys[party_id].append(attorney_tyler_id)
-                    else:
-                        new_case.party_to_attorneys[party_id] = [attorney_tyler_id]
-                    for participant in new_case.participants.elements:
-                        if participant.tyler_id == party_id:
-                            if hasattr(participant, "existing_attorney_ids"):
-                                participant.existing_attorney_ids.append(
-                                    attorney_tyler_id
-                                )
-                            else:
-                                participant.existing_attorney_ids = [attorney_tyler_id]
     new_case.participants.gathered = True
     new_case.attorneys.gathered = True
 
