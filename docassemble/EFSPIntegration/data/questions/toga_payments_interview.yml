@@ -10,6 +10,7 @@ data:
   california: California
   indiana: Indiana
 ---
+comment: Overriden from toga_payments to remove the "you can go back"
 need:
   - tyler_login
 event: payment_main_screen
@@ -40,5 +41,5 @@ code: |
 ---
 mandatory: True
 code: |
-  payment_main_screen
+  payment_main_screen # defined in toga_payments
 ---

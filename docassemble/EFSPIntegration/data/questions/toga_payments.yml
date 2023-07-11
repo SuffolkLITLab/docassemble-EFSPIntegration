@@ -358,3 +358,48 @@ subject: |
   Payment methods
 content: |
   ${ payment_list_table(proxy_conn.get_payment_account_list()) }
+---
+need:
+  - tyler_login
+continue button field: payment_main_screen
+id: Payment Main screen
+question: |
+  Payment methods for ${ my_username }
+subquestion: |
+  You can click back to return to your interview after editing your methods.
+  
+  ${ payment_template.content }
+---
+reconsider:
+  - tyler_payment_account_options
+id: select a payment method
+question: |
+  Select a payment method
+subquestion: |
+  If you want to add a payment method, [go to the payments screen](${ url_ask("payment_main_screen") }){:target="_blank"}.
+
+  Refresh this page when you have finished adding the account.
+fields:
+  - Payment Account: tyler_payment_id
+    datatype: dropdown
+    code: |
+      tyler_payment_account_options
+---
+code: |
+  default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
+---
+code: |
+  allowable_card_types = full_court_info.get('allowablecardtypes', [])
+  res = proxy_conn.get_payment_account_list().data
+  if res:
+    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
+  else:
+    tyler_payment_account_options = []
+  # For now, don't show global options for payment accounts.
+  #res = proxy_conn.get_global_payment_account_list().data
+  #if res:
+  #  tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
+---
+code: |
+  toga_interview = "docassemble.EFSPIntegration:toga_payments_interview.yml"
+---

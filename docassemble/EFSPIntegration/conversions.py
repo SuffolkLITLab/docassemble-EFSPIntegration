@@ -406,8 +406,9 @@ def _is_person(possible_person_entity: dict) -> bool:
 
 def chain_xml(xml_val, elems: List[Union[str, int]]):
     val = xml_val
-    for elem in elems:
+    for idx, elem in enumerate(elems):
         if not val:
+            log(f"No {elem} ({idx}) in {xml_val} ({elems})")
             return None
         if isinstance(val, dict):
             val = val.get(elem) or {}
