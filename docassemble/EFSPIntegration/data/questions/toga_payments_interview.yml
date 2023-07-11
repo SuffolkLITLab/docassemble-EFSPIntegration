@@ -42,5 +42,5 @@ code: |
 ---
 mandatory: True
 code: |
-  payment_main_screen
+  payment_main_screen # defined in toga_payments
 ---

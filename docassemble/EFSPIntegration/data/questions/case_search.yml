@@ -97,6 +97,7 @@ code: |
   else:
     x.court_id
     x.found_case = DAObject(x.instanceName + '.found_case')
+    log("parse_case_info")
     parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=x.party_type_map)
   # undefine('x.docket_number_from_user', 'x.docket_case_response')
 ---
