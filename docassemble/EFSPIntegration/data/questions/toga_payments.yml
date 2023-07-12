@@ -394,9 +394,16 @@ id: Payment Main screen
 question: |
   Edit payment methods for ${ my_username }
 subquestion: |
+<<<<<<< HEAD
   Click **Next** to continue after adding or editing your payment methods.
+=======
+  You can click "Next" to continue after editing your payment methods.
+>>>>>>> 713e3c3 (Better payment add screen)
 
   ${ payment_template.content }
+---
+event: tmp_testing_pmt
+question: tmp_testing_pmt
 ---
 reconsider:
   - tyler_payment_account_options
