@@ -364,11 +364,14 @@ need:
 continue button field: payment_main_screen
 id: Payment Main screen
 question: |
-  Payment methods for ${ my_username }
+  Edit payment methods for ${ my_username }
 subquestion: |
-  You can click back to return to your interview after editing your methods.
-  
+  You can click "Next" to continue after editing your payment methods.
+
   ${ payment_template.content }
+---
+event: tmp_testing_pmt
+question: tmp_testing_pmt
 ---
 reconsider:
   - tyler_payment_account_options
@@ -376,9 +379,9 @@ id: select a payment method
 question: |
   Select a payment method
 subquestion: |
-  If you want to add a payment method, [go to the payments screen](${ url_ask("payment_main_screen") }){:target="_blank"}.
+  You can add and adjust payment methods with the button below.
 
-  Refresh this page when you have finished adding the account.
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
