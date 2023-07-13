@@ -23,7 +23,7 @@ question: |
   Something went wrong creating your Waiver payment method
   % endif
 subquestion: |
-  ${ debug_display(waiver_resp) }
+  The method id is ${ debug_display(waiver_resp) }.
 continue button field: new_payment_account
 ---
 if: |
@@ -143,7 +143,7 @@ code: |
 ---
 template: payment_template
 subject: |
-  Payment methods 
+  Payment methods
 content: |
   ${ action_button_html(new_payment_account_url, label='New payment method', id_tag="new_payment_account") }
 
@@ -337,7 +337,7 @@ code: |
 ---
 question: Are you sure you want to remove your ${ _payment_labels(proxy_conn.get_payment_account(payment_account_id).data) }?
 subquestion: |
-  You won't be able to get it back, and will have to enter all of it's details again.
+  You won't be able to get it back, and will have to enter all of its details again.
 continue button field: are_you_sure_remove
 ---
 code: |
@@ -366,7 +366,7 @@ id: Payment Main screen
 question: |
   Edit payment methods for ${ my_username }
 subquestion: |
-  You can click "Next" to continue after editing your payment methods.
+  You can click **Next** to continue after editing your payment methods.
 
   ${ payment_template.content }
 ---
@@ -378,7 +378,7 @@ question: |
 subquestion: |
   You can add and adjust payment methods with the button below.
 
-  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md", color="primary") }
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
