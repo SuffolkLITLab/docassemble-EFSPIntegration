@@ -370,9 +370,6 @@ subquestion: |
 
   ${ payment_template.content }
 ---
-event: tmp_testing_pmt
-question: tmp_testing_pmt
----
 reconsider:
   - tyler_payment_account_options
 id: select a payment method
