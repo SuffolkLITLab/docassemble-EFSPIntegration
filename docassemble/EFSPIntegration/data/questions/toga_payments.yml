@@ -416,7 +416,7 @@ subquestion: |
 
   You can add and adjust payment methods with the button below.
 
-  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md", color="primary") }
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
