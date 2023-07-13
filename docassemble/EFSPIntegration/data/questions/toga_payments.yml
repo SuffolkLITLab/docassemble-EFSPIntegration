@@ -288,7 +288,7 @@ code: |
 ---
 code: |
   def payment_list_table(payment_list_resp):
-      ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", color="primary", size="md")}</span>'
+      ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", size="md")}</span>'
       if not payment_list_resp.data:
           return ret + "\n<div>You don't currently have any payment methods. Add some using above button.</div>"
       ret += f"""
@@ -378,7 +378,7 @@ question: |
 subquestion: |
   You can add and adjust payment methods with the button below.
 
-  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md", color="primary") }
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
 fields:
   - Payment Account: tyler_payment_id
     datatype: dropdown
