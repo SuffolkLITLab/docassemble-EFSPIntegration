@@ -35,6 +35,7 @@ comment: |
   # the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
   #      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
   #      ' <button>Click here if not working</button> </input>' +
+id: new-payment-method
 question: |
   New payment method
 # TODO: using url_args this way means you can only create one
@@ -102,7 +103,7 @@ code: |
   if 'creation_status' in action_arguments():
     creation_status = action_argument('creation_status')
 ---
-id: new payment method
+id: what new payment method
 question: |
   What type of payment method do you want to make?
 subquestion: |
