@@ -16,6 +16,7 @@ from docassemble.base.util import (
 )
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.functions import get_config
+from docassemble.webapp.server import error_notification
 from .efm_client import ApiResponse, ProxyConnection
 import importlib
 import dateutil.parser
@@ -39,9 +40,18 @@ __all__ = [
     "payment_account_labels",
     "filing_id_and_label",
     "get_tyler_roles",
+    "log_error_and_notify",
 ]
 
 TypeType = type(type(None))
+
+def log_error_and_notify(context: str, resp: ApiResponse):
+    """Similar to docassemble.webapp.server.error_notification, which will send an email to
+    the `error_notification_email` in the config."""
+    message = "context: {context};; resp: {resp}"
+    log(f"EFSPIntegration ERROR: {message}")
+    error_notification(resp, message=message)
+
 
 
 def convert_court_to_id(trial_court) -> str:
@@ -566,8 +576,9 @@ def fetch_case_info(
     # in peoriacr); using the original here, but can change it here if necessary
     full_case_details = proxy_conn.get_case(new_case.court_id, new_case.tracking_id)
     if not full_case_details.is_ok():
-        log(
-            f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}: {full_case_details}"
+        log_error_and_notify(
+            f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}",
+            full_case_details
         )
     new_case.attorneys = DADict(
         new_case.instanceName + ".attorneys",
@@ -723,7 +734,7 @@ def payment_account_labels(resp: ApiResponse) -> Optional[List[Dict]]:
             for account in resp.data
         ]
     else:
-        log(f"payment_account_labels: {resp}")
+        log_error_and_notify("payment_account_labels couldn't build from failed response", resp)
         return []
 
 
