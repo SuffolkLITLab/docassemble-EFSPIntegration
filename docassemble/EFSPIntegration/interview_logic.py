@@ -17,7 +17,7 @@ from typing import (
 from datetime import datetime
 
 from docassemble.base.util import CustomDataType, DAObject, DAList, log, word
-from .conversions import parse_case_info, fetch_case_info, chain_xml
+from .conversions import parse_case_info, fetch_case_info, chain_xml, log_error_and_notify
 from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 
@@ -236,7 +236,7 @@ def search_case_by_name(
                 found_cases.pop()
             log(f"done with {idx} in search_case_by_name, {new_case.as_serializable()}")
     else:
-        log(f"get_cases_response: {get_cases_response}")
+        log_error_and_notify("get_cases_response failed when searching for case", get_cases_response)
         found_cases.resp_ok = False
     found_cases.gathered = True
     return cms_connection_issue, found_cases
@@ -455,8 +455,8 @@ def get_available_efile_courts(proxy_conn) -> list:
         if court_list.is_ok():
             return sorted(court_list.data or [])
         else:
-            log(f"Couldn't get courts from proxy server? {court_list}")
+            log_error_and_notify("Couldn't get courts from proxy server?", court_list)
             return []
     else:
-        log(f"Couldn't login to the proxy server!: {resp}")
+        log_error_and_notify("Couldn't login to the proxy server", resp)
         return []

@@ -231,7 +231,7 @@ code: |
     if efile_author_mode:
       show_remaining
     else:
-      log(f'Something went wrong: {check_resp.error_msg}')
+      log_error_and_notify('Check response failed', check_resp)
   elif not remaining_to_check.get("required_vars") and not remaining_to_check.get("wrong_vars"):
     ready_to_efile = True
   else:
@@ -874,7 +874,7 @@ code: |
 code: |
   fees_resp = proxy_conn.calculate_filing_fees(court_id, al_court_bundle)
   if not fees_resp.is_ok():
-    log(f'fees not ok! {fees_resp}')
+    log_error_and_notify('Fees not ok', fees_resp)
 ---
 depends on:
   - fees_resp
