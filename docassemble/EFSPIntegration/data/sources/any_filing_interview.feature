@@ -3,6 +3,9 @@ Feature: Make any type of filing
 
   Runs the `any_filing_interview.yml` to completion a few different ways
 
+  # This one errors because of description’: “Court Peoria County doesn’t allow service on subsequent filings
+
+
   @any_filing_interview @af1
   Scenario: any_filing_interview goes to end
     Given I start the interview at "any_filing_interview.yml"
@@ -13,7 +16,7 @@ Feature: Make any type of filing
     And I set the variable "my_username" to secret "TYLER_EMAIL"
     And I set the variable "my_password" to secret "TYLER_PASSWORD"
     And I tap to continue
-    And I get to the question id "service contact" with this data:
+    And I get to the question id "ready to efile" with this data:
       | var | value | trigger |
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
@@ -37,13 +40,7 @@ Feature: Make any type of filing
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
       | contacts_to_attach.there_are_any | False | |
-      | service_contacts.there_are_any | True | |
-    And I set the var "service_contacts[i].contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
-    And I set the var "service_contacts[i].service_type" to "-580"
-    And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
-    And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
-    And I tap to continue
-    And I get to the question id "ready to efile" with this data:
+      | service_contacts.there_are_any | False | |
       | var | value | trigger |
       | service_contacts.target_number | 1 | service_contacts.there_is_another |
       | x.filing_action | efile_and_serve | lead_doc.filing_action |
@@ -63,7 +60,7 @@ Feature: Make any type of filing
     And I set the variable "my_username" to secret "PROSE_EMAIL"
     And I set the variable "my_password" to secret "PROSE_PASSWORD"
     And I tap to continue
-    And I get to the question id "service contact" with this data:
+    And I get to the question id "ready to efile" with this data:
       | var | value | trigger |
       | trial_court | peoria | |
       | filing_interview_initial_or_existing | existing_case | |
@@ -87,14 +84,7 @@ Feature: Make any type of filing
       | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
-      | service_contacts.there_are_any | True | |
-    And I set the var "service_contacts[i].contact_id" to "4fc26680-6b9a-42bd-8934-c67aaee7c97f"
-    And I set the var "service_contacts[i].service_type" to "-580"
-    And I set the var "service_contacts[i].attach_service_contact_to_party" to "True"
-    And I set the var "service_contacts[i].party_association" to "87bfa962-ce95-43c7-8370-021828672a38"
-    And I tap to continue
-    And I get to the question id "ready to efile" with this data:
-      | var | value | trigger |
+      | service_contacts.there_are_any | False | |
       | service_contacts.target_number | 1 | service_contacts.there_is_another |
       | x.filing_action | efile_and_serve | lead_doc.filing_action |
       | x.optional_services.there_are_any | False | lead_doc.optional_services.there_are_any |
