@@ -307,7 +307,7 @@ def get_full_court_info(proxy_conn, court_id: str) -> Dict:
     if full_court_resp.is_ok():
         return full_court_resp.data
     else:
-        log(f"Couldn't get full court info for {court_id}: {full_court_resp}")
+        log_error_and_notify(f"Couldn't get full court info for {court_id}", full_court_resp)
         return {}
 
 

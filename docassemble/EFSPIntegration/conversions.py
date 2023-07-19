@@ -45,10 +45,10 @@ __all__ = [
 
 TypeType = type(type(None))
 
-def log_error_and_notify(context: str, resp: ApiResponse):
+def log_error_and_notify(context: str, resp: Optional[ApiResponse] = None):
     """Similar to docassemble.webapp.server.error_notification, which will send an email to
     the `error_notification_email` in the config."""
-    message = "context: {context};; resp: {resp}"
+    message = f"context: {context};; resp: {resp}"
     log(f"EFSPIntegration ERROR: {message}")
     error_notification(resp, message=message)
 
