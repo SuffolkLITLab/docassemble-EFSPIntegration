@@ -17,7 +17,12 @@ from typing import (
 from datetime import datetime
 
 from docassemble.base.util import CustomDataType, DAObject, DAList, log, word
-from .conversions import parse_case_info, fetch_case_info, chain_xml, log_error_and_notify
+from .conversions import (
+    parse_case_info,
+    fetch_case_info,
+    chain_xml,
+    log_error_and_notify,
+)
 from docassemble.AssemblyLine.al_general import ALPeopleList, ALIndividual
 
 
@@ -236,7 +241,9 @@ def search_case_by_name(
                 found_cases.pop()
             log(f"done with {idx} in search_case_by_name, {new_case.as_serializable()}")
     else:
-        log_error_and_notify("get_cases_response failed when searching for case", get_cases_response)
+        log_error_and_notify(
+            "get_cases_response failed when searching for case", get_cases_response
+        )
         found_cases.resp_ok = False
     found_cases.gathered = True
     return cms_connection_issue, found_cases
@@ -307,7 +314,9 @@ def get_full_court_info(proxy_conn, court_id: str) -> Dict:
     if full_court_resp.is_ok():
         return full_court_resp.data
     else:
-        log_error_and_notify(f"Couldn't get full court info for {court_id}", full_court_resp)
+        log_error_and_notify(
+            f"Couldn't get full court info for {court_id}", full_court_resp
+        )
         return {}
 
 
