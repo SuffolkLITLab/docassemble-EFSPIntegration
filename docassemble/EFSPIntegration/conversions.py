@@ -1,6 +1,8 @@
 """Functions that help convert the JSON-ized XML from the proxy server into usable information."""
 
 import re
+import tempfile
+import json
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Any, Mapping, Callable, Optional, Union
 import docassemble.base.util
@@ -13,6 +15,8 @@ from docassemble.base.util import (
     validation_error,
     log,
     as_datetime,
+    user_info,
+    send_email,
 )
 from docassemble.AssemblyLine.al_general import ALIndividual, ALAddress
 from docassemble.base.functions import get_config
@@ -39,9 +43,146 @@ __all__ = [
     "payment_account_labels",
     "filing_id_and_label",
     "get_tyler_roles",
+    "log_error_and_notify",
 ]
 
 TypeType = type(type(None))
+
+
+def error_notification(err, message=None, trace=None, referer=None, the_vars=None):
+    """Copied from docassemble.webapp.server.error_notification, since:
+    1) things from webapp.* are unstable
+    2) it breaks the unit tests and the mypy
+
+    Some slight modifications to work without server backends
+    """
+    recipient_email = get_config("error notification email", None)
+    if not recipient_email:
+        return
+    if (
+        err.__class__.__name__
+        in ["CSRFError", "ClientDisconnected", "MethodNotAllowed", "DANotFoundError"]
+        + ERROR_TYPES_NO_EMAIL
+    ):
+        return
+    email_recipients = []
+    if isinstance(recipient_email, list):
+        email_recipients.extend(recipient_email)
+    else:
+        email_recipients.append(recipient_email)
+    if message is None:
+        errmess = str(err)
+    else:
+        errmess = message
+    try:
+        email_address = user_info().email
+    except:
+        email_address = None
+    referer = None
+    if get_config("error notification variables", get_config("debug", True)):
+        if the_vars is None:
+            try:
+                the_vars = docassemble.base.functions.all_variables(
+                    include_internal=True
+                )
+            except:
+                pass
+    else:
+        the_vars = None
+    json_filename = None
+    if the_vars is not None and len(the_vars):
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                prefix="datemp",
+                suffix=".json",
+                delete=False,
+                encoding="utf-8",
+            ) as fp:
+                fp.write(json.dumps(the_vars, sort_keys=True, indent=2))
+                json_filename = fp.name
+        except:
+            pass
+    interview_path = docassemble.base.functions.interview_path()
+    try:
+        try:
+            appname = get_config("appname", "docassemble")
+            html = (
+                "<html>\n  <body>\n    <p>There was an error in the "
+                + appname
+                + " application.</p>\n    <p>The error message was:</p>\n<pre>"
+                + err.__class__.__name__
+                + ": "
+                + str(errmess)
+                + "</pre>\n"
+            )
+            body = (
+                "There was an error in the "
+                + appname
+                + " application.\n\nThe error message was:\n\n"
+                + err.__class__.__name__
+                + ": "
+                + str(errmess)
+            )
+            if trace is not None:
+                body += "\n\n" + str(trace)
+                html += "<pre>" + str(trace) + "</pre>"
+            if referer is not None and referer != "None":
+                body += "\n\nThe referer URL was " + str(referer)
+                html += "<p>The referer URL was " + str(referer) + "</p>"
+            elif interview_path is not None:
+                body += "\n\nThe interview was " + str(interview_path)
+                html += "<p>The interview was " + str(interview_path) + "</p>"
+            if email_address is not None:
+                body += "\n\nThe user was " + str(email_address)
+                html += "<p>The user was " + str(email_address) + "</p>"
+            if trace is not None:
+                body += "\n\n" + str(trace)
+                html += "<pre>" + str(trace) + "</pre>"
+            if get_config("external hostname", None) is not None:
+                body += "\n\nThe external hostname was " + str(
+                    get_config("external hostname")
+                )
+                html += (
+                    "<p>The external hostname was "
+                    + str(get_config("external hostname"))
+                    + "</p>"
+                )
+            html += "\n  </body>\n</html>"
+            log(f"Trying to send error message {body}")
+            send_email(
+                subject=appname + " error: " + err.__class__.__name,
+                to=email_recipients,
+                body=body,
+                html=html,
+                attachments=[json_filename],
+            )
+        except Exception as zerr:
+            log(str(zerr))
+            body = "There was an error in the " + appname + " application."
+            html = (
+                "<html>\n  <body>\n    <p>There was an error in the "
+                + appname
+                + " application.</p>\n  </body>\n</html>"
+            )
+            log(f"Trying to send error message {body}")
+            send_email(
+                subject=appname + " error: " + err.__class__.__name__,
+                to=email_recipients,
+                body=body,
+                html=html,
+                attachments=[json_filename],
+            )
+    except:
+        pass
+
+
+def log_error_and_notify(context: str, resp: Optional[ApiResponse] = None):
+    """Similar to docassemble.webapp.server.error_notification, which will send an email to
+    the `error_notification_email` in the config."""
+    message = f"context: {context};; resp: {resp}"
+    log(f"EFSPIntegration ERROR: {message}")
+    error_notification(resp, message=message)
 
 
 def convert_court_to_id(trial_court) -> str:
@@ -566,8 +707,9 @@ def fetch_case_info(
     # in peoriacr); using the original here, but can change it here if necessary
     full_case_details = proxy_conn.get_case(new_case.court_id, new_case.tracking_id)
     if not full_case_details.is_ok():
-        log(
-            f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}: {full_case_details}"
+        log_error_and_notify(
+            f"couldn't get full details for {new_case.court_id}-{ new_case.tracking_id}",
+            full_case_details,
         )
     new_case.attorneys = DADict(
         new_case.instanceName + ".attorneys",
@@ -723,7 +865,9 @@ def payment_account_labels(resp: ApiResponse) -> Optional[List[Dict]]:
             for account in resp.data
         ]
     else:
-        log(f"payment_account_labels: {resp}")
+        log_error_and_notify(
+            "payment_account_labels couldn't build from failed response", resp
+        )
         return []
 
 
