@@ -1,4 +1,4 @@
-name: Use ALKiln testing framework v4 to run tests
+name: Use ALKiln for integration tests
 
 on:
   push:
