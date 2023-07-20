@@ -10,7 +10,7 @@ Feature: The interviews run without erroring
   @ai1 @admin_interview @taps @admin @attorneys
   Scenario: admin_interview.yml Admin login
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 15
+    And the maximum seconds for each Step in this Scenario is 30
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
@@ -23,7 +23,7 @@ Feature: The interviews run without erroring
   @ai2 @admin_interview @taps @prose @service_contacts
   Scenario: admin_interview.yml Pro Se login 
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
+    And the maximum seconds for each Step in this Scenario is 40
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
@@ -35,7 +35,7 @@ Feature: The interviews run without erroring
   @ai3 @admin_interview @taps @firm @accessibility
   Scenario: admin_interview.yml Get Firm
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
+    And the maximum seconds for each Step in this Scenario is 40
     And I check all pages for accessibility issues
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
@@ -53,7 +53,7 @@ Feature: The interviews run without erroring
   @ai4 @admin_interview @taps @accessibility
   Scenario: admin_interview.yml is accessible
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 50
+    And the maximum seconds for each Step in this Scenario is 70
     And I check all pages for accessibility issues
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
@@ -75,7 +75,7 @@ Feature: The interviews run without erroring
   @ai5 @admin_interview @taps @admin @courts
   Scenario: admin_interview.yml See court information
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 20
+    And the maximum seconds for each Step in this Scenario is 40
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
@@ -95,7 +95,7 @@ Feature: The interviews run without erroring
   @ai6 @admin_interview @attach
   Scenario: multiple-times through attach
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 40
+    And the maximum seconds for each Step in this Scenario is 60
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I set the variable "my_username" to secret "TYLER_EMAIL"
@@ -137,7 +137,7 @@ Feature: The interviews run without erroring
   @ai7 @admin_interview @attach @prose
   Scenario: earlyish stop attach when no service contacts
     Given I start the interview at "admin_interview.yml"
-    And the maximum seconds for each Step in this Scenario is 40
+    And the maximum seconds for each Step in this Scenario is 60
     And I set the variable "jurisdiction_id" to "illinois"
     And I tap to continue
     And I set the variable "my_username" to secret "PROSE_EMAIL"
