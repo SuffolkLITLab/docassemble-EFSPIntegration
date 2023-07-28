@@ -12,6 +12,8 @@ include:
 features:
   question back button: True
   navigation back button: False
+  custom datatypes to load:
+    - ALVisiblePassword
 ---
 default screen parts:
   back button label: |

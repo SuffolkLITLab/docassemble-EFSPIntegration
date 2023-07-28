@@ -247,7 +247,7 @@ code: |
 id: docket id
 generic object: EFCaseSearch
 question: |
-  ${ str(x.docket_lookup_choice) }
+  What is your ${ str(x.docket_lookup_choice) }?
 subquestion: |
   ${ collapse_template(x.case_number_format_template) }
 

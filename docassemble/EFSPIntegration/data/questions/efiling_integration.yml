@@ -504,7 +504,7 @@ code: |
     opt_srv_options, opt_srv_code = filter_codes(x.optional_service_options, opt_srv_filter, opt_srv_default)
     if opt_srv_code is None:
       # We shouldn't automatically add things, but should pay attention to:
-      log(f"Can't find optional service for {x.filing_code} at {court_id}, {opt_srv_filter}")
+      log(f"Can't find optional service for {x.filing_type} at {court_id}, {opt_srv_filter}, these options: {x.optional_service_options}")
     else:
       new_opt_srv = x.optional_services.appendObject()
       new_opt_srv.code = opt_srv_code
