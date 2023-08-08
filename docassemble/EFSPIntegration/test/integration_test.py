@@ -373,14 +373,16 @@ class TestClass:
 
     def test_court_record(self):
         print("\n\n### Court record ###\n\n")
-        contact = {}
-        contact["first"] = "John"
-        contact["last"] = "Brown"
-        cases = self.basic_assert(
-            self.proxy_conn.get_cases_raw("adams", person_name=contact)
-        )
-        assert len(cases.data) > 0
-        case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
+        # NOTE(brycew): Illinois turned off search by case name, so turning it off here.
+        # Maybe consider testing this on another jurisdiction.
+        #contact = {}
+        #contact["first"] = "John"
+        #contact["last"] = "Brown"
+        #cases = self.basic_assert(
+        #    self.proxy_conn.get_cases_raw("adams", person_name=contact)
+        #)
+        #assert len(cases.data) > 0
+        case_id = "2018SC241" # cases.data[0]["value"]["caseTrackingID"]["value"]
         case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
         doc_resp = self.proxy_conn.get_document("adams", case_id)
         assert doc_resp.response_code == 405
