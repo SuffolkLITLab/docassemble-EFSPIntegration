@@ -1,0 +1,39 @@
+metadata:
+  title: EfileProxy Logs Download
+  short title: Efile Logs
+  required privileges:
+    - admin
+---
+modules:
+  - .efm_client
+---
+objects:
+  da_file: DAFile
+---
+code: |
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
+---
+code: |
+  da_file.initialize(filename='logs.txt')
+  resp = proxy_conn.get_logs()
+  with open(da_file.path(), 'w') as f:
+    if resp.is_ok():
+      for line in resp.data:
+        f.write(line)
+        f.write("\n")
+    else:
+      f.write(resp.error_msg)
+  da_file_written = True
+---
+mandatory: True
+question: Get logs from ${ proxy_conn.base_url }
+subquestion: |
+  Press continue to get logs relating to your server traffic from ${ proxy_conn.base_url }.
+continue button field: start_screen
+---
+need:
+  - da_file_written
+mandatory: True
+question: Logs from ${ proxy_conn.base_url }
+subquestion: |
+  Right click to download [the logs here](${ da_file.url_for() }).
