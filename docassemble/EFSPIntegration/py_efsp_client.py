@@ -684,12 +684,18 @@ class EfspConnection:
         user_id: str = None,
         start_date: datetime = None,
         before_date: datetime = None,
+        case_number: str = None,
+        envelope_number: str = None,
+        filing_status: str = None
     ) -> ApiResponse:
         """Returns a list of filings that a particular user has made with a court."""
         params = {
             "user_id": user_id,
             "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
             "before_date": before_date.strftime("%Y-%m-%d") if before_date else None,
+            "case_number": case_number,
+            "envelope_number": envelope_number,
+            "filing_status": filing_status,
         }
         send = lambda: self.proxy_client.get(
             self.full_url(f"filingreview/courts/{court_id}/filings"), params=params

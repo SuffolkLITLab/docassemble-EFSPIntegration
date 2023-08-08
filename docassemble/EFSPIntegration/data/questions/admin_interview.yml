@@ -680,7 +680,7 @@ fields:
     default: ${ updated_attorney.default_last }
 ---
 question: |
-  Search dates
+  Search params
 fields:
   - Start date: start_date
     datatype: date
@@ -689,6 +689,12 @@ fields:
   - Before date: before_date
     datatype: date
     default: ${ today().plus(days=1).format("yyyy-MM-dd")}
+    required: False
+  - Case Number: fl_case_number
+    required: False
+  - Envelope Number: fl_envelope_number
+    required: False
+  - Filing Status: fl_filing_status
     required: False
 continue button field: ask_for_search_dates
 ---
@@ -859,7 +865,10 @@ code: |
   resp = proxy_conn.get_filing_list(court_id, 
       user_id = filtering_user_id,
       start_date = start_date if defined('start_date') else None, 
-      before_date = before_date if defined('before_date') else None)
+      before_date = before_date if defined('before_date') else None,
+      case_number = fl_case_number if defined('fl_case_number') else None,
+      envelope_number = fl_envelope_number if defined('fl_envelope_number') else None,
+      filing_status = fl_filing_status if defined('fl_filing_status') else None)
   if resp.data is None:
     resp.data = []
   globals().pop('filtering_user_id', None)

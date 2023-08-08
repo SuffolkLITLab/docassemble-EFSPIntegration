@@ -385,7 +385,10 @@ class TestClass:
             )  # person_name=contact)
         )
         assert len(cases.data) > 0
-        case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
+        if "value" not in cases.data[0] and "caseAugmentationPoint" in cases.data[0]:
+            case_id = cases.data[0]["caseAugmentationPoint"][1]["value"]["rest"][1]["value"]["identificationID"]["value"]
+        else:
+            case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
         case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
         doc_resp = self.proxy_conn.get_document("adams", case_id)
         assert doc_resp.response_code == 405
