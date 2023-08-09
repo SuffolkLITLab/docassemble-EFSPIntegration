@@ -34,7 +34,6 @@ code: |
   for review in all_reviews:
     after = 0
     for line in review.split("\n"):
-      log(line)
       if interest_re1.search(line):
         after = 4
       if after > 0:
