@@ -378,11 +378,12 @@ class TestClass:
         #contact = {}
         #contact["first"] = "John"
         #contact["last"] = "Brown"
-        #cases = self.basic_assert(
-        #    self.proxy_conn.get_cases_raw("adams", person_name=contact)
-        #)
-        #assert len(cases.data) > 0
-        case_id = "2018SC241" # cases.data[0]["value"]["caseTrackingID"]["value"]
+        docket_number = "2018SC241"
+        cases = self.basic_assert(
+            self.proxy_conn.get_cases_raw("adams", docket_number=docket_number ) # person_name=contact)
+        )
+        assert len(cases.data) > 0
+        case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
         case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
         doc_resp = self.proxy_conn.get_document("adams", case_id)
         assert doc_resp.response_code == 405
