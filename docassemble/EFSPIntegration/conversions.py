@@ -59,11 +59,12 @@ def error_notification(err, message=None, trace=None, referer=None, the_vars=Non
     recipient_email = get_config("error notification email", None)
     if not recipient_email:
         return
-    if (
-        err.__class__.__name__
-        in ["CSRFError", "ClientDisconnected", "MethodNotAllowed", "DANotFoundError"]
-        + get_config("suppress error notifications", [])
-    ):
+    if err.__class__.__name__ in [
+        "CSRFError",
+        "ClientDisconnected",
+        "MethodNotAllowed",
+        "DANotFoundError",
+    ] + get_config("suppress error notifications", []):
         return
     email_recipients = []
     if isinstance(recipient_email, list):
