@@ -1,0 +1,66 @@
+metadata:
+  title: EfileProxy Logs Download
+  short title: Efile Logs
+  required privileges:
+    - admin
+---
+modules:
+  - .efm_client
+---
+objects:
+  da_file: DAFile
+---
+code: |
+  proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
+---
+code: |
+  import re
+  da_file.initialize(filename='logs.txt')
+  resp = proxy_conn.get_logs()
+  review_re = re.compile("FilingReviewCommentsText>[^<]")
+  all_reviews = []
+  with open(da_file.path(), 'w') as f:
+    if resp.is_ok():
+      for log_line in resp.data:
+        f.write(log_line)
+        if review_re.search(log_line):
+          all_reviews.append(log_line)
+        f.write("\n")
+    else:
+      f.write(resp.error_msg)
+  special_reviews = []
+  interest_re1 = re.compile("FilingReviewCommentsText>[^<]|CaseDocketID>|<ns6:CaseCourt>")
+  interest_re2 = re.compile("FilingReviewCommentsText>|CaseDocketID|IdentificationID")
+  for review in all_reviews:
+    after = 0
+    for line in review.split("\n"):
+      log(line)
+      if interest_re1.search(line):
+        after = 4
+      if after > 0:
+        if interest_re2.search(line):
+          special_reviews.append(line.strip())
+        after -= 1
+    special_reviews.append("---")
+  da_file_written = True
+---
+mandatory: True
+question: Get logs from ${ proxy_conn.base_url }
+subquestion: |
+  Press continue to get logs relating to your server traffic from ${ proxy_conn.base_url }.
+continue button field: start_screen
+---
+need:
+  - da_file_written
+mandatory: True
+question: Logs from ${ proxy_conn.base_url }
+subquestion: |
+  Right click to download [the logs here](${ da_file.url_for() }).
+
+  <h2 class="h3">Filing Review Comments</h2>
+
+  <pre>
+  <code>
+  ${ "\n".join(special_reviews).replace("<", "&lt;").replace(">", "&gt;") }
+  </code>
+  </pre>
