@@ -80,7 +80,7 @@ Feature: Make any type of filing
       | x.filing_type | 145495 | |
       | x.filing_description | example description | |
       | x.exhibits[0].pages | example_upload.pdf | |
-      | x.document_type | 7688 | lead_doc.document_type |
+      | x.user_chosen_document_type | 7688 | lead_doc.user_chosen_document_type |
       | x.user_chosen_filing_component | 332 | lead_doc.user_chosen_filing_component |
       | x[i].pages.target_number | 1 | lead_doc.exhibits[0].pages.there_is_another |
       | x.existing_parties_payment_dict['87bfa962-ce95-43c7-8370-021828672a38'] | True | lead_doc.existing_parties_payment_dict |
