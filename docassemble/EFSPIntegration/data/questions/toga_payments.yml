@@ -394,15 +394,7 @@ id: Payment Main screen
 question: |
   Edit payment methods for ${ my_username }
 subquestion: |
-<<<<<<< HEAD
-<<<<<<< HEAD
   Click **Next** to continue after adding or editing your payment methods.
-=======
-  You can click "Next" to continue after editing your payment methods.
->>>>>>> 713e3c3 (Better payment add screen)
-=======
-  You can click **Next** to continue after editing your payment methods.
->>>>>>> c3a4c7b (Small tweaks with default payments)
 
   ${ payment_template.content }
 ---
