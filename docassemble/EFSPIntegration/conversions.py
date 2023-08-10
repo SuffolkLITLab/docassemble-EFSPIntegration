@@ -823,8 +823,8 @@ def _payment_type(acc: Mapping) -> str:
         return f"{acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')}"
     elif acc.get("paymentAccountTypeCode") == "WV":
         return f"Waiver account"
-    elif acc.get("paymentAccountTypeCode").lower() == "bankaccount":
-        return f"Bank Account {'(' +acc.get('cardLast4') +')' if 'cardLast4' in acc else ''}".strip()
+    elif acc.get("paymentAccountTypeCode", "").lower() == "bankaccount":
+        return f"Bank Account {'(' +acc.get('cardLast4', '') +')' if 'cardLast4' in acc else ''}".strip()
     else:
         return f"{acc.get('paymentAccountTypeCode')}"
 
