@@ -820,28 +820,34 @@ code: |
 ---
 ################################
 ## Fees
+if: has_fees
 id: review_fees_screen
 question: |
   Review filing fees
 subquestion: |
-  Your payment account will be charged the following fees:
-  
-  % if has_fees:
+  Your payment method ${ "(" + tyler_payment_account_map[tyler_payment_id] + ") " if tyler_payment_id in tyler_payment_account_map else "" }will be charged the following fees:
+
   ${ fees_table }
   
   **Total: ${ currency(fee_total(fees_resp)) }**
-  % else:
-  There are no fees associated with this filing.
-  % endif
 fields:
-  - no label: review_fees_screen
+  - no label: review_fees_agree
     datatype: checkboxes
     choices:
-      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
+      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) }: agrees_to_pay_fees
     minlength: 1
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
+continue button field: review_fees_screen
+---
+if: not has_fees
+id: review_fees_screen
+question: |
+  Review filing fees
+subquestion: |
+  There are no fees associated with this filing.
+continue button field: review_fees_screen
 ---
 id: bad fees
 event: bad_fees

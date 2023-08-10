@@ -394,8 +394,10 @@ code: |
   res = proxy_conn.get_payment_account_list().data
   if res:
     tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
+    tyler_payment_account_map = {val[0]: val[1] for val in tyler_payment_account_options}
   else:
     tyler_payment_account_options = []
+    tyler_payment_account_map = {}
   # For now, don't show global options for payment accounts.
   #res = proxy_conn.get_global_payment_account_list().data
   #if res:

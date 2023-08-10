@@ -622,7 +622,13 @@ fields:
     choices: |
       x.maybe_user_partips
     js show if: |
-      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_filing"
+      val("x.self_in_case") == "is_self"
+  - I am filing for: x.self_partip_choice
+    datatype: object_radio
+    choices: |
+      x.maybe_user_partips
+    js show if: |
+      val("x.self_in_case") == "is_filing"
 ---
 generic object: EFCaseSearch
 code: |
