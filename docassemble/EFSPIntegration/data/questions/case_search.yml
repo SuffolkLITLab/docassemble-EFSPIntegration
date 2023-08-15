@@ -248,7 +248,7 @@ code: |
 id: docket id
 generic object: EFCaseSearch
 question: |
-  What is your ${ str(x.docket_lookup_choice) }?
+  What is your ${ str(x.docket_lookup_choice).lower() }?
 subquestion: |
   ${ collapse_template(x.case_number_format_template) }
 
@@ -284,7 +284,7 @@ if: |
  jurisdiction_id == 'illinois'
 template: x.case_number_format_template
 subject: |
-  How to enter your case number (Except Cook County)
+  How to enter your case number
 content: |
   Case numbers are usually in the following format: "YYYYxx###": where "YYYY" is the 4 digit year,
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
@@ -295,7 +295,7 @@ if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
 template: x.case_number_format_template
 subject: |
-  How to enter your case number (Chicago/Cook County only)
+  How to enter your case number
 content: |
   [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county).
 ---

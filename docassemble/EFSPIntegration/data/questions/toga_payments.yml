@@ -115,11 +115,15 @@ fields:
       code: |
         logged_in_user_is_global_admin
   - Name of payment method: new_account_name
+    help: |
+      You can name it anything. For example: "My Visa card", or "My bank". This name can help you identify the payment method on other screens.
   - Type: new_account_type_code
     datatype: radio
     choices:
       - Fee Waiver: WV
-      - eCheck: BankAccount
+      - Bank account: BankAccount
+        help: |
+          The bank account can be a checking or savings account. This is also known as an eCheck or an ACH transfer.
       - Credit Card: CC
   - note: |
       On the next screen, you'll be sent to a secure payments site to enter your credit card information.
@@ -131,6 +135,13 @@ fields:
     show if:
       variable: new_account_type_code
       is: BankAccount
+  - note: |
+      Note: For payments using a credit card or bank account, the following convenience fees apply:
+
+      * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.
+      * Bank account: $.025 flat fee for each submissions (also called an envelope).
+    js show if: |
+      val("new_account_type_code") !== "WV"
 ---
 code: |
   if not logged_in_user_is_global_admin:
@@ -198,10 +209,10 @@ question: |
   Update payment method
 subquestion: |
   % if payment_account_id_resp.data.get('paymentAccountTypeCode') == 'CC':
-  The card number is a ${ payment_account_id_resp.data.get("cardType").get('value') }, the last 4 digits are ${ payment_account_id_resp.data.get("cardLast4") },
+  The card type is ${ payment_account_id_resp.data.get("cardType").get('value') }, the last 4 digits are ${ payment_account_id_resp.data.get("cardLast4") },
   and it's expiration date is ${ payment_expiration(payment_account_id_resp.data) }.
 
-  To change the card number or expiration date, you should create a new payment method with the updated information.
+  To change the card type, number, or expiration date, you should create a new payment method with the updated information.
   % elif payment_account_id_resp.data.get('paymentAccountTypeCode') == 'BankAccount':
   The last 4 digits of the bank number are ${ payment_account_id_resp.data.get("cardLast4") }.
 
@@ -378,7 +389,7 @@ id: Payment Main screen
 question: |
   Edit payment methods for ${ my_username }
 subquestion: |
-  You can click **Next** to continue after editing your payment methods.
+  Click **Next** to continue after editing your payment methods.
 
   ${ payment_template.content }
 ---
@@ -388,6 +399,8 @@ id: select a payment method
 question: |
   Select a payment method
 subquestion: |
+  Your fees will be ready for review after you select a payment method.
+
   You can add and adjust payment methods with the button below.
 
   ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
