@@ -732,12 +732,12 @@ def parse_case_info(
         roles = {}
     new_case.details = entry
     new_case.court_id = court_id
-    if 'value' not in entry and 'caseAugmentationPoint' in entry:
+    if 'name' in entry and entry['name'] == "{http://release.niem.gov/niem/niem-core/4.0/}Case":
       # ECFv5 version
-      new_case.title = chain_xml(entry, ["caseTitleText", "value"])
-      new_case.tracking_id = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 1, "value", "identificationID", "value"])
-      new_case.docket_number = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 3, "value", "value"])
-      new_case.category = chain_xml(entry, ["caseAugmentationPoint", 1, "value", "rest", 0, "value", "value"])
+      new_case.title = chain_xml(entry, ["value", "caseTitleText", "value"])
+      new_case.tracking_id = chain_xml(entry, ["value", "caseAugmentationPoint", 1, "value", "rest", 1, "value", "identificationID", "value"])
+      new_case.docket_number = chain_xml(entry, ["value", "caseAugmentationPoint", 1, "value", "rest", 3, "value", "value"])
+      new_case.category = chain_xml(entry, ["value", "caseAugmentationPoint", 1, "value", "rest", 0, "value", "value"])
     else:
       # ECFv4 version
       new_case.title = chain_xml(entry, ["value", "caseTitleText", "value"])
@@ -790,9 +790,9 @@ def fetch_case_info(
     )
     new_case.case_details = full_case_details.data or {}
     # TODO: is the order of this array predictable? might it break if Tyler changes something?
-    if "value" not in new_case.case_details and "caseAugmentationPoint" in new_case.case_details:
+    if "name" in new_case.case_details and new_case.case_details["name"] == "{http://release.niem.gov/niem/niem-core/4.0/}Case":
         # ECFv5
-        new_case.case_type = chain_xml(new_case.case_details, ["caseAugmentationPoint", 1, "value", "rest", 4, "value", "value"])
+        new_case.case_type = chain_xml(new_case.case_details, ["value", "caseAugmentationPoint", 1, "value", "rest", 4, "value", "value"])
         maybe_court = chain_xml(
             new_case.case_details,
             [
@@ -809,14 +809,14 @@ def fetch_case_info(
             new_case.court_id = maybe_court
         new_case.efile_case_type = new_case.case_type
         new_case.title = chain_xml(
-            new_case.case_details, ["caseTitleText", "value"]
+            new_case.case_details, ["value", "caseTitleText", "value"]
         )
         new_case.date = tyler_daterep_to_datetime(
             chain_xml(
-                new_case.case_details, ["caseAugmentationPoint", 2, "value", "filedDate"]
+                new_case.case_details, ["value", "caseAugmentationPoint", 2, "value", "filedDate"]
             )
         )
-        for aug in chain_xml(new_case.case_details, ["caseAugmentationPoint"]):
+        for aug in chain_xml(new_case.case_details, ["value", "caseAugmentationPoint"]):
             # TODO(brycew): get the AppellateCaseOriginalCase stuff from ECF5
             if (
                 aug.get("name")
@@ -840,7 +840,7 @@ def fetch_case_info(
                         attorney_tyler_id, ALIndividual
                     )
                     _parse_attorney(new_att_obj, attorney)
-                    parties = attorney.get("caseRepresentedPartyReference", [])
+                    parties = chain_xml(attorney, ["caseOfficialAugmentationPoint", 0, "value", "caseRepresentedParty"])
                     for party in parties:
                         party_id = _parse_participant_id(party.get("ref", {}))
                         if party_id in new_case.party_to_attorneys:

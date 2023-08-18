@@ -57,7 +57,7 @@ def _give_data_url(bundle: ALDocumentBundle, key: str = "final") -> None:
                             "http://localhost/",
                             "http://" + get_config("external hostname") + "/",
                         )
-                    attachment.page_court = attachment_pdf.num_pages()
+                    attachment.page_count = attachment_pdf.num_pages()
             else:
                 doc_pdf = doc.as_pdf(key)
                 doc.data_url = doc_pdf.url_for(external=True, temporary=True)
@@ -88,6 +88,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
             "filing_type_options",
             "filing_type_map",
             "party_type_options",
+            "court_bundle_list",
             "available_efile_courts",
             "case_category_map",
             "full_court_info",

@@ -626,7 +626,7 @@ fields:
 ---
 sets:
   - new_service_contact.name.first
-  - new_service_contact.address.address  
+  - new_service_contact.address.address
 id: create service contact
 question: |
   Create a new service contact
