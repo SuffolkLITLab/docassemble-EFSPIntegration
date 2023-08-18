@@ -37,7 +37,11 @@ comment: |
   #      ' <button>Click here if not working</button> </input>' +
 id: new-payment-method
 question: |
+  % if defined('creation_status') and creation_status == 'success':
+  New payment method added
+  % else:
   New payment method
+  % endif
 # TODO: using url_args this way means you can only create one
 # payment method per session!
 subquestion: |
@@ -389,7 +393,7 @@ id: Payment Main screen
 question: |
   Edit payment methods for ${ my_username }
 subquestion: |
-  Click **Next** to continue after editing your payment methods.
+  Click **Next** to continue after adding or editing your payment methods.
 
   ${ payment_template.content }
 ---
