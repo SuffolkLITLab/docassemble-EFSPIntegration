@@ -414,10 +414,10 @@ def make_filters(
 ) -> Iterable[Callable[..., bool]]:
     filter_lambdas = []
     for filter_fn in filters:
-        if isinstance(filter_fn, SearchType):
-            filter_lambdas.append(make_filter(filter_fn))
-        else:
+        if callable(filter_fn):
             filter_lambdas.append(filter_fn)
+        else:
+            filter_lambdas.append(make_filter(filter_fn))
     for filter_fn in filters:
         if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
 

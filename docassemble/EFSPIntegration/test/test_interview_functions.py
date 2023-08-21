@@ -1,12 +1,6 @@
 
-import json
 import unittest
-from unittest.mock import MagicMock
-from pathlib import Path
-from docassemble.base.core import DAObject
-from ..efm_client import ProxyConnection, ApiResponse
-from ..conversions import choices_and_map
-from ..interview_logic import *
+from ..interview_logic import make_filters, filter_codes, make_filter, ContainAny, CodeType
 
 filing_types = [
  ('29811', 'Change'),
@@ -226,6 +220,13 @@ class TestInterviews(unittest.TestCase):
 
     def test_code_filter(self):
       filters = make_filters([CodeType("143184")])
+      options, _ = filter_codes(filing_types, filters, None, None)
+
+      self.assertEqual(1, len(options))
+      self.assertEqual(options[0][1], "Oath")
+
+    def test_func_filter(self):
+      filters = make_filters([lambda y: y[0] == "143184"])
       options, _ = filter_codes(filing_types, filters, None, None)
 
       self.assertEqual(1, len(options))
