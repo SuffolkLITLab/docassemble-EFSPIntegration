@@ -10,6 +10,7 @@ from typing import (
     List,
     Tuple,
     Optional,
+    NamedTuple,
     Iterable,
     Union,
     TypedDict,
@@ -361,34 +362,60 @@ def get_max_allowed_sizes(proxy_conn, court_id: str) -> Optional[Tuple[int, int]
 class CodeType(str):
     pass
 
+class ContainAny(list):
+    pass
+
+# TODO(brycew): python 3.10, make this Iterable[str]
+SearchType = Union[Iterable, ContainAny, str, CodeType]
+
+def make_filter(
+    search: Optional[SearchType]
+) -> Callable[..., bool]:
+    """Makes a 'filter' function from some simple type.
+    
+    Necessary because docassemble doesn't store lambdas and functions well in
+    interview dicts, so the filters need to be set as primitive types and kept
+    that way until the search actually happens (in filter_codes).
+    """
+    if not search:
+        return lambda opt: True
+    if isinstance(search, CodeType):
+        return lambda opt, search_code=search: opt[0] == search_code
+    elif isinstance(search, str):
+        # unfortunately mypy doesn't work work well with lambdas, so use a def instead
+        # https://github.com/python/mypy/issues/4226
+        def func_from_str(opt, search_str=search):
+            return (opt[1] or "").lower().strip() == search_str.lower().strip()
+
+        return func_from_str
+    elif isinstance(search, ContainAny):
+        def func_from_any(opt, search_list=search):
+            return any(
+                [
+                    search_item.lower() in (opt[1] or "").lower()
+                    for search_item in search_list
+                ]
+            )
+
+        return func_from_any
+    else: # if isinstance(search, Iterable):
+        def func_from_iter(opt, search_list=search):
+            return all(
+                [
+                    search_item.lower() in (opt[1] or "").lower()
+                    for search_item in search_list
+                ]
+            )
+
+        return func_from_iter
 
 def make_filters(
-    filters: Iterable[Union[Callable[..., bool], str, CodeType]]
+    filters: Iterable[Union[Callable[..., bool], SearchType]]
 ) -> Iterable[Callable[..., bool]]:
     filter_lambdas = []
     for filter_fn in filters:
-        if isinstance(filter_fn, CodeType):
-            filter_lambdas.append(
-                lambda opt, filter_code=filter_fn: opt[0] == filter_code
-            )
-        elif isinstance(filter_fn, str):
-            # unfortunately mypy doesn't work work well with lambdas, so use a def instead
-            # https://github.com/python/mypy/issues/4226
-            def func_from_str(opt, filter_str=filter_fn):
-                return (opt[1] or "").lower().strip() == filter_str.lower().strip()
-
-            filter_lambdas.append(func_from_str)
-        elif isinstance(filter_fn, Iterable):
-
-            def func_from_iter(opt, filter_list=filter_fn):
-                return all(
-                    [
-                        filter_item.lower() in (opt[1] or "").lower()
-                        for filter_item in filter_list
-                    ]
-                )
-
-            filter_lambdas.append(func_from_iter)
+        if isinstance(filter_fn, SearchType):
+            filter_lambdas.append(make_filter(filter_fn))
         else:
             filter_lambdas.append(filter_fn)
     for filter_fn in filters:
@@ -402,16 +429,16 @@ def make_filters(
 
 
 def filter_codes(
-    options: Iterable, filters: Iterable, default: str
+    options: Iterable, filters: Iterable[Union[Callable[..., bool], SearchType]], default: str, exclude: Optional[Callable[..., bool]]=None
 ) -> Tuple[List[Any], Optional[str]]:
     """Given a list of filter functions from most specific to least specific,
-    (if true, use that code), filters a total list of codes"""
+    (if true, use that code), filters a total list of codes. If any codes match the exclude filter, won't use them."""
     codes_tmp: List[Any] = []
     filter_lambdas = make_filters(filters)
     for filter_fn in filter_lambdas:
         if codes_tmp:
             break
-        codes_tmp = [opt for opt in options if filter_fn(opt)]
+        codes_tmp = [opt for opt in options if filter_fn(opt) and (not exclude or not exclude(opt))]
 
     codes = sorted(codes_tmp, key=lambda option: option[1] + str(option[0]))
     if len(codes) == 1:
