@@ -362,17 +362,18 @@ def get_max_allowed_sizes(proxy_conn, court_id: str) -> Optional[Tuple[int, int]
 class CodeType(str):
     pass
 
+
 class ContainAny(list):
     pass
+
 
 # TODO(brycew): python 3.10, make this Iterable[str]
 SearchType = Union[Iterable, ContainAny, str, CodeType]
 
-def make_filter(
-    search: Optional[SearchType]
-) -> Callable[..., bool]:
+
+def make_filter(search: Optional[SearchType]) -> Callable[..., bool]:
     """Makes a 'filter' function from some simple type.
-    
+
     Necessary because docassemble doesn't store lambdas and functions well in
     interview dicts, so the filters need to be set as primitive types and kept
     that way until the search actually happens (in filter_codes).
@@ -389,6 +390,7 @@ def make_filter(
 
         return func_from_str
     elif isinstance(search, ContainAny):
+
         def func_from_any(opt, search_list=search):
             return any(
                 [
@@ -398,7 +400,8 @@ def make_filter(
             )
 
         return func_from_any
-    else: # if isinstance(search, Iterable):
+    else:  # if isinstance(search, Iterable):
+
         def func_from_iter(opt, search_list=search):
             return all(
                 [
@@ -408,6 +411,7 @@ def make_filter(
             )
 
         return func_from_iter
+
 
 def make_filters(
     filters: Iterable[Union[Callable[..., bool], SearchType]]
@@ -429,16 +433,24 @@ def make_filters(
 
 
 def filter_codes(
-    options: Iterable, filters: Iterable[Union[Callable[..., bool], SearchType]], default: str, exclude: Optional[Callable[..., bool]]=None
+    options: Iterable,
+    filters: Iterable[Union[Callable[..., bool], SearchType]],
+    default: str,
+    exclude: Optional[Callable[..., bool]] = None,
 ) -> Tuple[List[Any], Optional[str]]:
     """Given a list of filter functions from most specific to least specific,
-    (if true, use that code), filters a total list of codes. If any codes match the exclude filter, won't use them."""
+    (if true, use that code), filters a total list of codes. If any codes match the exclude filter, won't use them.
+    """
     codes_tmp: List[Any] = []
     filter_lambdas = make_filters(filters)
     for filter_fn in filter_lambdas:
         if codes_tmp:
             break
-        codes_tmp = [opt for opt in options if filter_fn(opt) and (not exclude or not exclude(opt))]
+        codes_tmp = [
+            opt
+            for opt in options
+            if filter_fn(opt) and (not exclude or not exclude(opt))
+        ]
 
     codes = sorted(codes_tmp, key=lambda option: option[1] + str(option[0]))
     if len(codes) == 1:
