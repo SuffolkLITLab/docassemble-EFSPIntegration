@@ -868,6 +868,8 @@ code: |
   if not fees_resp.is_ok():
     log_error_and_notify('Fees not ok', fees_resp)
 ---
+need:
+  - fee_reason_label
 depends on:
   - fees_resp
 table: fees_table
@@ -875,9 +877,21 @@ rows: |
   [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
 columns:
   - Reason: |
-      row_item.get('allowanceChargeReason',{}).get('value')
+      fee_reason_label(row_item)
   - Amount: |
       currency(row_item.get('amount',{}).get('value',0))
+---
+code: |
+  def fee_reason_label(charge_obj):
+    reason = charge_obj.get('allowanceChargeReason',{}).get('value')
+    code = charge_obj.get("id", {}).get("value")
+    if reason.lower() == "filing fee":
+      return reason + " (" + filing_type_map.get(code)["name"] + ")"
+    else:
+      # TODO(brycew): this could further explain the optional service, but
+      # we don't know which filing it's from. Would need a full opt serv dict for that
+      # and the API is probably a bit too slow for that.
+      return reason
 ---
 code: |
   if fees_resp.is_ok():
