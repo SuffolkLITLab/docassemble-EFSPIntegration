@@ -371,7 +371,7 @@ class ContainAny(list):
 SearchType = Union[Iterable, ContainAny, str, CodeType]
 
 
-def make_filter(search: Optional[SearchType]) -> Callable[..., bool]:
+def make_filter(search: Union[Callable[..., bool], SearchType, None]) -> Callable[..., bool]:
     """Makes a 'filter' function from some simple type.
 
     Necessary because docassemble doesn't store lambdas and functions well in
@@ -379,7 +379,10 @@ def make_filter(search: Optional[SearchType]) -> Callable[..., bool]:
     that way until the search actually happens (in filter_codes).
     """
     if not search:
-        return lambda opt: True
+        # With None, this is usually with an exclude; so default to False
+        return lambda opt: False 
+    if callable(search):
+        return search
     if isinstance(search, CodeType):
         return lambda opt, search_code=search: opt[0] == search_code
     elif isinstance(search, str):
@@ -418,10 +421,7 @@ def make_filters(
 ) -> Iterable[Callable[..., bool]]:
     filter_lambdas = []
     for filter_fn in filters:
-        if callable(filter_fn):
-            filter_lambdas.append(filter_fn)
-        else:
-            filter_lambdas.append(make_filter(filter_fn))
+        filter_lambdas.append(make_filter(filter_fn))
     for filter_fn in filters:
         if not isinstance(filter_fn, CodeType) and isinstance(filter_fn, str):
 
@@ -436,20 +436,21 @@ def filter_codes(
     options: Iterable,
     filters: Iterable[Union[Callable[..., bool], SearchType]],
     default: str,
-    exclude: Optional[Callable[..., bool]] = None,
+    exclude: Union[Callable[..., bool], SearchType, None] = None,
 ) -> Tuple[List[Any], Optional[str]]:
     """Given a list of filter functions from most specific to least specific,
     (if true, use that code), filters a total list of codes. If any codes match the exclude filter, won't use them.
     """
     codes_tmp: List[Any] = []
     filter_lambdas = make_filters(filters)
+    exclude_lambda = make_filter(exclude)
     for filter_fn in filter_lambdas:
         if codes_tmp:
             break
         codes_tmp = [
             opt
             for opt in options
-            if filter_fn(opt) and (not exclude or not exclude(opt))
+            if filter_fn(opt) and (not exclude or not exclude_lambda(opt))
         ]
 
     codes = sorted(codes_tmp, key=lambda option: option[1] + str(option[0]))
