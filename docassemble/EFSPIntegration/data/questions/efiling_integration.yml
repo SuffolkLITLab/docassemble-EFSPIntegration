@@ -513,7 +513,14 @@ code: |
 generic object: DAObject
 code: |
   x.optional_services_defaults = []
+---
+generic object: DAObject
+code: |
   x.optional_services_filters = []
+---
+generic object: DAObject
+code: |
+  x.optional_services_exclude = None
 ---
 id: optional service multiplier
 generic object: DAObject
@@ -575,7 +582,7 @@ need:
   - x.filing_component_filters
 code: |
   x.filtered_filing_component_options, x.filing_component = \
-      filter_codes(x.filing_component_options, x.filing_component_filters, x.filing_component_default)
+      filter_codes(x.filing_component_options, x.filing_component_filters, x.filing_component_default, x.filing_component_exclude)
   if x.filing_component is None:
     del x.filing_component
     x.filing_component = x.user_chosen_filing_component
@@ -597,7 +604,7 @@ need:
   - x.document_type_filters
 code: |
   x.filtered_document_type_options, x.document_type = \
-      filter_codes(x.document_type_options, x.document_type_filters, x.document_type_default)
+      filter_codes(x.document_type_options, x.document_type_filters, x.document_type_default, x.document_type_exclude)
   if x.document_type is None:
     del x.document_type
     x.document_type = x.user_chosen_document_type
@@ -613,6 +620,10 @@ code: |
 ---
 generic object: DAObject
 code: |
+  x.document_type_exclude = None
+---
+generic object: DAObject
+code: |
   x.document_type_default = None
 ---
 generic object: DAObject
@@ -621,11 +632,22 @@ code: |
 ---
 generic object: DAObject
 code: |
+  x.filing_type_exclude = None
+---
+generic object: DAObject
+code: |
   x.filing_type_default = None
 ---
 generic object: DAObject
 code: |
   x.filing_component_filters = []
+---
+generic object: DAObject
+code: |
+  x.filing_component_exclude = None
+---
+generic object: DAObject
+code: |
   x.filing_component_default = None
 ---
 generic object: DAObject
@@ -644,7 +666,7 @@ need:
   - x.filing_type_filters
 code: |
   x.filtered_filing_type_options, x.filing_type = \
-      filter_codes(filing_type_options, x.filing_type_filters, x.filing_type_default)
+      filter_codes(filing_type_options, x.filing_type_filters, x.filing_type_default, x.filing_type_exclude)
   if x.filing_type is None and check_duplicate_codes(x.filtered_filing_type_options):
     # choices are the same from the user's view
     x.filing_type = x.filtered_filing_type_options[0][0]
@@ -909,7 +931,7 @@ fields:
 generic object: ALIndividual
 code: |
   x.party_type_filtered_options, x.party_type = filter_codes(
-    party_type_options, x.party_type_filters, x.party_type_default)
+    party_type_options, x.party_type_filters, x.party_type_default, x.party_type_exclude)
   if x.party_type is None:
     del x.party_type
     x.party_type = x.user_chosen_party_type
@@ -1053,14 +1075,14 @@ fields:
 ---
 code: |
   efile_case_category_filtered_options, efile_case_category = filter_codes(case_category_options,
-      efile_case_category_filters, efile_case_category_default)
+      efile_case_category_filters, efile_case_category_default, efile_case_category_exclude)
   if efile_case_category is None:
     del efile_case_category
     efile_case_category = user_chosen_case_category
 ---
 code: |
   efile_case_filtered_options, efile_case_type = filter_codes(case_type_options,
-    efile_case_type_filters, efile_case_type_default)
+    efile_case_type_filters, efile_case_type_default, efile_case_type_exclude)
   if efile_case_type is None:
     del efile_case_type
     efile_case_type = user_chosen_case_type

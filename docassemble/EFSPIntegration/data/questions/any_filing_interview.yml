@@ -27,9 +27,21 @@ objects:
 ---
 code: |
   efile_case_category_filters = []
+---
+code: |
   efile_case_category_default = None
+---
+code: |
+  efile_case_category_exclude = None
+---
+code: |
   efile_case_type_filters = []
+---
+code: |
   efile_case_type_default = None
+---
+code: |
+  efile_case_type_exclude = None
 ---
 mandatory: True
 code: |
@@ -641,6 +653,7 @@ generic object: ALIndividual
 code: |
   x.party_type_default = None
   x.party_type_filters = ['plaintiff'] if showifdef('user_role') == 'plaintiff' else ['defendant']
+  x.party_type_exclude = None
 ---
 id: party type of other parties
 question: |
