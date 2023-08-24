@@ -371,7 +371,9 @@ class ContainAny(list):
 SearchType = Union[Iterable, ContainAny, str, CodeType]
 
 
-def make_filter(search: Union[Callable[..., bool], SearchType, None]) -> Callable[..., bool]:
+def make_filter(
+    search: Union[Callable[..., bool], SearchType, None]
+) -> Callable[..., bool]:
     """Makes a 'filter' function from some simple type.
 
     Necessary because docassemble doesn't store lambdas and functions well in
@@ -380,7 +382,7 @@ def make_filter(search: Union[Callable[..., bool], SearchType, None]) -> Callabl
     """
     if not search:
         # With None, this is usually with an exclude; so default to False
-        return lambda opt: False 
+        return lambda opt: False
     if callable(search):
         return search
     if isinstance(search, CodeType):
