@@ -16,6 +16,7 @@ code: |
 if: new_account_type_code == 'WV'
 need:
   - waiver_resp
+id: waiver payment method created
 question: |
   % if waiver_resp.is_ok():
   Waiver payment method created!
@@ -23,7 +24,9 @@ question: |
   Something went wrong creating your Waiver payment method
   % endif
 subquestion: |
-  ${ debug_display(waiver_resp) }
+  % if get_config("debug"):
+  The method id is ${ debug_display(waiver_resp) }.
+  % endif
 continue button field: new_payment_account
 ---
 if: |
@@ -35,10 +38,13 @@ comment: |
   # the TOGA site, and it replies back to the proxy, which forwards back to the DA interview
   #      '  <input type="text" name="RequestXML" value="' + data +  '" style="display:none;"/> ' +
   #      ' <button>Click here if not working</button> </input>' +
+id: new-payment-method
 question: |
+  % if defined('creation_status') and creation_status == 'success':
+  New payment method added
+  % else:
   New payment method
-# TODO: using url_args this way means you can only create one
-# payment method per session!
+  % endif
 subquestion: |
   % if defined('creation_status'):
   % if creation_status == 'success':
@@ -102,7 +108,7 @@ code: |
   if 'creation_status' in action_arguments():
     creation_status = action_argument('creation_status')
 ---
-id: new payment method
+id: what new payment method
 question: |
   What type of payment method do you want to make?
 subquestion: |
@@ -114,11 +120,15 @@ fields:
       code: |
         logged_in_user_is_global_admin
   - Name of payment method: new_account_name
+    help: |
+      You can name it anything. For example: "My Visa card", or "My bank". This name can help you identify the payment method on other screens.
   - Type: new_account_type_code
     datatype: radio
     choices:
       - Fee Waiver: WV
-      - eCheck: BankAccount
+      - Bank account: BankAccount
+        help: |
+          The bank account can be a checking or savings account. This is also known as an eCheck or an ACH transfer.
       - Credit Card: CC
   - note: |
       On the next screen, you'll be sent to a secure payments site to enter your credit card information.
@@ -130,6 +140,13 @@ fields:
     show if:
       variable: new_account_type_code
       is: BankAccount
+  - note: |
+      Note: For payments using a credit card or bank account, the following convenience fees apply:
+
+      * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.
+      * Bank account: $.025 flat fee for each submissions (also called an envelope).
+    js show if: |
+      val("new_account_type_code") !== "WV"
 ---
 code: |
   if not logged_in_user_is_global_admin:
@@ -143,7 +160,7 @@ code: |
 ---
 template: payment_template
 subject: |
-  Payment methods 
+  Payment methods
 content: |
   ${ action_button_html(new_payment_account_url, label='New payment method', id_tag="new_payment_account") }
 
@@ -195,6 +212,17 @@ depends on:
 id: update payment method
 question: |
   Update payment method
+subquestion: |
+  % if payment_account_id_resp.data.get('paymentAccountTypeCode') == 'CC':
+  The card type is ${ payment_account_id_resp.data.get("cardType").get('value') }, the last 4 digits are ${ payment_account_id_resp.data.get("cardLast4") },
+  and it's expiration date is ${ payment_expiration(payment_account_id_resp.data) }.
+
+  To change the card type, number, or expiration date, you should create a new payment method with the updated information.
+  % elif payment_account_id_resp.data.get('paymentAccountTypeCode') == 'BankAccount':
+  The last 4 digits of the bank number are ${ payment_account_id_resp.data.get("cardLast4") }.
+
+  To change the bank account number, you should create a new payment method with the updated information.
+  % endif
 fields:
   - Payment method name: payment_account_name
     default: ${ payment_account_id_resp.data.get('accountName') if payment_account_id_resp.data else '' }
@@ -288,7 +316,7 @@ code: |
 ---
 code: |
   def payment_list_table(payment_list_resp):
-      ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", color="primary", size="md")}</span>'
+      ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", size="md")}</span>'
       if not payment_list_resp.data:
           return ret + "\n<div>You don't currently have any payment methods. Add some using above button.</div>"
       ret += f"""
@@ -310,7 +338,7 @@ code: |
           acc_id = payment.get("paymentAccountID")
           ret += f'<tr><td class="text-break">{payment.get("accountName")}</td>'
           ret += f'<td>{_payment_type(payment)}</td>'
-          ret += f'<td>{_payment_expiration(payment)}</td>'
+          ret += f'<td>{payment_expiration(payment)}</td>'
           ret += f'<td>{(payment.get("active") or {}).get("value", False)}</td>'
           edit_qs = [
               {"set": [{"payment_account_id": acc_id}]},
@@ -337,7 +365,7 @@ code: |
 ---
 question: Are you sure you want to remove your ${ _payment_labels(proxy_conn.get_payment_account(payment_account_id).data) }?
 subquestion: |
-  You won't be able to get it back, and will have to enter all of it's details again.
+  You won't be able to get it back, and will have to enter all of its details again.
 continue button field: are_you_sure_remove
 ---
 code: |
@@ -358,3 +386,49 @@ subject: |
   Payment methods
 content: |
   ${ payment_list_table(proxy_conn.get_payment_account_list()) }
+---
+need:
+  - tyler_login
+continue button field: payment_main_screen
+id: Payment Main screen
+question: |
+  Edit payment methods for ${ my_username }
+subquestion: |
+  Click **Next** to continue after adding or editing your payment methods.
+
+  ${ payment_template.content }
+---
+reconsider:
+  - tyler_payment_account_options
+id: select a payment method
+question: |
+  Select a payment method
+subquestion: |
+  Your fees will be ready for review after you select a payment method.
+
+  You can add and adjust payment methods with the button below.
+
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
+fields:
+  - Payment Account: tyler_payment_id
+    datatype: dropdown
+    code: |
+      tyler_payment_account_options
+---
+code: |
+  default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
+---
+code: |
+  allowable_card_types = full_court_info.get('allowablecardtypes', [])
+  res = proxy_conn.get_payment_account_list().data
+  if res:
+    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
+    tyler_payment_account_map = {val[0]: val[1] for val in tyler_payment_account_options}
+  else:
+    tyler_payment_account_options = []
+    tyler_payment_account_map = {}
+  # For now, don't show global options for payment accounts.
+  #res = proxy_conn.get_global_payment_account_list().data
+  #if res:
+  #  tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
+---

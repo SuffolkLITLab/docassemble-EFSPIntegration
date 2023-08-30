@@ -247,7 +247,7 @@ code: |
 id: docket id
 generic object: EFCaseSearch
 question: |
-  What is your ${ str(x.docket_lookup_choice) }?
+  What is your ${ str(x.docket_lookup_choice).lower() }?
 subquestion: |
   ${ collapse_template(x.case_number_format_template) }
 
@@ -283,7 +283,7 @@ if: |
  jurisdiction_id == 'illinois'
 template: x.case_number_format_template
 subject: |
-  How to enter your case number (Except Cook County)
+  How to enter your case number
 content: |
   Case numbers are usually in the following format: "YYYYxx###": where "YYYY" is the 4 digit year,
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
@@ -294,7 +294,7 @@ if: |
   jurisdiction_id == 'illinois' and 'cook' in x.court_id
 template: x.case_number_format_template
 subject: |
-  How to enter your case number (Chicago/Cook County only)
+  How to enter your case number
 content: |
   [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county).
 ---
@@ -458,7 +458,6 @@ code: |
 need:
   - users
   - to_add_participants
-  - user_role
   - is_user_party
   - is_other_party
   - other_parties
@@ -554,6 +553,8 @@ code: |
   def is_unused_party(p):
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_unused_filters)])
 ---
+need:
+  - user_started_case
 code: |
   if user_started_case:
     is_user_filters = is_plaintiff_filters
@@ -566,6 +567,8 @@ code: |
   def is_person_party(p):
     return p.person_type != 'business'
 ---
+need:
+  - user_started_case
 if: len(target_case.party_type_options) > 1
 comment: |
   TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes
@@ -621,7 +624,13 @@ fields:
     choices: |
       x.maybe_user_partips
     js show if: |
-      val("x.self_in_case") == "is_self" || val("x.self_in_case") == "is_filing"
+      val("x.self_in_case") == "is_self"
+  - I am filing for: x.self_partip_choice
+    datatype: object_radio
+    choices: |
+      x.maybe_user_partips
+    js show if: |
+      val("x.self_in_case") == "is_filing"
 ---
 generic object: EFCaseSearch
 code: |

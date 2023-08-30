@@ -38,7 +38,7 @@ __all__ = [
     "fetch_case_info",
     "_payment_type",
     "_payment_labels",
-    "_payment_expiration",
+    "payment_expiration",
     "filter_payment_accounts",
     "payment_account_labels",
     "filing_id_and_label",
@@ -406,8 +406,9 @@ def _is_person(possible_person_entity: dict) -> bool:
 
 def chain_xml(xml_val, elems: List[Union[str, int]]):
     val = xml_val
-    for elem in elems:
+    for idx, elem in enumerate(elems):
         if not val:
+            log(f"No {elem} ({idx}) in {xml_val} ({elems})")
             return None
         if isinstance(val, dict):
             val = val.get(elem) or {}
@@ -822,11 +823,13 @@ def _payment_type(acc: Mapping) -> str:
         return f"{acc.get('cardType',{}).get('value')}, {acc.get('cardLast4')}"
     elif acc.get("paymentAccountTypeCode") == "WV":
         return f"Waiver account"
+    elif acc.get("paymentAccountTypeCode", "").lower() == "bankaccount":
+        return f"Bank Account {'(' +acc.get('cardLast4', '') +')' if 'cardLast4' in acc else ''}".strip()
     else:
         return f"{acc.get('paymentAccountTypeCode')}"
 
 
-def _payment_expiration(acc: Mapping) -> str:
+def payment_expiration(acc: Mapping) -> str:
     if acc.get("paymentAccountTypeCode") == "CC":
         return f"{(acc.get('cardMonth') or {}).get('value', '??')}/{(acc.get('cardYear') or {}).get('value', '????')}"
     else:

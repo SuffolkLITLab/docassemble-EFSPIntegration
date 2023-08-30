@@ -818,66 +818,36 @@ code: |
 code: |
   admin_interview = "docassemble.EFSPIntegration:admin_interview.yml"
 ---
-code: |
-  toga_interview = "docassemble.EFSPIntegration:toga_payments_interview.yml"
----
-############ Payments Stuff ############
-reconsider:
-  - tyler_payment_account_options
-id: payment account
-question: |
-  Payment Account
-subquestion: |
-  Select an existing account below, or add a payment account
-  using the 
-  [payments screen](${ interview_url(i=toga_interview, reset=1, jurisdiction_id=jurisdiction_id) }){:target="_blank"}
-  
-  Refresh this page when you have finished adding the account.
-fields:
-  - Payment Account: tyler_payment_id
-    datatype: dropdown
-    code: |
-      tyler_payment_account_options
----
-code: |
-  default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
----
-code: |
-  allowable_card_types = full_court_info.get('allowablecardtypes', [])
-  res = proxy_conn.get_payment_account_list().data
-  if res:
-    tyler_payment_account_options = filter_payment_accounts(res, allowable_card_types)
-  else:
-    tyler_payment_account_options = []
-  # For now, don't show global options for payment accounts.
-  #res = proxy_conn.get_global_payment_account_list().data
-  #if res:
-  #  tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
----
 ################################
 ## Fees
+if: has_fees
 id: review_fees_screen
 question: |
   Review filing fees
 subquestion: |
-  Your payment account will be charged the following fees:
-  
-  % if has_fees:
+  Your payment method ${ "(" + tyler_payment_account_map[tyler_payment_id] + ") " if tyler_payment_id in tyler_payment_account_map else "" }will be charged the following fees:
+
   ${ fees_table }
   
   **Total: ${ currency(fee_total(fees_resp)) }**
-  % else:
-  There are no fees associated with this filing.
-  % endif
 fields:
-  - no label: review_fees_screen
+  - no label: review_fees_agree
     datatype: checkboxes
     choices:
-      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) if has_fees else 'No fees' }: agrees_to_pay_fees
+      - ${ 'I agree to pay the listed fees of ' + str(currency(fee_total(fees_resp))) }: agrees_to_pay_fees
     minlength: 1
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
+continue button field: review_fees_screen
+---
+if: not has_fees
+id: no fees screen
+question: |
+  Review filing fees
+subquestion: |
+  There are no fees associated with this filing.
+continue button field: review_fees_screen
 ---
 id: bad fees
 event: bad_fees
@@ -898,6 +868,8 @@ code: |
   if not fees_resp.is_ok():
     log_error_and_notify('Fees not ok', fees_resp)
 ---
+need:
+  - fee_reason_label
 depends on:
   - fees_resp
 table: fees_table
@@ -905,9 +877,21 @@ rows: |
   [fee for fee in fees_resp.data.get('allowanceCharge',[]) if fee.get('chargeIndicator',{}).get('value')]
 columns:
   - Reason: |
-      row_item.get('allowanceChargeReason',{}).get('value')
+      fee_reason_label(row_item)
   - Amount: |
       currency(row_item.get('amount',{}).get('value',0))
+---
+code: |
+  def fee_reason_label(charge_obj):
+    reason = charge_obj.get('allowanceChargeReason',{}).get('value')
+    code = charge_obj.get("id", {}).get("value")
+    if reason.lower() == "filing fee":
+      return reason + " (" + filing_type_map.get(code)["name"] + ")"
+    else:
+      # TODO(brycew): this could further explain the optional service, but
+      # we don't know which filing it's from. Would need a full opt serv dict for that
+      # and the API is probably a bit too slow for that.
+      return reason
 ---
 code: |
   if fees_resp.is_ok():
