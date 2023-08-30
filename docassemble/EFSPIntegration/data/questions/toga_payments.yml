@@ -45,8 +45,6 @@ question: |
   % else:
   New payment method
   % endif
-# TODO: using url_args this way means you can only create one
-# payment method per session!
 subquestion: |
   % if defined('creation_status'):
   % if creation_status == 'success':
