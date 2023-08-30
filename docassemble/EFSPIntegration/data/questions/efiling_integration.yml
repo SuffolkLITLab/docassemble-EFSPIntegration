@@ -842,7 +842,7 @@ fields:
 continue button field: review_fees_screen
 ---
 if: not has_fees
-id: review_fees_screen
+id: no fees screen
 question: |
   Review filing fees
 subquestion: |

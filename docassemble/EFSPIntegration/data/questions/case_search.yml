@@ -97,7 +97,6 @@ code: |
   else:
     x.court_id
     x.found_case = DAObject(x.instanceName + '.found_case')
-    log("parse_case_info")
     parse_case_info(proxy_conn, x.found_case, x.docket_case_response.data[0], x.court_id, fetch=True, roles=x.party_type_map)
   # undefine('x.docket_number_from_user', 'x.docket_case_response')
 ---
@@ -459,7 +458,6 @@ code: |
 need:
   - users
   - to_add_participants
-  - user_started_case
   - is_user_party
   - is_other_party
   - other_parties
@@ -555,6 +553,8 @@ code: |
   def is_unused_party(p):
     return any([pred([p.party_type, p.party_type_name]) for pred in make_filters(is_unused_filters)])
 ---
+need:
+  - user_started_case
 code: |
   if user_started_case:
     is_user_filters = is_plaintiff_filters
@@ -567,6 +567,8 @@ code: |
   def is_person_party(p):
     return p.person_type != 'business'
 ---
+need:
+  - user_started_case
 if: len(target_case.party_type_options) > 1
 comment: |
   TODO(brycew): should be attached to the DACaseSearch, but have had problems with lambda attributes

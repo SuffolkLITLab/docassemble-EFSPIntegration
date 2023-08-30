@@ -16,6 +16,7 @@ code: |
 if: new_account_type_code == 'WV'
 need:
   - waiver_resp
+id: waiver payment method created
 question: |
   % if waiver_resp.is_ok():
   Waiver payment method created!
@@ -23,7 +24,9 @@ question: |
   Something went wrong creating your Waiver payment method
   % endif
 subquestion: |
+  % if get_config("debug"):
   The method id is ${ debug_display(waiver_resp) }.
+  % endif
 continue button field: new_payment_account
 ---
 if: |
@@ -430,7 +433,4 @@ code: |
   #res = proxy_conn.get_global_payment_account_list().data
   #if res:
   #  tyler_payment_account_options.extend(filter_payment_accounts(res, allowable_card_types))
----
-code: |
-  toga_interview = "docassemble.EFSPIntegration:toga_payments_interview.yml"
 ---
