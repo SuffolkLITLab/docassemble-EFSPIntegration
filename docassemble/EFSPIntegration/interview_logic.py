@@ -104,6 +104,7 @@ def address_fields_with_defaults(
     proxy_conn, person: ALIndividual, is_admin: bool, **kwargs
 ):
     address_fields = person.address_fields(**kwargs)
+    log(address_fields)
     # Efiling requires zip most of the time, enough for us to require it
     for field in address_fields:
         if field.get("field", "").endswith(".zip"):
@@ -112,6 +113,7 @@ def address_fields_with_defaults(
         # Don't autofill if the person is an admin
         return address_fields
     firm_info = proxy_conn.get_firm()
+    log(firm_info)
     if firm_info.is_ok():
         if "address" in firm_info.data:
             for field in address_fields:
