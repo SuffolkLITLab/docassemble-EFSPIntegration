@@ -127,6 +127,7 @@ def address_fields_with_defaults(
                     field["default"] = firm_info.data["address"].get("state")
                 if field.get("field", "").endswith(".zip"):
                     field["default"] = firm_info.data["address"].get("zipCode")
+    log(f"final address fields: {address_fields}")
     return address_fields
 
 
