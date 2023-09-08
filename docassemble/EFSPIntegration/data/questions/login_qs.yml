@@ -310,12 +310,3 @@ only sets: full_court_info
 code: |
   full_court_info = get_full_court_info(proxy_conn, court_id)
 ---
-variable name: jurisdiction_names
-data:
-  illinois: Illinois
-  massachusetts: Massachusetts
-  texas: Texas
-  california: California
-  indiana: Indiana
-  louisiana: Louisiana
----

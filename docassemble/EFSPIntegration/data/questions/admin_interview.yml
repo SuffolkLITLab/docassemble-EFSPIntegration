@@ -1295,14 +1295,6 @@ question: |
 subquestion: |
   ${ error_message }
 ---
-variable name: jurisdiction_names
-data:
-  illinois: Illinois
-  massachusetts: Massachusetts
-  texas: Texas
-  california: California
-  indiana: Indiana
----
 code: |
   case_category_options, case_category_map = choices_and_map(proxy_conn.get_case_categories(court_id, fileable_only=False, timing=None).data)
 ---

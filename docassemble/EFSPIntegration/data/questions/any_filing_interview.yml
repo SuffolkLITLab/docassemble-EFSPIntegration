@@ -14,14 +14,6 @@ include:
 code: |
   user_wants_efile = True # This interview is always for e-filing
 ---
-variable name: jurisdiction_names
-data:
-  illinois: Illinois
-  massachusetts: Massachusetts
-  texas: Texas
-  california: California
-  indiana: Indiana
----
 objects:
   - case_search: EFCaseSearch.using(court_id=court_id)
   - lower_court_case: DAObject
