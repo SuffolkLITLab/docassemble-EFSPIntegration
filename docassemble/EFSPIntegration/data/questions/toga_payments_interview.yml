@@ -2,15 +2,6 @@ include:
   - login_qs.yml
   - toga_payments.yml
 ---
-# overriden from toga_payments to remove Louisana, not a Tyler jurisdiction
-variable name: jurisdiction_names
-data:
-  illinois: Illinois
-  massachusetts: Massachusetts
-  texas: Texas
-  california: California
-  indiana: Indiana
----
 # Overriden from toga_payments to remove the "you can go back"
 need:
   - tyler_login
