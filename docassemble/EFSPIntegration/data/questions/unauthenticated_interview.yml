@@ -7,10 +7,6 @@ data: !!omap
   - INDIVIDUAL: Self-represented user
   - "FIRM_ADMINISTRATOR": Administrator of a new firm
 ---
-code: |
-  if 'jurisdiction_id' in url_args:
-    jurisdiction_id = url_args['jurisdiction_id']
----
 mandatory: True
 id: main-unauth-page
 event: main_unauth_page

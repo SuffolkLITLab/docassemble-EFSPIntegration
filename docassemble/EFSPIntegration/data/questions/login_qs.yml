@@ -310,14 +310,6 @@ only sets: full_court_info
 code: |
   full_court_info = get_full_court_info(proxy_conn, court_id)
 ---
-id: which-jurisdiction
-question: |
-  Which jurisdiction are you filing in?
-fields:
-  - no label: jurisdiction_id
-    code: |
-      [{k: v} for k, v in jurisdiction_names.items() if k in jurisdiction_choices]
----
 variable name: jurisdiction_names
 data:
   illinois: Illinois
@@ -327,14 +319,3 @@ data:
   indiana: Indiana
   louisiana: Louisiana
 ---
-imports:
-  - requests
----
-code: |
-  if 'jurisdiction_id' in url_args:
-    jurisdiction_id = url_args['jurisdiction_id']
-  try:
-    jurisdiction_choices = set(requests.get(get_config("efile proxy", {}).get("url", "") + "/jurisdictions").json().keys())
-  except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.JSONDecodeError) as ex:
-    log(f"Couldn't connect with the efile proxy server! {ex}")
-    jurisdiction_id = ""

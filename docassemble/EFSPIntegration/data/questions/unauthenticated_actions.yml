@@ -15,6 +15,9 @@ modules:
   - .efm_client
   - .conversions
 ---
+imports:
+  - requests
+---
 include:
   - docassemble.ALToolbox:phone-number-validation.yml
   - docassemble.AssemblyLine:assembly_line.yml
@@ -43,6 +46,23 @@ code: |
 ---
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='', default_jurisdiction=jurisdiction_id)
+---
+id: which-jurisdiction
+question: |
+  Which jurisdiction are you filing in?
+fields:
+  - no label: jurisdiction_id
+    code: |
+      [{k: v} for k, v in jurisdiction_names.items() if k in jurisdiction_choices]
+---
+code: |
+  if 'jurisdiction_id' in url_args:
+    jurisdiction_id = url_args['jurisdiction_id']
+  try:
+    jurisdiction_choices = set(requests.get(get_config("efile proxy", {}).get("url", "") + "/jurisdictions").json().keys())
+  except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.JSONDecodeError) as ex:
+    log_error_and_notify(f"Couldn't connect with the efile proxy server! {ex}")
+    jurisdiction_id = ""
 ---
 code: |
   can_connect_to_proxy = proxy_conn.get_server_name().is_ok()
