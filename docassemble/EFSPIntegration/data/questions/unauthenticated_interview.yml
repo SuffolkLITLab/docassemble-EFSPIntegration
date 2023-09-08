@@ -10,8 +10,6 @@ data: !!omap
 code: |
   if 'jurisdiction_id' in url_args:
     jurisdiction_id = url_args['jurisdiction_id']
-  else:
-    jurisdiction_id = 'illinois'
 ---
 mandatory: True
 id: main-unauth-page

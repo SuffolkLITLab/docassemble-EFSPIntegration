@@ -24,7 +24,7 @@ objects:
 ---
 variable name: account_action_list
 data: !!omap
-  - register: "Register"
+  - register: "Create an e-filing account"
   - reset_user_password: "Reset your password"
   - self_resend_activation: "Resend activation email"
 ---

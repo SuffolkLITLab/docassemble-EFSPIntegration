@@ -985,12 +985,14 @@ code: |
     users[i].is_form_filler = False
 ---
 code: |
+  firm_details = proxy_conn.get_firm()
+---
+code: |
   # Seeing if a user is a firm can only be done by checking getFirm()["isIndividual"]
   # getFirm is valid for all users, and is where the address is for individuals
   if not can_check_efile:
     users[0].is_form_filler = False
   else:
-    firm_details = proxy_conn.get_firm()
     if firm_details.is_ok() and firm_details.data.get("isIndividual", False):
       users[0].is_form_filler = False
 ---
