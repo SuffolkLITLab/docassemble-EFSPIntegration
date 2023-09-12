@@ -151,7 +151,7 @@ fields:
 template: fees_explain
 subject: |
   Are there any fees?
-contents: |
+content: |
   For payments using a credit card or bank account, the following convenience fees apply:
 
   * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.

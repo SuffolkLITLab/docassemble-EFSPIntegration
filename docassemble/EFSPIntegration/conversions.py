@@ -562,13 +562,18 @@ def _parse_contact_means(obj, contact_means_xml):
             == "{http://niem.gov/niem/niem-core/2.0}ContactEmailID"
         ):
             email = contact_info.get("value", {}).get("value")
+            # Sometimes the email of a user can be redacted / sealed, but we aren't told about it.
             if email:
-                obj.email = email
+                if "@" in email: # the simplest email regex
+                    obj.email = email
+                else:
+                    obj.is_redacted = True
     return obj
 
 
 def _parse_participant(part_obj, participant_val, roles: dict):
     """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
+    part_obj.is_redacted = False # Assuming we can get all of the information
     part_obj.party_type = chain_xml(
         participant_val, ["value", "caseParticipantRoleCode", "value"]
     )
@@ -586,6 +591,13 @@ def _parse_participant(part_obj, participant_val, roles: dict):
     else:
         part_obj.person_type = "business"
         part_obj.name.first = entity.get("organizationName", {}).get("value", "")
+    if part_obj.name.full().lower() == "**sealed**":
+        # If their name is this exact string, it's likely that the case is redacted somehow.
+        part_obj.is_redacted = True
+        if hasattr(part_obj.name, "first"):
+            delattr(part_obj.name, "first")
+        if hasattr(part_obj.name, "last"):
+            delattr(part_obj.name, "last")
     part_obj.tyler_id = _parse_participant_id(entity)
     return part_obj
 
