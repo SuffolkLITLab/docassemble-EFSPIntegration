@@ -144,12 +144,18 @@ fields:
       variable: new_account_type_code
       is: BankAccount
   - note: |
-      Note: For payments using a credit card or bank account, the following convenience fees apply:
-
-      * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.
-      * Bank account: $.025 flat fee for each submissions (also called an envelope).
+      Note: ${ fees_explain.content }
     js show if: |
       val("new_account_type_code") !== "WV"
+---
+template: fees_explain
+subject: |
+  Are there any fees?
+contents: |
+  For payments using a credit card or bank account, the following convenience fees apply:
+
+  * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.
+  * Bank account: $0.25 flat fee for each submissions (also called an envelope).
 ---
 code: |
   if not logged_in_user_is_global_admin:
