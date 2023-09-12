@@ -859,7 +859,15 @@ fields:
     validation messages:
       minlength: |
         You must agree to pay the fees listed above.
+  - note: |
+      ${ collapse_template(convenience_fees_help) }
 continue button field: review_fees_screen
+---
+template: convenience_fees_help
+subject: |
+  What are these fees for?
+content: |
+  ${ fees_explain.content }
 ---
 if: not has_fees
 id: no fees screen
@@ -1034,7 +1042,7 @@ code: |
 ## disclaimer
 id: disclaimers
 question: |
-  Disclaimers
+  ${ full_court_info.get("name", "") } Disclaimers
 subquestion: |
   % if not disclaimers:
   No Disclaimers!
