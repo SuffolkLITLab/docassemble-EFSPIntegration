@@ -937,20 +937,15 @@ def get_tyler_roles(
     DAConfig"""
 
     if not user_details:
-        if not login_data:
-            return False, False
-        user_details = proxy_conn.get_user(
-            login_data.get("TYLER-ID", login_data.get("TYLER_ID"))
-        )
+        user_details = proxy_conn.get_user()
 
     if not user_details.data:
         return False, False
 
     is_admin = lambda role: role.get("roleName") == "FIRM_ADMIN"
-    firm_details = proxy_conn.get_firm()
     logged_in_user_is_admin = any(
         filter(is_admin, user_details.data.get("role"))
-    ) and not firm_details.data.get("isIndividual", False)
+    ) and not proxy_conn.get_firm().data.get("isIndividual", False)
     logged_in_user_is_global_admin = logged_in_user_is_admin and user_details.data.get(
         "email"
     ) in get_config("efile proxy").get("global server admins", [])
