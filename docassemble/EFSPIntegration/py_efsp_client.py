@@ -877,6 +877,10 @@ class EfspConnection:
         )
         return self._call_proxy(send)
 
+    def get_filer_types(self, court_id: str) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/courts/{court_id}/filer_types"))
+        return self._call_proxy(send)
+
     def get_case_types(
         self, court_id: str, case_category: str, timing: str = None
     ) -> ApiResponse:

@@ -73,6 +73,7 @@ code: |
   existing_parties_new_atts.gather(complete_attribute='attorney_ids')
   attorney_ids
   party_to_attorneys
+  filer_type
   if not needs_all_info:
     target_case = case_search
   all_case_parties
