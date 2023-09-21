@@ -564,7 +564,7 @@ def _parse_contact_means(obj, contact_means_xml):
             email = contact_info.get("value", {}).get("value")
             # Sometimes the email of a user can be redacted / sealed, but we aren't told about it.
             if email:
-                if "@" in email: # the simplest email regex
+                if "@" in email:  # the simplest email regex
                     obj.email = email
                 else:
                     obj.is_redacted = True
@@ -573,7 +573,7 @@ def _parse_contact_means(obj, contact_means_xml):
 
 def _parse_participant(part_obj, participant_val, roles: dict):
     """Given an xsd:CommonTypes-4.0:CaseParticipantType, fills it with necessary info"""
-    part_obj.is_redacted = False # Assuming we can get all of the information
+    part_obj.is_redacted = False  # Assuming we can get all of the information
     part_obj.party_type = chain_xml(
         participant_val, ["value", "caseParticipantRoleCode", "value"]
     )
