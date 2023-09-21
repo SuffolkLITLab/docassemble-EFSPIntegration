@@ -73,6 +73,7 @@ code: |
   existing_parties_new_atts.gather(complete_attribute='attorney_ids')
   attorney_ids
   party_to_attorneys
+  filer_type
   if not needs_all_info:
     target_case = case_search
   all_case_parties
@@ -389,6 +390,14 @@ field: filing_interview_initial_or_existing
 choices:
   - I am starting a new case: initial_document
   - I am adding a document to an existing case: existing_case
+---
+if: not full_court_info.get("initial")
+code: |
+  filing_interview_initial_or_existing = "existing_case"
+---
+if: not full_court_info.get("subsequent")
+code: |
+  filing_interview_initial_or_existing = "initial_document"
 ---
 code: |
   is_initial_filing = filing_interview_initial_or_existing == 'initial_document'

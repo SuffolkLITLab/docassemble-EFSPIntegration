@@ -751,6 +751,26 @@ fields:
     code: |
       sorted(case_type_options,key=lambda cat: cat[1])
 ---
+id: filer type
+question: |
+  Filer Type
+fields:
+  - Filer Type: filer_type
+    datatype: dropdown
+    code: |
+      sorted(filer_type_options, key=lambda filer: filer[1])
+---
+code: |
+  filer_type_options, filer_type_map = choices_and_map(proxy_conn.get_filer_types(court_id).data)
+---
+if: len(filer_type_options) == 0
+code: |
+  filer_type = ""
+---
+if: len(filer_type_options) == 1
+code: |
+  filer_type = filer_type_options[0][0]
+---
 code: |
   all_case_parties_tmp = []
   for u in users + other_parties:
