@@ -767,6 +767,10 @@ if: len(filer_type_options) == 0
 code: |
   filer_type = ""
 ---
+if: len(filer_type_options) == 1
+code: |
+  filer_type = filer_type_options[0][0]
+---
 code: |
   all_case_parties_tmp = []
   for u in users + other_parties:
