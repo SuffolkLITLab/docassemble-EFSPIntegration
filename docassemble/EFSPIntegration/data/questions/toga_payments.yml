@@ -2,6 +2,9 @@
 imports:
   - os
 ---
+modules:
+  - .conversions
+---
 if: |
   new_account_type_code == 'WV'
 need:
@@ -358,10 +361,10 @@ event: payment_account_remove
 code: |
   rm_payment_account_resp = proxy_conn.remove_payment_account(action_argument('account_id'))
   if rm_payment_account_resp.is_ok():
-    log("Removed payment method", "success")
+    log(word("Removed payment method"), "success")
   else:
-    log(f"Wasn't able to remove payment method: {rm_payment_account_resp}")
-    log("Wasn't able to remove payment method", "error")
+    log_error_and_notify(f"Wasn't able to remove payment method: {rm_payment_account_resp}")
+    log(word("Wasn't able to remove payment method"), "error")
 ---
 question: Are you sure you want to remove your ${ _payment_labels(proxy_conn.get_payment_account(payment_account_id).data) }?
 subquestion: |
@@ -375,10 +378,10 @@ code: |
   updated_payment_account_resp = proxy_conn.update_payment_account(payment_account_id, payment_account_name, payment_account_active)
   log(updated_payment_account_resp)
   if updated_payment_account_resp.is_ok():
-    log("Updated payment method", "success")
+    log(word("Updated payment method"), "success")
   else:
-    log(f"Wasn't able to update payment method: {update_payment_account_resp}")
-    log("Wasn't able to update payment method", "error")
+    log_error_and_notify(f"Wasn't able to update payment method: {update_payment_account_resp}")
+    log(word("Wasn't able to update payment method"), "error")
   payment_account_edit = True
 ---
 template: payment_template
