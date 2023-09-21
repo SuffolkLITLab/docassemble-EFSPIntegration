@@ -243,7 +243,7 @@ code: |
       ready_to_efile = True
     else:
       ready_to_efile = False
-      log(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
+      log_error_and_notify(f"Couldn't efile, remaining_to_check: {remaining_to_check}")
       fallback_user_choice
   globals().pop('check_resp', None)
 

@@ -57,9 +57,8 @@ code: |
       if x.found_cases is None: # we're okay with empty lists, but not None
         x.found_cases = DAEmpty(x.instanceName + '.found_cases')
     else:
-      log(x.case_search_task_status.result().error_message)
-      log(str(x.case_search_task_status.result().error_trace))
-      log(str(x.case_search_task_status.result().variables))
+      search_result = x.case_search_task_status.result()
+      log_error_and_notify(f"Case search failed!: {search_result.error_message)}\n{search_result.error_trace}\n{search_result.variables}")
       x.cms_connection_issue = False
       x.found_cases = DAEmpty(x.instanceName + '.found_cases')
 ---

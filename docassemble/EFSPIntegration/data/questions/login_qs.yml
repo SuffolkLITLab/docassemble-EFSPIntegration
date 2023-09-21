@@ -75,7 +75,7 @@ code: |
       # Re-raise only name errors, so DA can work correctly
       raise err
     except Exception as ex:
-      log(f"Error when trying to get da_store Tyler token: {ex}")
+      log_error_and_notify(f"Error when trying to get da_store Tyler token: {ex}")
 ---
 id: login with redis
 continue button field: continue_stored_login
