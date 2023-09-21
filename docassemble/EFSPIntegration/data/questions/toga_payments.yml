@@ -318,7 +318,7 @@ code: |
   def payment_list_table(payment_list_resp):
       ret = f'<span>{action_button_html(new_payment_account_url, label="Add a new payment method", icon="plus-circle", size="md")}</span>'
       if not payment_list_resp.data:
-          return ret + "\n<div>You don't currently have any payment methods. Add some using above button.</div>"
+          return ret + "\n<div>You don't currently have any payment methods. Add some using the above button.</div>"
       ret += f"""
       <div class="table-responsive">
       <table class="table table-striped">
@@ -414,6 +414,19 @@ fields:
     datatype: dropdown
     code: |
       tyler_payment_account_options
+---
+reconsider:
+  - tyler_payment_account_options
+if: len(tyler_payment_account_options) == 0
+question: |
+  Create a payment method
+subquestion: |
+  Your fees will be ready for review after you add a payment method.
+
+  You can add and adjust payment methods with the button below.
+
+  ${ action_button_html(url_ask("payment_main_screen"), label="Add and edit payment methods", icon="money-check-dollar", size="md") }
+event: tyler_payment_id
 ---
 code: |
   default_jurisdiction_waiver = get_config('efile proxy', {}).get('global waivers', {}).get(jurisdiction_id, '')
