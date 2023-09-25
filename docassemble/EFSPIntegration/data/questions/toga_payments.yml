@@ -152,9 +152,9 @@ template: fees_explain
 subject: |
   Are there any fees?
 content: |
-  For payments using a credit card or bank account, the following convenience fees apply:
+  For payments using a credit card, debit card, or bank account, the following convenience fees apply:
 
-  * Credit card: $ 1.00 or 2.89% of the total fees, whichever is greater.
+  * Credit card or debit card: $1.00 or 2.89% of the total fees, whichever is greater.
   * Bank account: $0.25 flat fee for each submissions (also called an envelope).
 ---
 code: |
