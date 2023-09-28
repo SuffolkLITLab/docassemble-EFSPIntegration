@@ -1,0 +1,266 @@
+include:
+  - docassemble.EFSPIntegration:efiling_integration.yml
+  - docassemble.EFSPIntegration:case_search.yml
+---
+code: |
+  proxy_conn = ProxyConnection(default_jurisdiction=jurisdiction_id)
+---
+mandatory: True
+code: |
+  jurisdiction_id
+  code_choice
+  if do_search and code_choice in searchable_codes:
+    search_term
+    show_search_result
+    show_retrieve_result
+  else:
+    trial_court
+    value(code_choice)
+    end
+---
+code: |
+  searchable_codes = ["optional_service", "case_type", "case_category", "party_type", "filing_type"]
+---
+code: |
+  if code_choice == "optional_service":
+    search_result = proxy_conn.search_optional_services(search_term)
+  elif code_choice == "case_type":
+    search_result = proxy_conn.search_case_types(search_term)
+  elif code_choice == "case_category":
+    search_result = proxy_conn.search_case_categories(search_term)
+  elif code_choice == "party_type":
+    search_result = proxy_conn.search_party_types(search_term)
+  elif code_choice == "filing_type":
+    search_result = proxy_conn.search_filing_types(search_term)
+  else:
+    pass
+---
+code: |
+  if code_choice == "optional_service":
+    retrieve_result = proxy_conn.retrieve_optional_services(selected_search)
+  elif code_choice == "case_type":
+    retrieve_result= proxy_conn.retrieve_case_types(selected_search)
+  elif code_choice == "case_category":
+    retrieve_result = proxy_conn.retrieve_case_categories(selected_search)
+  elif code_choice == "party_type":
+    retrieve_result = proxy_conn.retrieve_party_types(selected_search)
+  elif code_choice == "filing_type":
+    retrieve_result = proxy_conn.retrieve_filing_types(selected_search)
+  else:
+    pass
+---
+question: Search Result
+subquestion: |
+  ${ [next(iter(ch.values()), "") for ch in all_choices if next(iter(ch), "") == code_choice] } with "${ search_term }"
+
+  ${ debug_display(search_result) }
+fields:
+  - See more about: selected_search
+    code: |
+      search_result.data
+continue button field: show_search_result
+---
+event: show_retrieve_result
+question: Retrieve Result
+subquestion: |
+  ${ selected_search }
+
+  ## Courts:
+
+  % for loc in sorted(set(r['location'] for r in retrieve_result.data)):
+  * ${ loc }
+  % endfor
+
+  ## All Results
+
+  ${ debug_display(retrieve_result) }
+buttons:
+  - restart
+---
+variable name: all_choices
+data:
+      - case_category: Case category
+      - damage_amount: Damage amount
+      - procedure_remedy: Procedure remedy
+      - case_type: Case type
+      - case_subtype: Case subtype
+      - cross_reference: Cross reference
+      - party_type: Party type
+      - filing_type: Filing type
+      - document_type: Document type
+      - optional_service: Optional Service
+      - motion_type: Motion type
+      #- filing_component: Filing component
+---
+question: What code do you want to see?
+subquestion: |
+  Only some codes can be searched:
+
+  * Case types
+  * Case Category
+  * Party Type
+  * Filing Type
+  * Optional Service
+
+  For more info see [the documentation](https://github.com/SuffolkLITLab/EfileProxyServer/blob/main/docs/tyler_codes.md)
+fields:
+  - no label: code_choice
+    code: all_choices
+  - Search (if applicable): do_search
+    datatype: yesno
+  - Search term: search_term
+    show if: do_search
+---
+question: |
+  Initial case, or subsequent case?
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }
+fields:
+  - Initial case: is_initial_filing
+    datatype: yesnoradio
+---
+id: location
+question: | 
+  What court will you file this case in?
+fields:
+  - Court Location: trial_court
+    datatype: dropdown
+    code: |
+      trial_court_options
+---
+code: |
+  case_category_choices, case_category_map = \
+    choices_and_map(proxy_conn.get_case_categories(court_id).data, "{name} ({code})")
+---
+question: |
+  Case category?
+subquestion: |
+  In ${ trial_court }
+fields:
+  - Case category: case_category
+    code: case_category_choices
+---
+code: |
+  damage_amount_choices, damage_amount_map = \
+    choices_and_map(proxy_conn.get_damage_amounts(court_id).data, "{name} ({code})")
+---
+question: |
+  Damage Amount?
+subquestion: |
+  In ${ trial_court }
+fields:
+  - Damage amount: damage_amount
+    code: damage_amount_choices
+---
+code: |
+  procedure_remedy_choices, procedure_remedy_map = \
+    choices_and_map(proxy_conn.get_procedure_or_remedies(court_id).data, "{name} ({code})")
+---
+question: |
+  Procedure remedy
+subquestion: |
+  ${ trial_court }
+fields:
+  - Procedure remedy: procedure_remedy
+    code: procedure_remedy_choices
+---
+code: |
+  case_type_choices, case_type_map = \
+    choices_and_map(proxy_conn.get_case_types(court_id, case_category, timing='Initial' if is_initial_filing else 'Subsequent').data, "{name} ({code})")
+---
+question: |
+  Case type
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }
+fields:
+  - Case type: case_type
+    code: case_type_choices
+---
+code: |
+  case_subtype_options, case_subtype_map = \
+    choices_and_map(proxy_conn.get_case_subtypes(court_id, case_type).data, "{name} ({code})")
+---
+question: |
+  Case Subtype
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }, case type: ${ case_type_map[case_type]["name"] }
+fields:
+  - Case Subtype: case_subtype
+    datatype: dropdown
+    code: |
+      sorted(case_subtype_options, key=lambda cat: cat[1])
+---
+code: |
+  cross_reference_choices, cross_reference_map = \
+    choices_and_map(proxy_conn.get_cross_references(court_id, case_category).data, "{name} ({code})")
+---
+question: Cross References
+fields:
+  - Cross references: cross_reference
+    code: cross_reference_choices
+---
+code: |
+  party_type_choices, party_type_map = \
+    choices_and_map(proxy_conn.get_party_types(court_id, case_type).data, "{name} ({code})")
+---
+question: Party type
+fields:
+  - Party type: party_type
+    code: party_type_choices
+---
+code: |
+  filing_type_choices, filing_type_map = \
+    choices_and_map(proxy_conn.get_filing_types(court_id, case_category, case_type, is_initial_filing).data, "{name} ({code})")
+---
+question: Filing type
+fields:
+  - Filing type: filing_type
+    code: filing_type_choices
+---
+code: |
+  document_type_choices, document_type_map = \
+    choices_and_map(proxy_conn.get_document_types(court_id, filing_type).data, "{name} ({code})")
+---
+question: Document type
+fields:
+  - Document type: document_type
+    code: document_type_choices
+---
+code: |
+  optional_service_choices, optional_service_map = \
+    choices_and_map(proxy_conn.get_optional_services(court_id, filing_type).data, "{name} ({code})")
+---
+question: Optional service
+fields:
+  - Optional service: optional_service
+    code: optional_service_choices
+---
+code: |
+  motion_type_choices, motion_type_map = \
+    choices_and_map(proxy_conn.get_motion_types(court_id, filing_type).data, "{name} ({code})")
+---
+question: Motion type
+fields:
+  - Motion type: motion_type
+    code: motion_type_choices
+---
+code: |
+  def end_disp(code_name):
+    if defined(code_name):
+        val = value(code_name + "_map").get(value(code_name))
+        to_ret =  f"## {code_name.replace('_', ' ').capitalize()}\n\n" + pretty_display(val)
+        if val is None:
+          to_ret += "(no options were available)"
+        return to_ret + "\n"
+    else:
+        return ""
+---
+event: end
+question: All done
+subquestion: |
+  % for choice in reversed(all_choices):
+  ${ end_disp(next(iter(choice.keys()))) }
+  
+  % endfor
+buttons:
+  - restart
