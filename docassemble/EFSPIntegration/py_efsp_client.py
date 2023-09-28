@@ -868,8 +868,21 @@ class EfspConnection:
         )
         return self._call_proxy(send)
 
+    def search_case_categories(
+        self, search_term: Optional[str] = None
+    ) -> ApiResponse:
+        params = {"search": search_term}
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/categories"), params=params)
+        return self._call_proxy(send)
+
+    def retrieve_case_categories(
+        self, retrieve_name: Optional[str] = None
+    ) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/categories/{retrieve_name}"))
+        return self._call_proxy(send)
+
     def get_case_categories(
-        self, court_id: str, fileable_only: bool = False, timing: str = None
+        self, court_id: str, fileable_only: bool = False, timing: Optional[str] = None
     ) -> ApiResponse:
         params = {"fileable_only": fileable_only, "timing": timing}
         send = lambda: self.proxy_client.get(
@@ -881,6 +894,19 @@ class EfspConnection:
         send = lambda: self.proxy_client.get(
             self.full_url(f"codes/courts/{court_id}/filer_types")
         )
+        return self._call_proxy(send)
+
+    def search_case_types(
+        self, search_term: Optional[str] = None
+    ) -> ApiResponse:
+        params = {"search": search_term}
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/case_types"), params=params)
+        return self._call_proxy(send)
+
+    def retrieve_case_types(
+        self, retrieve_name: Optional[str] = None
+    ) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/case_types/{retrieve_name}"))
         return self._call_proxy(send)
 
     def get_case_types(
@@ -900,6 +926,19 @@ class EfspConnection:
         )
         return self._call_proxy(send)
 
+    def search_filing_types(
+        self, search_term: Optional[str] = None
+    ) -> ApiResponse:
+        params = {"search": search_term}
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/filing_types"), params=params)
+        return self._call_proxy(send)
+
+    def retrieve_filing_types(
+        self, retrieve_name: Optional[str] = None
+    ) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/filing_types/{retrieve_name}"))
+        return self._call_proxy(send)
+
     def get_filing_types(
         self, court_id: str, case_category: str, case_type: str, initial: bool
     ) -> ApiResponse:
@@ -917,6 +956,19 @@ class EfspConnection:
         send = lambda: self.proxy_client.get(
             self.full_url(f"codes/courts/{court_id}/service_types")
         )
+        return self._call_proxy(send)
+
+    def search_party_types(
+        self, search_term: Optional[str] = None
+    ) -> ApiResponse:
+        params = {"search": search_term}
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/party_types"), params=params)
+        return self._call_proxy(send)
+
+    def retrieve_party_types(
+        self, retrieve_name: Optional[str] = None
+    ) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/party_types/{retrieve_name}"))
         return self._call_proxy(send)
 
     def get_party_types(
@@ -957,6 +1009,20 @@ class EfspConnection:
             )
         )
         return self._call_proxy(send)
+
+    def search_optional_services(
+        self, search_term: Optional[str] = None
+    ) -> ApiResponse:
+        params = {"search": search_term}
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/optional_services"), params=params)
+        return self._call_proxy(send)
+
+    def retrieve_optional_services(
+        self, retrieve_name: Optional[str] = None
+    ) -> ApiResponse:
+        send = lambda: self.proxy_client.get(self.full_url(f"codes/optional_services/{retrieve_name}"))
+        return self._call_proxy(send)
+
 
     def get_optional_services(self, court_id: str, filing_type: str) -> ApiResponse:
         send = lambda: self.proxy_client.get(

@@ -8,19 +8,74 @@ code: |
 mandatory: True
 code: |
   jurisdiction_id
-  trial_court
-  value(code_choice)
-  end
+  code_choice
+  if do_search and code_choice in searchable_codes:
+    search_term
+    show_search_result
+    show_retrieve_result
+  else:
+    trial_court
+    value(code_choice)
+    end
 ---
-id: which-jurisdiction
-question: |
-  Which jurisdiction?
+code: |
+  searchable_codes = ["optional_service", "case_type", "case_category", "party_type", "filing_type"]
+---
+code: |
+  if code_choice == "optional_service":
+    search_result = proxy_conn.search_optional_services(search_term)
+  elif code_choice == "case_type":
+    search_result = proxy_conn.search_case_types(search_term)
+  elif code_choice == "case_category":
+    search_result = proxy_conn.search_case_categories(search_term)
+  elif code_choice == "party_type":
+    search_result = proxy_conn.search_party_types(search_term)
+  elif code_choice == "filing_type":
+    search_result = proxy_conn.search_filing_types(search_term)
+  else:
+    pass
+---
+code: |
+  if code_choice == "optional_service":
+    retrieve_result = proxy_conn.retrieve_optional_services(selected_search)
+  elif code_choice == "case_type":
+    retrieve_result= proxy_conn.retrieve_case_types(selected_search)
+  elif code_choice == "case_category":
+    retrieve_result = proxy_conn.retrieve_case_categories(selected_search)
+  elif code_choice == "party_type":
+    retrieve_result = proxy_conn.retrieve_party_types(selected_search)
+  elif code_choice == "filing_type":
+    retrieve_result = proxy_conn.retrieve_filing_types(selected_search)
+  else:
+    pass
+---
+question: Search Result
+subquestion: |
+  ${ [next(iter(ch.values()), "") for ch in all_choices if next(iter(ch), "") == code_choice] } with "${ search_term }"
+
+  ${ debug_display(search_result) }
 fields:
-  - no label: jurisdiction_id
-    choices:
-      - Illinois: 'illinois'
-      - Massachusetts: 'massachusetts'
-      - Texas: 'texas'
+  - See more about: selected_search
+    code: |
+      search_result.data
+continue button field: show_search_result
+---
+event: show_retrieve_result
+question: Retrieve Result
+subquestion: |
+  ${ selected_search }
+
+  ## Courts:
+
+  % for loc in sorted(set(r['location'] for r in retrieve_result.data)):
+  * ${ loc }
+  % endfor
+
+  ## All Results
+
+  ${ debug_display(retrieve_result) }
+buttons:
+  - restart
 ---
 variable name: all_choices
 data:
@@ -38,12 +93,28 @@ data:
       #- filing_component: Filing component
 ---
 question: What code do you want to see?
+subquestion: |
+  Only some codes can be searched:
+
+  * Case types
+  * Case Category
+  * Party Type
+  * Filing Type
+  * Optional Service
+
+  For more info see [the documentation](https://github.com/SuffolkLITLab/EfileProxyServer/blob/main/docs/tyler_codes.md)
 fields:
   - no label: code_choice
     code: all_choices
+  - Search (if applicable): do_search
+    datatype: yesno
+  - Search term: search_term
+    show if: do_search
 ---
 question: |
   Initial case, or subsequent case?
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }
 fields:
   - Initial case: is_initial_filing
     datatype: yesnoradio
@@ -63,6 +134,8 @@ code: |
 ---
 question: |
   Case category?
+subquestion: |
+  In ${ trial_court }
 fields:
   - Case category: case_category
     code: case_category_choices
@@ -73,6 +146,8 @@ code: |
 ---
 question: |
   Damage Amount?
+subquestion: |
+  In ${ trial_court }
 fields:
   - Damage amount: damage_amount
     code: damage_amount_choices
@@ -83,6 +158,8 @@ code: |
 ---
 question: |
   Procedure remedy
+subquestion: |
+  ${ trial_court }
 fields:
   - Procedure remedy: procedure_remedy
     code: procedure_remedy_choices
@@ -93,6 +170,8 @@ code: |
 ---
 question: |
   Case type
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }
 fields:
   - Case type: case_type
     code: case_type_choices
@@ -103,6 +182,8 @@ code: |
 ---
 question: |
   Case Subtype
+subquestion: |
+  In ${ trial_court }, category: ${ case_category_map[case_category]["name"] }, case type: ${ case_type_map[case_type]["name"] }
 fields:
   - Case Subtype: case_subtype
     datatype: dropdown
@@ -181,3 +262,5 @@ subquestion: |
   ${ end_disp(next(iter(choice.keys()))) }
   
   % endfor
+buttons:
+  - restart

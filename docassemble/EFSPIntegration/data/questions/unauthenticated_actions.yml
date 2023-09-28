@@ -64,7 +64,7 @@ code: |
     log_error_and_notify(f"Couldn't connect with the efile proxy server! {ex}")
     jurisdiction_id = ""
 ---
-# Note the lack of Louisana, not a Tyler jurisdiction. Can still be set manually
+# Note the lack of Louisiana, not a Tyler jurisdiction. Can still be set manually
 variable name: jurisdiction_names
 data:
   illinois: Illinois
