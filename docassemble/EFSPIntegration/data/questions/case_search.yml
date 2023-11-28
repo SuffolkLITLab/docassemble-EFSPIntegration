@@ -116,9 +116,9 @@ only sets:
   - x.can_file_non_indexed_case
 generic object: EFCaseSearch
 code: |
-  x.court_code_results = proxy_conn.get_court(x.court_id).data
-  if x.court_code_results:
-    x.can_file_non_indexed_case = x.court_code_results.get('allowfilingintononindexedcase', False)
+  x.court_code_results = proxy_conn.get_court(x.court_id)
+  if x.court_code_results and x.court_code_results.is_ok():
+    x.can_file_non_indexed_case = x.court_code_results.data.get('allowfilingintononindexedcase', False)
   else:
     x.can_file_non_indexed_case = False
 ---
