@@ -943,7 +943,7 @@ fields:
 generic object: ALIndividual
 code: |
   x.party_type_filtered_options, x.party_type = filter_codes(
-    party_type_options, x.party_type_filters, x.party_type_default, x.party_type_exclude)
+    party_type_options, x.party_type_filters, x.party_type_default, x.party_type_exclude if hasattr(x, 'party_type_exclude') else None)
   if x.party_type is None:
     del x.party_type
     x.party_type = x.user_chosen_party_type
