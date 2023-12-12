@@ -99,7 +99,7 @@ id: Admin tasks
 question: | 
   ${ 'Admin' if logged_in_user_is_admin else 'User' } Tasks
 subquestion: |
-  % if logged_in_user_is_global_admin:
+  % if logged_in_user_is_global_admin and logged_in_user_is_admin:
   ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
       firm_admin_template,
@@ -110,7 +110,7 @@ subquestion: |
       make_filing_template,
       efsp_template,
       filings_template) }
-  % elif logged_in_user_is_admin:
+  % elif not logged_in_user_is_global_admin and logged_in_user_is_admin:
     ${ tabbed_templates_html("Tests", login_status_template,
       code_cache_template,
       firm_admin_template,
@@ -118,6 +118,13 @@ subquestion: |
       firm_admin_attorneys_template,
       firm_admin_service_contacts,
       payment_template,
+      make_filing_template,
+      efsp_template,
+      filings_template) }
+  % elif logged_in_user_is_global_admin and not logged_in_user_is_admin
+  ${ tabbed_templates_html("Tests", login_status_template,
+      code_cache_template,
+      global_admin_payment_template,
       make_filing_template,
       efsp_template,
       filings_template) }
