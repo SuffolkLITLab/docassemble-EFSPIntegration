@@ -958,7 +958,7 @@ def get_tyler_roles(
     logged_in_user_is_admin = any(
         filter(is_admin, user_details.data.get("role"))
     ) and not proxy_conn.get_firm().data.get("isIndividual", False)
-    logged_in_user_is_global_admin = user_details.data.get(
-        "email"
-    ) in get_config("efile proxy").get("global server admins", [])
+    logged_in_user_is_global_admin = user_details.data.get("email") in get_config(
+        "efile proxy"
+    ).get("global server admins", [])
     return logged_in_user_is_admin, logged_in_user_is_global_admin
