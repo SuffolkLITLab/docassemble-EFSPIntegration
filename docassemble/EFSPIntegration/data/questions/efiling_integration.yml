@@ -403,6 +403,8 @@ code: |
   if x.enabled:
     x.filing_type
     x.filing_description
+    if filing_comment_datafield.get("isvisible"):
+      x.filing_comment
     x.reference_number
     x.document_type
     x.motion_type
@@ -414,6 +416,10 @@ code: |
     x.optional_services.gather()
     x.as_pdf('preview', refresh=False)
   x.completed = True
+---
+generic object: ALDocument
+code: |
+  x.filing_comment = ""
 ---
 generic object: ALDocumentBundle
 code: |
@@ -435,6 +441,8 @@ code: |
         subdoc.document_type_map = x.document_type_map
         subdoc.document_type
     x.filing_description
+    if filing_comment_datafield.get("isvisible"):
+      x.filing_comment
     x.reference_number
     x.motion_type
     x.filing_parties
@@ -444,6 +452,10 @@ code: |
     x.optional_services.gather()
     x.as_pdf('preview', refresh=False)
   x.completed = True
+---
+generic object: ALDocumentBundle
+code: |
+  x.filing_comment = ""
 ---
 generic object: DAObject
 id: eserve
@@ -729,6 +741,9 @@ code: |
 ---
 code: |
   filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
+---
+code: |
+  filing_comment_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingComments').data or {}
 ---
 code: |
   filing_type_options, filing_type_map = choices_and_map(proxy_conn.get_filing_types(court_id, efile_case_category, efile_case_type, is_initial_filing).data)
