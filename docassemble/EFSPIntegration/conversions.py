@@ -956,7 +956,7 @@ def get_tyler_roles(
 
     is_admin = lambda role: role.get("roleName") == "FIRM_ADMIN"
     logged_in_user_is_admin = any(
-        filter(is_admin, user_details.data.get("role"))
+        filter(is_admin, user_details.data.get("role") or [])
     ) and not proxy_conn.get_firm().data.get("isIndividual", False)
     logged_in_user_is_global_admin = user_details.data.get("email") in get_config(
         "efile proxy"
