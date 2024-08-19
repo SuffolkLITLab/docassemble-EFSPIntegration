@@ -527,7 +527,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     )
     tc.test_authenticate()
     tc.test_hateos()
-    #tc.test_self_user()
+    # tc.test_self_user()
     tc.test_firm()
     tc.test_service_contacts()
     tc.test_get_courts()
