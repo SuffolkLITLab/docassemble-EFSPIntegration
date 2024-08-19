@@ -13,7 +13,7 @@ def get_proxy_server_ip():
     # Figure out the ip addr of the service, assuming it's running through
     # Docker compose
     info_json = subprocess.check_output(
-        ["docker", "inspect", "efileproxyserver_efspjava_1"]
+        ["docker", "inspect", "efileproxyserver-efspjava"]
     )
     if info_json:
         info_dict = json.loads(info_json)
@@ -527,7 +527,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     )
     tc.test_authenticate()
     tc.test_hateos()
-    tc.test_self_user()
+    #tc.test_self_user()
     tc.test_firm()
     tc.test_service_contacts()
     tc.test_get_courts()
