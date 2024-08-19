@@ -811,15 +811,15 @@ class EfspConnection:
         send = lambda: self.proxy_client.get(
             self.full_url(f"cases/courts/{court_id}/cases"),
             params={
-                "first_name": person_name.get("first")
-                if person_name is not None
-                else None,
-                "middle_name": person_name.get("middle")
-                if person_name is not None
-                else None,
-                "last_name": person_name.get("last")
-                if person_name is not None
-                else None,
+                "first_name": (
+                    person_name.get("first") if person_name is not None else None
+                ),
+                "middle_name": (
+                    person_name.get("middle") if person_name is not None else None
+                ),
+                "last_name": (
+                    person_name.get("last") if person_name is not None else None
+                ),
                 "business_name": business_name,
                 "docket_number": docket_number,
             },

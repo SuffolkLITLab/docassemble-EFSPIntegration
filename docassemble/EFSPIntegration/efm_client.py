@@ -357,9 +357,9 @@ def serialize_person(person: Union[Person, Individual]) -> Dict:
     if isinstance(person, Individual):
         return_dict = {
             "firstName": person.name.first,
-            "middleName": person.name.middle
-            if hasattr(person.name, "middle")
-            else None,
+            "middleName": (
+                person.name.middle if hasattr(person.name, "middle") else None
+            ),
             "lastName": person.name.last,
         }
     else:
@@ -369,28 +369,32 @@ def serialize_person(person: Union[Person, Individual]) -> Dict:
     return_dict.update(
         {
             "address": {
-                "addressLine1": person.address.address
-                if hasattr(person.address, "address")
-                else None,
-                "addressLine2": person.address.unit
-                if hasattr(person.address, "unit")
-                else None,
-                "city": person.address.city
-                if hasattr(person.address, "city")
-                else None,
-                "state": person.address.state
-                if hasattr(person.address, "state")
-                else None,
-                "zipCode": person.address.zip
-                if hasattr(person.address, "zip")
-                else None,
-                "country": person.address.country
-                if hasattr(person.address, "country")
-                else "US",
+                "addressLine1": (
+                    person.address.address
+                    if hasattr(person.address, "address")
+                    else None
+                ),
+                "addressLine2": (
+                    person.address.unit if hasattr(person.address, "unit") else None
+                ),
+                "city": (
+                    person.address.city if hasattr(person.address, "city") else None
+                ),
+                "state": (
+                    person.address.state if hasattr(person.address, "state") else None
+                ),
+                "zipCode": (
+                    person.address.zip if hasattr(person.address, "zip") else None
+                ),
+                "country": (
+                    person.address.country
+                    if hasattr(person.address, "country")
+                    else "US"
+                ),
             },
-            "phoneNumber": person.phone_number
-            if hasattr(person, "phone_number")
-            else None,
+            "phoneNumber": (
+                person.phone_number if hasattr(person, "phone_number") else None
+            ),
             "email": person.email if hasattr(person, "email") else "",
         }
     )
