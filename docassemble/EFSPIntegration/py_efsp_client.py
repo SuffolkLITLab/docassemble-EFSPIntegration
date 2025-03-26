@@ -805,7 +805,7 @@ class EfspConnection:
         Params:
           court_id (str)
           person_name (dict)
-          buisness_name (str)
+          business_name (str)
           docket_number (str)
         """
         send = lambda: self.proxy_client.get(
