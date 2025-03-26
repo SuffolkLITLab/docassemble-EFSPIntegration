@@ -371,7 +371,7 @@ SearchType = Union[Iterable, ContainAny, str, CodeType]
 
 
 def make_filter(
-    search: Union[Callable[..., bool], SearchType, None]
+    search: Union[Callable[..., bool], SearchType, None],
 ) -> Callable[..., bool]:
     """Makes a 'filter' function from some simple type.
 
@@ -418,7 +418,7 @@ def make_filter(
 
 
 def make_filters(
-    filters: Iterable[Union[Callable[..., bool], SearchType]]
+    filters: Iterable[Union[Callable[..., bool], SearchType]],
 ) -> Iterable[Callable[..., bool]]:
     filter_lambdas = []
     for filter_fn in filters:
