@@ -11,7 +11,7 @@ include:
 code: |
   proxy_conn = ProxyConnection()  # Uses default configs in the python module
 ---
-# It's best to leave this be, but it's changable if you can't access the server configuration
+# It's best to leave this be, but it's changeable if you can't access the server configuration
 code: |
   efile_author_mode = get_config("debug")
 ---
@@ -313,7 +313,7 @@ code: |
       have_valid_date = False
   submitted_court_reserve_resp = court_reserve_resp
 ---
-# Don't trigger efile_resp by tring to show the envelope id
+# Don't trigger efile_resp by trying to show the envelope id
 if: defined('efile_resp') and efile_resp.is_ok()
 code: |
   envelope_id = efile_resp.data['envelopeId']
@@ -337,8 +337,8 @@ id: reserve start date
 question: |
   Court Start Time
 fields:
-  - Do you have a prefered time range: use_range
-    datatype: yesno
+  - "Do you have a preferred time range?": use_range
+    datatype: yesnoradio
   - After this Date: reserve_after_date
     datatype: date
     show if: use_range
@@ -460,7 +460,7 @@ code: |
 generic object: DAObject
 id: eserve
 question: |
-  Would you like to e-file this document, serve to the desginated party, or both?
+  Would you like to e-file this document, serve to the designated party, or both?
 fields:
   - Efile or serve?: x.filing_action
     choices:

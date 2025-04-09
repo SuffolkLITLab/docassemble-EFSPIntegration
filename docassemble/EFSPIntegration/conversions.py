@@ -357,7 +357,7 @@ def debug_display(resp: ApiResponse) -> str:
 def tyler_daterep_to_datetime(tyler_daterep: Mapping) -> DADateTime:
     """
     Takes an jsonized-XML object of "{http://niem.gov/niem/niem-core/2.0}ActivityDate,
-    returns the datetime it repsents.
+    returns the datetime it represents.
     """
     timestamp = chain_xml(tyler_daterep, ["dateRepresentation", "value", "value"]) or 0
     return tyler_timestamp_to_datetime(timestamp)
@@ -454,7 +454,7 @@ def _parse_phone_number(phone_xml) -> Optional[str]:
         tp = phone_xml.get("value") or {}
         return (
             (chain_xml(tp, ["telephoneAreaCodeID", "value"]) or "")
-            + (chain_xml(tp, ["telephoneExchanceID", "value"]) or "")
+            + (chain_xml(tp, ["telephoneExchangeID", "value"]) or "")
             + (chain_xml(tp, ["telephoneLineID", "value"]) or "")
         )
     else:

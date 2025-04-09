@@ -155,7 +155,7 @@ class EfspConnection:
 
         if jurisdiction is None:
             jurisdiction = self.default_jurisdiction
-        logging.info(f"authing with jurisdiction: {jurisdiction}")
+        logging.info(f"authenticating with jurisdiction: {jurisdiction}")
         auth_obj: Dict[str, Union[str, Dict[str, str]]] = {}
         auth_obj["api_key"] = self.api_key
         if jeffnet_key:
@@ -805,7 +805,7 @@ class EfspConnection:
         Params:
           court_id (str)
           person_name (dict)
-          buisness_name (str)
+          business_name (str)
           docket_number (str)
         """
         send = lambda: self.proxy_client.get(
