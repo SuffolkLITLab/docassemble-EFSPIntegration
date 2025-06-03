@@ -378,28 +378,31 @@ class TestClass:
         # contact = {}
         # contact["first"] = "John"
         # contact["last"] = "Brown"
-        docket_number = "2018SC241"
+
+        COURT = "tazewell"
+
+        docket_number = "2022-SC-000005"
         cases = self.basic_assert(
             self.proxy_conn.get_cases_raw(
-                "adams", docket_number=docket_number
+                "tazewell", docket_number=docket_number
             )  # person_name=contact)
         )
         assert len(cases.data) > 0
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
-        case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
-        doc_resp = self.proxy_conn.get_document("adams", case_id)
+        case_info = self.basic_assert(self.proxy_conn.get_case(COURT, case_id))
+        doc_resp = self.proxy_conn.get_document(COURT, case_id)
         assert doc_resp.response_code == 405
         serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information("adams", case_id)
+            self.proxy_conn.get_service_information(COURT, case_id)
         )
         history_serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information_history("adams", case_id)
+            self.proxy_conn.get_service_information_history(COURT, case_id)
         )
 
         if len(serv_info.data) > 0:
             serv_id = serv_info.data[0]
             attach_cases = self.proxy_conn.get_service_attach_case_list(
-                "adams", serv_id
+                COURT, serv_id
             )
             if self.verbose:
                 print(attach_cases)
@@ -521,18 +524,18 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     proxy_conn = EfspConnection(
         url=base_url, api_key=api_key, default_jurisdiction="illinois"
     )
-    proxy_conn.set_verbose_logging(False)
+    proxy_conn.set_verbose_logging(True)
     tc = TestClass(
-        proxy_conn, verbose=False, user_email=user_email, user_password=user_password
+        proxy_conn, verbose=True, user_email=user_email, user_password=user_password
     )
     tc.test_authenticate()
-    tc.test_hateos()
+    #tc.test_hateos()
     # tc.test_self_user()
-    tc.test_firm()
-    tc.test_service_contacts()
-    tc.test_get_courts()
-    tc.test_payment_accounts()
-    tc.test_attorneys()
+    #tc.test_firm()
+    #tc.test_service_contacts()
+    #tc.test_get_courts()
+    #tc.test_payment_accounts()
+    #tc.test_attorneys()
     tc.test_court_record()
     tc.test_users()
     tc.test_codes()
