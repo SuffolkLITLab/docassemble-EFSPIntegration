@@ -32,7 +32,7 @@ def get_proxy_server_ip():
 
 def mock_person():
     per = {}
-    per["email"] = "fakeemail@example.com"
+    per["email"] = "fakeemail-no-conflicts@example.com"
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
     per["name"] = {
         "first": "B",
