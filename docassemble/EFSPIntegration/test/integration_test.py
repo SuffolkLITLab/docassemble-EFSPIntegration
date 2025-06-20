@@ -275,8 +275,10 @@ class TestClass:
         full_user = self.basic_assert(self.proxy_conn.get_user(new_id))
         assert full_user.data["middleName"] == "S"
 
-        all_users = self.basic_assert(self.proxy_conn.get_users())
-        assert len(all_users.data) == len(all_initial_users.data) + 1
+        self.basic_assert(self.proxy_conn.get_users())
+        # With paging, there are now limits to how many users we can see
+        # Also, we have 203 users now because removing them doesn't remove them, lol
+        # assert len(all_users.data) == len(all_initial_users.data) + 1
 
         roles = self.basic_assert(self.proxy_conn.get_user_roles(new_id))
         assert len(roles.data) == 1
@@ -529,13 +531,13 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
         proxy_conn, verbose=True, user_email=user_email, user_password=user_password
     )
     tc.test_authenticate()
-    #tc.test_hateos()
-    # tc.test_self_user()
-    #tc.test_firm()
-    #tc.test_service_contacts()
-    #tc.test_get_courts()
-    #tc.test_payment_accounts()
-    #tc.test_attorneys()
+    tc.test_hateos()
+    tc.test_self_user()
+    tc.test_firm()
+    tc.test_service_contacts()
+    tc.test_get_courts()
+    tc.test_payment_accounts()
+    tc.test_attorneys()
     tc.test_court_record()
     tc.test_users()
     tc.test_codes()
