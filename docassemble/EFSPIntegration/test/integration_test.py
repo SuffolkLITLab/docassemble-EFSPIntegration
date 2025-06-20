@@ -403,9 +403,7 @@ class TestClass:
 
         if len(serv_info.data) > 0:
             serv_id = serv_info.data[0]
-            attach_cases = self.proxy_conn.get_service_attach_case_list(
-                COURT, serv_id
-            )
+            attach_cases = self.proxy_conn.get_service_attach_case_list(COURT, serv_id)
             if self.verbose:
                 print(attach_cases)
 
