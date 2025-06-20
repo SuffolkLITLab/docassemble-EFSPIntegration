@@ -526,9 +526,9 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     proxy_conn = EfspConnection(
         url=base_url, api_key=api_key, default_jurisdiction="illinois"
     )
-    proxy_conn.set_verbose_logging(True)
+    proxy_conn.set_verbose_logging(False)
     tc = TestClass(
-        proxy_conn, verbose=True, user_email=user_email, user_password=user_password
+        proxy_conn, verbose=False, user_email=user_email, user_password=user_password
     )
     tc.test_authenticate()
     tc.test_hateos()
