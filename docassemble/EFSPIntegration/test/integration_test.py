@@ -32,7 +32,7 @@ def get_proxy_server_ip():
 
 def mock_person():
     per = {}
-    per["email"] = "fakeemail@example.com"
+    per["email"] = "fakeemail-no-conflicts@example.com"
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
     per["name"] = {
         "first": "B",
@@ -275,8 +275,10 @@ class TestClass:
         full_user = self.basic_assert(self.proxy_conn.get_user(new_id))
         assert full_user.data["middleName"] == "S"
 
-        all_users = self.basic_assert(self.proxy_conn.get_users())
-        assert len(all_users.data) == len(all_initial_users.data) + 1
+        self.basic_assert(self.proxy_conn.get_users())
+        # With paging, there are now limits to how many users we can see
+        # Also, we have 203 users now because removing them doesn't remove them, lol
+        # assert len(all_users.data) == len(all_initial_users.data) + 1
 
         roles = self.basic_assert(self.proxy_conn.get_user_roles(new_id))
         assert len(roles.data) == 1
@@ -378,29 +380,30 @@ class TestClass:
         # contact = {}
         # contact["first"] = "John"
         # contact["last"] = "Brown"
-        docket_number = "2018SC241"
+
+        COURT = "tazewell"
+
+        docket_number = "2022-SC-000005"
         cases = self.basic_assert(
             self.proxy_conn.get_cases_raw(
-                "adams", docket_number=docket_number
+                "tazewell", docket_number=docket_number
             )  # person_name=contact)
         )
         assert len(cases.data) > 0
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
-        case = self.basic_assert(self.proxy_conn.get_case("adams", case_id))
-        doc_resp = self.proxy_conn.get_document("adams", case_id)
+        case_info = self.basic_assert(self.proxy_conn.get_case(COURT, case_id))
+        doc_resp = self.proxy_conn.get_document(COURT, case_id)
         assert doc_resp.response_code == 405
         serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information("adams", case_id)
+            self.proxy_conn.get_service_information(COURT, case_id)
         )
         history_serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information_history("adams", case_id)
+            self.proxy_conn.get_service_information_history(COURT, case_id)
         )
 
         if len(serv_info.data) > 0:
             serv_id = serv_info.data[0]
-            attach_cases = self.proxy_conn.get_service_attach_case_list(
-                "adams", serv_id
-            )
+            attach_cases = self.proxy_conn.get_service_attach_case_list(COURT, serv_id)
             if self.verbose:
                 print(attach_cases)
 
@@ -527,7 +530,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     )
     tc.test_authenticate()
     tc.test_hateos()
-    # tc.test_self_user()
+    tc.test_self_user()
     tc.test_firm()
     tc.test_service_contacts()
     tc.test_get_courts()
