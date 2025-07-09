@@ -3,6 +3,7 @@
 import os
 import json
 import sys
+import random
 import subprocess
 from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiResponse
 from pathlib import Path
@@ -32,7 +33,7 @@ def get_proxy_server_ip():
 
 def mock_person():
     per = {}
-    per["email"] = "fakeemail-no-conflicts@example.com"
+    per["email"] = f"fakeemail-no-conflicts-{random.randint(0, 1_000_000)}@example.com"
     # Neat trick: https://stackoverflow.com/a/24448351/11416267
     per["name"] = {
         "first": "B",
