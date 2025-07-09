@@ -517,7 +517,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None, verbose=Fals
     proxy_conn = EfspConnection(
         url=base_url, api_key=api_key, default_jurisdiction=jurisdiction
     )
-    proxy_conn.set_verbose_logging(False)
+    proxy_conn.set_verbose_logging(verbose)
     tc = TestClass(
         proxy_conn, verbose=verbose, user_email=user_email, user_password=user_password
     )
@@ -545,4 +545,5 @@ if __name__ == "__main__":
     main(
         base_url=sys.argv[1] if len(sys.argv) > 1 else None,
         api_key=os.getenv("PROXY_API_KEY"),
+        verbose=True
     )
