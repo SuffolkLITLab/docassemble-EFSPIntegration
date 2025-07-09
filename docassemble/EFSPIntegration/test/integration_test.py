@@ -106,7 +106,7 @@ class TestClass:
                         or "firmattorneyservice" in url
                         or "payments" in url
                     )
-                    # and "illinois" not in url
+                    # and jurisdiction not in url
                 )
             ):
                 continue
@@ -448,39 +448,26 @@ class TestClass:
         policy = self.basic_assert(self.proxy_conn.get_policy(court))
 
         cdir = Path(__file__).resolve().parent
-        with open(cdir.joinpath("opening_affidavit_adams.json"), "r") as f:
-            all_vars_str = f.read()
+        with open(cdir.joinpath(filename), "r") as f:
+            all_vars = json.load(f)
         base_url = self.proxy_conn.base_url
-        fees_send = lambda: self.proxy_conn.proxy_client.post(
-            base_url
-            + f"jurisdictions/illinois/filingreview/courts/{court}/filing/fees",
-            data=all_vars_str,
-        )
-        fees_resp = self.basic_assert(self.proxy_conn._call_proxy(fees_send))
-        check_send = lambda: self.proxy_conn.proxy_client.get(
-            base_url
-            + f"jurisdictions/illinois/filingreview/courts/{court}/filing/check",
-            data=all_vars_str,
-        )
-        checked_resp = self.basic_assert(self.proxy_conn._call_proxy(check_send))
+        fees_resp = self.basic_assert(self.proxy_conn.calculate_filing_fees(court, all_vars=all_vars))
+        checked_resp = self.basic_assert(self.proxy_conn.check_filing(court, all_vars=all_vars))
         return
-        # IDK if I want to make a new filing each time, even if we cancel it
-        file_send = lambda: self.proxy_conn.proxy_client.post(
-            base_url + f"jurisdictions/illinois/filingreview/courts/{court}/filings",
-            data=all_vars_str,
-        )
-        filing_resp = self.basic_assert(self.proxy_conn._call_proxy(file_send))
 
-        for filing_id in filing_resp.data:
-            status_resp = self.basic_assert(
-                self.proxy_conn.get_filing_status(court, filing_id)
-            )
-            detail_resp = self.basic_assert(
-                self.proxy_conn.get_filing(court, filing_id)
-            )
-            cancel_resp = self.basic_assert(
-                self.proxy_conn.cancel_filing_status(court, filing_id)
-            )
+        # IDK if I want to make a new filing each time, even if we cancel it
+        #filing_resp = self.basic_assert(self.proxy_conn.file_for_review(court, all_vars=all_vars))
+
+        #for filing_id in filing_resp.data["filingIds"]:
+        #    status_resp = self.basic_assert(
+        #        self.proxy_conn.get_filing_status(court, filing_id)
+        #    )
+        #    detail_resp = self.basic_assert(
+        #        self.proxy_conn.get_filing(court, filing_id)
+        #    )
+        #    cancel_resp = self.basic_assert(
+        #        self.proxy_conn.cancel_filing_status(court, filing_id)
+        #    )
 
     def test_codes(self):
         print("\n\n### Codes ###\n\n")
@@ -504,7 +491,12 @@ class TestClass:
             assert l.split("|")[1].strip() == server_id
 
 
-def main(*, base_url, api_key, user_email=None, user_password=None):
+def main(*, base_url, api_key, user_email=None, user_password=None, verbose=False):
+    jurisdiction = 'illinois' # 'massachusetts'
+    court = "adams" # "appeals:acsj"
+    record_court = "tazewell" # "535"
+    docket_number = "2022-SC-000005" # "99H85SC000016" 
+    bar_number = "6224951" # "012345A"
     if not base_url:
         base_url = get_proxy_server_ip()
     if not api_key:
@@ -515,7 +507,7 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     if not user_password:
         user_password = os.getenv("bryce_user_password")
     bad_proxy = EfspConnection(
-        url=base_url, api_key="IntenionallyWrongKey", default_jurisdiction="illinois"
+        url=base_url, api_key="IntenionallyWrongKey", default_jurisdiction=jurisdiction
     )
     intentional_bad_resp = bad_proxy.authenticate_user()
     if intentional_bad_resp.response_code != 403:
@@ -523,11 +515,11 @@ def main(*, base_url, api_key, user_email=None, user_password=None):
     assert intentional_bad_resp.response_code == 403
     bad_proxy.proxy_client.close()
     proxy_conn = EfspConnection(
-        url=base_url, api_key=api_key, default_jurisdiction="illinois"
+        url=base_url, api_key=api_key, default_jurisdiction=jurisdiction
     )
     proxy_conn.set_verbose_logging(False)
     tc = TestClass(
-        proxy_conn, verbose=False, user_email=user_email, user_password=user_password
+        proxy_conn, verbose=verbose, user_email=user_email, user_password=user_password
     )
     tc.test_authenticate()
     tc.test_hateos()
