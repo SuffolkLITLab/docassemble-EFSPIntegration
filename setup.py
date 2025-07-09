@@ -51,7 +51,7 @@ setup(name='docassemble.EFSPIntegration',
       license='The MIT License (MIT)',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
       packages=find_namespace_packages(),
-      install_requires=['docassemble.AssemblyLine>=2.18.0', 'docassemble.ALToolbox>=0.6.2', 'requests>=2.25.1'],
+      install_requires=['docassemble.AssemblyLine>=3.5.0', 'docassemble.ALToolbox>=0.6.2', 'requests>=2.25.1'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),
      )
