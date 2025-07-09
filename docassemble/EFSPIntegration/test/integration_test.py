@@ -303,9 +303,9 @@ class TestClass:
 
         self.basic_assert(self.proxy_conn.remove_user(new_id))
 
-    def test_get_courts(self):
+    def test_get_courts(self, expected_court):
         courts = self.basic_assert(self.proxy_conn.get_courts())
-        assert "jefferson" in courts.data
+        assert expected_court in courts.data
 
     def test_global_payment_accounts(self):
         print("\n\n### Global payment accounts ###\n\n")
@@ -347,11 +347,11 @@ class TestClass:
             self.proxy_conn.remove_global_payment_account(global_account.data)
         )
 
-    def test_payment_accounts(self):
+    def test_payment_accounts(self, court):
         print("\n\n### Payment accounts ###\n\n")
         self.basic_assert(self.proxy_conn.get_payment_account_type_list())
         self.basic_assert(self.proxy_conn.get_payment_account_list())
-        self.basic_assert(self.proxy_conn.get_payment_account_list("adams"))
+        self.basic_assert(self.proxy_conn.get_payment_account_list(court))
 
         new_account = self.basic_assert(
             self.proxy_conn.create_waiver_account("New Integration Test account", False)
@@ -374,7 +374,7 @@ class TestClass:
         )
         self.basic_assert(self.proxy_conn.remove_payment_account(new_account.data))
 
-    def test_court_record(self):
+    def test_court_record(self, court, docket_number):
         print("\n\n### Court record ###\n\n")
         # NOTE(brycew): Illinois turned off search by case name, so turning it off here.
         # Maybe consider testing this on another jurisdiction.
@@ -382,45 +382,42 @@ class TestClass:
         # contact["first"] = "John"
         # contact["last"] = "Brown"
 
-        COURT = "tazewell"
-
-        docket_number = "2022-SC-000005"
         cases = self.basic_assert(
             self.proxy_conn.get_cases_raw(
-                "tazewell", docket_number=docket_number
+                court, docket_number=docket_number
             )  # person_name=contact)
         )
         assert len(cases.data) > 0
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
-        case_info = self.basic_assert(self.proxy_conn.get_case(COURT, case_id))
-        doc_resp = self.proxy_conn.get_document(COURT, case_id)
+        case_info = self.basic_assert(self.proxy_conn.get_case(court, case_id))
+        doc_resp = self.proxy_conn.get_document(court, case_id)
         assert doc_resp.response_code == 405
         serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information(COURT, case_id)
+            self.proxy_conn.get_service_information(court, case_id)
         )
         history_serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information_history(COURT, case_id)
+            self.proxy_conn.get_service_information_history(court, case_id)
         )
 
         if len(serv_info.data) > 0:
             serv_id = serv_info.data[0]
-            attach_cases = self.proxy_conn.get_service_attach_case_list(COURT, serv_id)
+            attach_cases = self.proxy_conn.get_service_attach_case_list(court, serv_id)
             if self.verbose:
                 print(attach_cases)
 
-    def test_attorneys(self):
+    def test_attorneys(self, bar_number):
         print("\n\n### Attorneys ###\n\n")
-        new_attorney = self.proxy_conn.create_attorney(
-            bar_number="6224951",
+        new_attorney = self.basic_assert(self.proxy_conn.create_attorney(
+            bar_number=bar_number,
             first_name="Valarie",
             middle_name="DONTUSE_IS_REAL_PERSON",
             last_name="Franklin",
-        )
+        ))
         assert new_attorney.response_code == 200
         new_attorney_id = new_attorney.data
 
         attorney_list = self.basic_assert(self.proxy_conn.get_attorney_list())
-        assert any(map(lambda a: a["barNumber"] == "6224951", attorney_list.data))
+        assert any(map(lambda a: a["barNumber"] == bar_number, attorney_list.data))
 
         updated_attorney = self.basic_assert(
             self.proxy_conn.update_attorney(new_attorney_id, middle_name="Lobert")
@@ -435,9 +432,8 @@ class TestClass:
         deleted_maybe = self.proxy_conn.remove_attorney(new_attorney_id)
         assert deleted_maybe.response_code == 200
 
-    def test_filings(self):
+    def test_filings(self, court, filename):
         print("\n\n### Filings ###\n\n")
-        court = "adams"
         filing_list = self.basic_assert(
             self.proxy_conn.get_filing_list(
                 court,
@@ -469,19 +465,19 @@ class TestClass:
         #        self.proxy_conn.cancel_filing_status(court, filing_id)
         #    )
 
-    def test_codes(self):
+    def test_codes(self, court):
         print("\n\n### Codes ###\n\n")
         self.basic_assert(self.proxy_conn.get_court_list())
-        self.basic_assert(self.proxy_conn.get_court("adams"))
-        self.basic_assert(self.proxy_conn.get_datafield("adams", "GlobalPassword"))
-        self.basic_assert(self.proxy_conn.get_disclaimers("adams"))
+        self.basic_assert(self.proxy_conn.get_court(court))
+        self.basic_assert(self.proxy_conn.get_datafield(court, "GlobalPassword"))
+        self.basic_assert(self.proxy_conn.get_disclaimers(court))
         categories = self.basic_assert(
-            self.proxy_conn.get_case_categories("adams")
+            self.proxy_conn.get_case_categories(court)
         ).data
         for idx, cat in enumerate(categories):
             if idx > 5:
-                continue
-            self.basic_assert(self.proxy_conn.get_case_types("adams", cat["code"]))
+                break
+            self.basic_assert(self.proxy_conn.get_case_types(court, cat["code"]))
 
     def test_logs(self):
         print("\n\n### Test Logs ###\n\n")
@@ -526,15 +522,15 @@ def main(*, base_url, api_key, user_email=None, user_password=None, verbose=Fals
     tc.test_self_user()
     tc.test_firm()
     tc.test_service_contacts()
-    tc.test_get_courts()
-    tc.test_payment_accounts()
-    tc.test_attorneys()
-    tc.test_court_record()
+    tc.test_get_courts(court)
+    tc.test_payment_accounts(court)
+    tc.test_attorneys(bar_number)
+    tc.test_court_record(record_court, docket_number)
     tc.test_users()
-    tc.test_codes()
+    tc.test_codes(court)
     tc.test_logs()
     # TODO(brycew): needs a more up to date JSON from any filing interiview
-    tc.test_filings()
+    tc.test_filings(court, "opening_affidavit_adams.json")
     print("Done!")
     # TODO(brycew): Tyler issue, have to wait on them
     # tc.test_global_payment_accounts()
