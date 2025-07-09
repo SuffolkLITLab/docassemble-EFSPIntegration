@@ -9,32 +9,17 @@ from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiRespon
 from pathlib import Path
 from datetime import datetime, timedelta
 
+import unittest
 
-def get_proxy_server_ip():
-    # Figure out the ip addr of the service, assuming it's running through
-    # Docker compose
-    info_json = subprocess.check_output(
-        ["docker", "inspect", "efileproxyserver-efspjava"]
-    )
-    if info_json:
-        info_dict = json.loads(info_json)
-        base_url = (
-            "http://"
-            # + info_dict[0]["NetworkSettings"]["Networks"]["efileproxyserver_default"]["IPAddress"]
-            + "localhost"
-            + ":9000/"
-        )
-        print("Using URL: " + base_url)
-        return base_url
-    else:
-        print("FAILED Can't find the docker image!")
-        return None
+jurisdiction = "illinois"  # 'massachusetts'
+
+base_url = None  # From Env var
+api_key = None  # From Env var
 
 
 def mock_person():
     per = {}
     per["email"] = f"fakeemail-no-conflicts-{random.randint(0, 1_000_000)}@example.com"
-    # Neat trick: https://stackoverflow.com/a/24448351/11416267
     per["name"] = {
         "first": "B",
         "middle": "S",
@@ -52,26 +37,58 @@ def mock_person():
     return per
 
 
-class TestClass:
-    def __init__(
-        self, proxy_conn, verbose: bool = True, user_email=None, user_password=None
-    ):
-        self.proxy_conn = proxy_conn
-        self.verbose = verbose
-        self.user_email = user_email
-        self.user_password = user_password
+class BadAuth(unittest.TestCase):
+
+    def test_misconfigured_proxy(self):
+        bad_proxy = EfspConnection(
+            url=base_url,
+            api_key="IntenionallyWrongKey",
+            default_jurisdiction=jurisdiction,
+        )
+        intentional_bad_resp = bad_proxy.authenticate_user()
+        self.assertEqual(intentional_bad_resp.response_code, 403)
+        bad_proxy.proxy_client.close()
+
+
+class TestClass(unittest.TestCase):
+
+    def setUp(self):
+        # Constants
+        self.jurisdiction = jurisdiction
+        self.court = "adams"  # "appeals:acsj"
+        self.record_court = "tazewell"  # "535"
+        self.docket_number = "2022-SC-000005"  # "99H85SC000016"
+        self.bar_number = "6224951"  # "012345A" # This MA value is still not correct
+        self.filing_filename = "opening_affidavit_adams.json"  # no MA equivalent yet
+        self.verbose = False
+
+        # Actual setup
+        self.user_email = os.getenv("bryce_user_email")
+        self.user_password = os.getenv("bryce_user_password")
+        api_key = os.getenv("PROXY_API_KEY")
+        if not api_key:
+            print("You need to have the PROXY_API_KEY env var set; not running tests")
+            exit(2)
+        self.proxy_conn = EfspConnection(
+            url=base_url, api_key=api_key, default_jurisdiction=jurisdiction
+        )
+        self.proxy_conn.set_verbose_logging(verbose)
+        self.setup_authenticate()
+
+    def tearDown(self):
+        self.proxy_conn.proxy_client.close()
 
     def basic_assert(self, resp: ApiResponse):
         if self.verbose or not resp.is_ok():
             print(resp)
-        assert resp.is_ok()
+        self.assertTrue(resp.is_ok())
         return resp
 
-    def test_authenticate(self):
+    def setup_authenticate(self):
         print("\n\n### Authenticate ###\n\n")
         empty_resp = self.proxy_conn.authenticate_user()
         self.basic_assert(empty_resp)
-        assert len(empty_resp.data["tokens"]) == 0
+        self.assertEqual(empty_resp.data["tokens"], [])
         resp = self.proxy_conn.authenticate_user(
             tyler_email=self.user_email, tyler_password=self.user_password
         )
@@ -127,12 +144,12 @@ class TestClass:
     def test_self_user(self):
         print("\n\n### Self user ###\n\n")
         myself = self.basic_assert(self.proxy_conn.get_user())
-        assert myself.data["middleName"] == "Steven"
+        self.assertEqual(myself.data["middleName"], "Steven")
         nm = self.basic_assert(
             self.proxy_conn.update_user(myself.data["userID"], middle_name="Stephen")
         )
         bad_spelling = self.basic_assert(self.proxy_conn.get_user())
-        assert bad_spelling.data["middleName"] == "Stephen"
+        self.assertEqual(bad_spelling.data["middleName"], "Stephen")
         self.basic_assert(self.proxy_conn.self_update_user(middle_name="Steven"))
 
         # Password stuff
@@ -164,16 +181,12 @@ class TestClass:
             )
         )
         new_notifs = self.basic_assert(self.proxy_conn.get_notification_preferences())
-        assert all(
-            map(
-                lambda n: n["isActive"] == False,
-                filter(lambda n: n["code"] == "SERVICEUNDELIVERABLE", new_notifs.data),
-            )
-        )
+        for n in filter(lambda n: n["code"] == "SERVICEUNDELIVERABLE", new_notifs.data):
+            self.assertFalse(n["isActive"])
         last_update = self.proxy_conn.update_notification_preferences(
             [{"code": "SERVICEUNDELIVERABLE", "isActive": True}]
         )
-        assert last_update.response_code == 200
+        self.assertEqual(last_update.response_code, 200)
 
     def test_service_contacts(self):
         print("\n\n### Service Contacts ###\n\n")
@@ -212,7 +225,7 @@ class TestClass:
         )
 
         my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
-        assert len(my_list.data) >= 1
+        self.assertGreaterThan(len(my_list.data), 1)
         updated_contact = self.basic_assert(
             self.proxy_conn.get_service_contact(contact_id)
         )
@@ -303,40 +316,41 @@ class TestClass:
 
         self.basic_assert(self.proxy_conn.remove_user(new_id))
 
-    def test_get_courts(self, expected_court):
+    def test_get_courts(self):
         courts = self.basic_assert(self.proxy_conn.get_courts())
-        assert expected_court in courts.data
+        assert self.court in courts.data
 
+    @unittest.skip("Tyler issue, have to wait on them")
     def test_global_payment_accounts(self):
         print("\n\n### Global payment accounts ###\n\n")
         all_accounts = self.proxy_conn.get_global_payment_account_list()
         if self.verbose:
             print(all_accounts)
-        assert all_accounts.response_code == 200
-        assert all_accounts.data[0]["firmID"] is None
+        self.assertEqual(all_accounts.response_code, 200)
+        self.assertIsNone(all_accounts.data[0]["firmID"])
         account_id = all_accounts.data[0]["paymentAccountID"]
         account = self.proxy_conn.get_global_payment_account(
             global_payment_account_id=account_id
         )
         if self.verbose:
             print(account)
-        assert account.response_code == 200
-        assert account.data["paymentAccountID"] == account_id
+        self.assertEqual(account.response_code, 200)
+        self.assertEqual(account.data["paymentAccountID"], account_id)
 
         update_account = self.proxy_conn.update_global_payment_account(
             account_id, account_name="New, Better Name"
         )
         if self.verbose:
             print(update_account)
-        assert update_account.response_code == 200
+        self.assertEqual(update_account.response_code, 200)
         better_account = self.proxy_conn.get_global_payment_account(account_id)
-        assert better_account.response_code == 200
-        assert better_account.data["accountName"] == "New, Better Name"
+        self.assertEqual(better_account.response_code, 200)
+        self.assertEqual(better_account.data["accountName"], "New, Better Name")
 
         update_account = self.proxy_conn.update_global_payment_account(
             account_id, account_name=account.data["accountName"]
         )
-        assert update_account.response_code == 200
+        self.assertEqual(update_account.response_code, 200)
 
         global_account = self.basic_assert(
             self.proxy_conn.create_waiver_account(
@@ -347,11 +361,11 @@ class TestClass:
             self.proxy_conn.remove_global_payment_account(global_account.data)
         )
 
-    def test_payment_accounts(self, court):
+    def test_payment_accounts(self):
         print("\n\n### Payment accounts ###\n\n")
         self.basic_assert(self.proxy_conn.get_payment_account_type_list())
         self.basic_assert(self.proxy_conn.get_payment_account_list())
-        self.basic_assert(self.proxy_conn.get_payment_account_list(court))
+        self.basic_assert(self.proxy_conn.get_payment_account_list(self.court))
 
         new_account = self.basic_assert(
             self.proxy_conn.create_waiver_account("New Integration Test account", False)
@@ -374,7 +388,7 @@ class TestClass:
         )
         self.basic_assert(self.proxy_conn.remove_payment_account(new_account.data))
 
-    def test_court_record(self, court, docket_number):
+    def test_court_record(self):
         print("\n\n### Court record ###\n\n")
         # NOTE(brycew): Illinois turned off search by case name, so turning it off here.
         # Maybe consider testing this on another jurisdiction.
@@ -384,77 +398,86 @@ class TestClass:
 
         cases = self.basic_assert(
             self.proxy_conn.get_cases_raw(
-                court, docket_number=docket_number
+                self.record_court, docket_number=self.docket_number
             )  # person_name=contact)
         )
-        assert len(cases.data) > 0
+        self.assertGreater(len(cases.data), 0)
         case_id = cases.data[0]["value"]["caseTrackingID"]["value"]
-        case_info = self.basic_assert(self.proxy_conn.get_case(court, case_id))
-        doc_resp = self.proxy_conn.get_document(court, case_id)
-        assert doc_resp.response_code == 405
+        case_info = self.basic_assert(
+            self.proxy_conn.get_case(self.record_court, case_id)
+        )
+        doc_resp = self.proxy_conn.get_document(self.record_court, case_id)
+        self.assertEqual(doc_resp.response_code, 405)
         serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information(court, case_id)
+            self.proxy_conn.get_service_information(self.record_court, case_id)
         )
         history_serv_info = self.basic_assert(
-            self.proxy_conn.get_service_information_history(court, case_id)
+            self.proxy_conn.get_service_information_history(self.record_court, case_id)
         )
 
         if len(serv_info.data) > 0:
             serv_id = serv_info.data[0]
-            attach_cases = self.proxy_conn.get_service_attach_case_list(court, serv_id)
+            attach_cases = self.proxy_conn.get_service_attach_case_list(
+                self.record_court, serv_id
+            )
             if self.verbose:
                 print(attach_cases)
 
-    def test_attorneys(self, bar_number):
+    def test_attorneys(self):
         print("\n\n### Attorneys ###\n\n")
-        new_attorney = self.basic_assert(self.proxy_conn.create_attorney(
-            bar_number=bar_number,
-            first_name="Valarie",
-            middle_name="DONTUSE_IS_REAL_PERSON",
-            last_name="Franklin",
-        ))
+        new_attorney = self.basic_assert(
+            self.proxy_conn.create_attorney(
+                bar_number=self.bar_number,
+                first_name="Valarie",
+                middle_name="DONTUSE_IS_REAL_PERSON",
+                last_name="Franklin",
+            )
+        )
         assert new_attorney.response_code == 200
         new_attorney_id = new_attorney.data
 
         attorney_list = self.basic_assert(self.proxy_conn.get_attorney_list())
-        assert any(map(lambda a: a["barNumber"] == bar_number, attorney_list.data))
+        assert any(map(lambda a: a["barNumber"] == self.bar_number, attorney_list.data))
 
         updated_attorney = self.basic_assert(
             self.proxy_conn.update_attorney(new_attorney_id, middle_name="Lobert")
         )
-        assert updated_attorney.data is not None
+        self.assertIsNotNone(updated_attorney.data)
 
         full_new_attorney = self.basic_assert(
             self.proxy_conn.get_attorney(new_attorney_id)
         )
-        assert full_new_attorney.data["middleName"] == "Lobert"
+        self.assertEqual(full_new_attorney.data["middleName"], "Lobert")
 
         deleted_maybe = self.proxy_conn.remove_attorney(new_attorney_id)
-        assert deleted_maybe.response_code == 200
+        self.assertEqual(deleted_maybe.response_code, 200)
 
-    def test_filings(self, court, filename):
+    def test_filings(self):
         print("\n\n### Filings ###\n\n")
         filing_list = self.basic_assert(
             self.proxy_conn.get_filing_list(
-                court,
+                self.court,
                 start_date=datetime.today() - timedelta(days=3),
                 before_date=datetime.today(),
             )
         )
-        policy = self.basic_assert(self.proxy_conn.get_policy(court))
+        policy = self.basic_assert(self.proxy_conn.get_policy(self.court))
 
         cdir = Path(__file__).resolve().parent
-        with open(cdir.joinpath(filename), "r") as f:
+        with open(cdir.joinpath(self.filing_filename), "r") as f:
             all_vars = json.load(f)
         base_url = self.proxy_conn.base_url
-        fees_resp = self.basic_assert(self.proxy_conn.calculate_filing_fees(court, all_vars=all_vars))
-        checked_resp = self.basic_assert(self.proxy_conn.check_filing(court, all_vars=all_vars))
-        return
+        fees_resp = self.basic_assert(
+            self.proxy_conn.calculate_filing_fees(self.court, all_vars=all_vars)
+        )
+        checked_resp = self.basic_assert(
+            self.proxy_conn.check_filing(self.court, all_vars=all_vars)
+        )
 
         # IDK if I want to make a new filing each time, even if we cancel it
-        #filing_resp = self.basic_assert(self.proxy_conn.file_for_review(court, all_vars=all_vars))
+        # filing_resp = self.basic_assert(self.proxy_conn.file_for_review(court, all_vars=all_vars))
 
-        #for filing_id in filing_resp.data["filingIds"]:
+        # for filing_id in filing_resp.data["filingIds"]:
         #    status_resp = self.basic_assert(
         #        self.proxy_conn.get_filing_status(court, filing_id)
         #    )
@@ -465,81 +488,31 @@ class TestClass:
         #        self.proxy_conn.cancel_filing_status(court, filing_id)
         #    )
 
-    def test_codes(self, court):
+    def test_codes(self):
         print("\n\n### Codes ###\n\n")
         self.basic_assert(self.proxy_conn.get_court_list())
-        self.basic_assert(self.proxy_conn.get_court(court))
-        self.basic_assert(self.proxy_conn.get_datafield(court, "GlobalPassword"))
-        self.basic_assert(self.proxy_conn.get_disclaimers(court))
+        self.basic_assert(self.proxy_conn.get_court(self.court))
+        self.basic_assert(self.proxy_conn.get_datafield(self.court, "GlobalPassword"))
+        self.basic_assert(self.proxy_conn.get_disclaimers(self.court))
         categories = self.basic_assert(
-            self.proxy_conn.get_case_categories(court)
+            self.proxy_conn.get_case_categories(self.court)
         ).data
         for idx, cat in enumerate(categories):
             if idx > 5:
                 break
-            self.basic_assert(self.proxy_conn.get_case_types(court, cat["code"]))
+            self.basic_assert(self.proxy_conn.get_case_types(self.court, cat["code"]))
 
     def test_logs(self):
         print("\n\n### Test Logs ###\n\n")
         server_id = self.basic_assert(self.proxy_conn.get_server_id()).data
         all_logs = self.basic_assert(self.proxy_conn.get_logs())
         for l in all_logs.data:
-            assert l.split("|")[1].strip() == server_id
-
-
-def main(*, base_url, api_key, user_email=None, user_password=None, verbose=False):
-    jurisdiction = 'illinois' # 'massachusetts'
-    court = "adams" # "appeals:acsj"
-    record_court = "tazewell" # "535"
-    docket_number = "2022-SC-000005" # "99H85SC000016" 
-    bar_number = "6224951" # "012345A"
-    if not base_url:
-        base_url = get_proxy_server_ip()
-    if not api_key:
-        print("You need to have the PROXY_API_KEY env var set; not running tests")
-        return 1
-    if not user_email:
-        user_email = os.getenv("bryce_user_email")
-    if not user_password:
-        user_password = os.getenv("bryce_user_password")
-    bad_proxy = EfspConnection(
-        url=base_url, api_key="IntenionallyWrongKey", default_jurisdiction=jurisdiction
-    )
-    intentional_bad_resp = bad_proxy.authenticate_user()
-    if intentional_bad_resp.response_code != 403:
-        print(intentional_bad_resp)
-    assert intentional_bad_resp.response_code == 403
-    bad_proxy.proxy_client.close()
-    proxy_conn = EfspConnection(
-        url=base_url, api_key=api_key, default_jurisdiction=jurisdiction
-    )
-    proxy_conn.set_verbose_logging(verbose)
-    tc = TestClass(
-        proxy_conn, verbose=verbose, user_email=user_email, user_password=user_password
-    )
-    tc.test_authenticate()
-    tc.test_hateos()
-    tc.test_self_user()
-    tc.test_firm()
-    tc.test_service_contacts()
-    tc.test_get_courts(court)
-    tc.test_payment_accounts(court)
-    tc.test_attorneys(bar_number)
-    tc.test_court_record(record_court, docket_number)
-    tc.test_users()
-    tc.test_codes(court)
-    tc.test_logs()
-    # TODO(brycew): needs a more up to date JSON from any filing interiview
-    tc.test_filings(court, "opening_affidavit_adams.json")
-    print("Done!")
-    # TODO(brycew): Tyler issue, have to wait on them
-    # tc.test_global_payment_accounts()
-    proxy_conn.proxy_client.close()
+            self.assertEqual(l.split("|")[1].strip(), server_id)
 
 
 if __name__ == "__main__":
-    main(
-        base_url=sys.argv[1] if len(sys.argv) > 1 else None,
-        api_key=os.getenv("PROXY_API_KEY"),
-        verbose=True
-    )
+    base_url = os.getenv("PROXY_URL")
+    if not base_url:
+        print("Need to pass the Proxy Server URL")
+        exit(1)
+    unittest.main()
