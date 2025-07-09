@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
@@ -50,8 +50,7 @@ setup(name='docassemble.EFSPIntegration',
       author_email='bwilley@suffolk.edu',
       license='The MIT License (MIT)',
       url='https://github.com/SuffolkLITLab/docassemble-EFSPIntegration',
-      packages=find_packages(),
-      namespace_packages=['docassemble'],
+      packages=find_namespace_packages(),
       install_requires=['docassemble.AssemblyLine>=2.18.0', 'docassemble.ALToolbox>=0.6.2', 'requests>=2.25.1'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/EFSPIntegration/', package='docassemble.EFSPIntegration'),

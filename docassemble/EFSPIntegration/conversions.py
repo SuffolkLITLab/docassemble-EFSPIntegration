@@ -408,7 +408,7 @@ def chain_xml(xml_val, elems: List[Union[str, int]]):
     val = xml_val
     for idx, elem in enumerate(elems):
         if not val:
-            log(f"No {elem} ({idx}) in {xml_val} ({elems})")
+            log(f"No `{elem}` ({idx}) in `{xml_val}` ({elems})")
             return None
         if isinstance(val, dict):
             val = val.get(elem) or {}

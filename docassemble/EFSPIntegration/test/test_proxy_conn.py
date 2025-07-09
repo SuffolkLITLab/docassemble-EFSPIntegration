@@ -22,8 +22,8 @@ import unittest
 
 jurisdiction = "illinois"  # 'massachusetts'
 
-base_url = None  # From Env var
-api_key = None  # From Env var
+base_url = os.getenv("PROXY_URL")
+api_key = os.getenv("PROXY_API_KEY")
 
 
 def mock_person():
@@ -49,6 +49,9 @@ def mock_person():
 class BadAuth(unittest.TestCase):
 
     def test_misconfigured_proxy(self):
+        if not base_url:
+            print("Need to pass the Proxy Server URL")
+            exit(1)
         bad_proxy = EfspConnection(
             url=base_url,
             api_key="IntenionallyWrongKey",
@@ -57,6 +60,17 @@ class BadAuth(unittest.TestCase):
         intentional_bad_resp = bad_proxy.authenticate_user()
         self.assertEqual(intentional_bad_resp.response_code, 403)
         bad_proxy.proxy_client.close()
+
+    def test_good_but_no_password_proxy(self):
+        good_proxy = EfspConnection(
+            url=base_url,
+            api_key=api_key,
+            default_jurisdiction=jurisdiction,
+        )
+
+        empty_resp = good_proxy.authenticate_user()
+        self.assertTrue(empty_resp.is_ok())
+        self.assertEqual(empty_resp.data["tokens"], {})
 
 
 class TestClass(unittest.TestCase):
@@ -74,14 +88,16 @@ class TestClass(unittest.TestCase):
         # Actual setup
         self.user_email = os.getenv("TYLER_USER_EMAIL")
         self.user_password = os.getenv("TYLER_USER_PASSWORD")
-        api_key = os.getenv("PROXY_API_KEY")
+        if not base_url:
+            print("Need to pass the Proxy Server URL")
+            exit(1)
         if not api_key:
             print("You need to have the PROXY_API_KEY env var set; not running tests")
             exit(2)
         self.proxy_conn = EfspConnection(
             url=base_url, api_key=api_key, default_jurisdiction=jurisdiction
         )
-        self.proxy_conn.set_verbose_logging(verbose)
+        self.proxy_conn.set_verbose_logging(self.verbose)
         self.setup_authenticate()
 
     def tearDown(self):
@@ -95,9 +111,6 @@ class TestClass(unittest.TestCase):
 
     def setup_authenticate(self):
         print("\n\n### Authenticate ###\n\n")
-        empty_resp = self.proxy_conn.authenticate_user()
-        self.basic_assert(empty_resp)
-        self.assertEqual(empty_resp.data["tokens"], [])
         resp = self.proxy_conn.authenticate_user(
             tyler_email=self.user_email, tyler_password=self.user_password
         )
@@ -233,7 +246,7 @@ class TestClass(unittest.TestCase):
         )
 
         my_list = self.basic_assert(self.proxy_conn.get_service_contact_list())
-        self.assertGreaterThan(len(my_list.data), 1)
+        self.assertGreater(len(my_list.data), 1)
         updated_contact = self.basic_assert(
             self.proxy_conn.get_service_contact(contact_id)
         )
@@ -519,8 +532,4 @@ class TestClass(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    base_url = os.getenv("PROXY_URL")
-    if not base_url:
-        print("Need to pass the Proxy Server URL")
-        exit(1)
     unittest.main()
