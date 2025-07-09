@@ -1,5 +1,14 @@
 #! /usr/bin/env python3
 
+"""
+Env vars needed to run:
+
+* PROXY_URL: URL where the EfileProxyServer is running
+* PROXY_API_KEY: the API Key generated from the running EfileProxyServer
+* TYLER_USER_EMAIL: the email of a user account in the specific jurisdiction of Tyler's EFM (should be a firm account)
+* TYLER_USER_PASSWORD: the password for that user account
+"""
+
 import os
 import json
 import sys
@@ -63,8 +72,8 @@ class TestClass(unittest.TestCase):
         self.verbose = False
 
         # Actual setup
-        self.user_email = os.getenv("bryce_user_email")
-        self.user_password = os.getenv("bryce_user_password")
+        self.user_email = os.getenv("TYLER_USER_EMAIL")
+        self.user_password = os.getenv("TYLER_USER_PASSWORD")
         api_key = os.getenv("PROXY_API_KEY")
         if not api_key:
             print("You need to have the PROXY_API_KEY env var set; not running tests")
@@ -144,7 +153,6 @@ class TestClass(unittest.TestCase):
     def test_self_user(self):
         print("\n\n### Self user ###\n\n")
         myself = self.basic_assert(self.proxy_conn.get_user())
-        self.assertEqual(myself.data["middleName"], "Steven")
         nm = self.basic_assert(
             self.proxy_conn.update_user(myself.data["userID"], middle_name="Stephen")
         )
