@@ -286,7 +286,7 @@ subject: |
 content: |
   Case numbers are usually in the following format: "YYYYxx###": where "YYYY" is the 4 digit year,
   "xx" is are the category letters of your case category, and "###" are the 3 digit sequence number of the case.
-  [See more information here](https://odysseyfileandserve.zendesk.com/hc/en-us/articles/360049682351-Illinois-What-is-the-correct-format-for-my-case-number-).
+  [See more information here](https://odysseyfileandservecloud.zendesk.com/hc/en-us/articles/360054658131-ILLINOIS-What-is-the-Correct-Case-Number-Format-to-Search-for-eFiling-Excluding-Cook-County).
 ---
 generic object: EFCaseSearch
 if: |
@@ -295,7 +295,7 @@ template: x.case_number_format_template
 subject: |
   How to enter your case number
 content: |
-  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-tips-cook-county).
+  [See information here](https://www.illinoislegalaid.org/legal-information/e-filing-common-questions#howdoifindmycase)
 ---
 if: |
   x.do_what_choice == 'docket_lookup'
