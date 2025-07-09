@@ -1,12 +1,24 @@
-name: Run python only unit tests and mypy
+name: Run mypy and python-only unit and integration tests
 
 on:
   push:
   workflow_dispatch:
 
+env:
+  PROXY_URL: https://efile-test.suffolklitlab.org
+  PROXY_API_KEY: ${{ secrets.EFILE_PROXY_API_KEY }}
+  TYLER_USER_EMAIL: ${{ secrets.TYLER_EMAIL }}
+  TYLER_USER_PASSWORD: ${{ secrets.TYLER_PASSWORD }}
+
+# Allow only one concurrent test-run, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as stopping integration tests mid-run could end up in a bad state
+concurrency:
+  group: "tests"
+  cancel-in-progress: false
+
 jobs:
   test-efspintegration:
     runs-on: ubuntu-latest
-    name: Run python only unit tests
+    name: Run python-only unit and integration tests
     steps:
       - uses: SuffolkLITLab/ALActions/pythontests@main
