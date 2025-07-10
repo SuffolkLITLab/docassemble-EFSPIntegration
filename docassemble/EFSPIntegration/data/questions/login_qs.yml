@@ -45,7 +45,10 @@ code: |
     tyler_login_resp = proxy_conn.authenticate_user(tyler_email=my_username, tyler_password=my_password)
     del my_password
     if not tyler_login_resp.is_ok():
-      log(f'Failed to login: {tyler_login_resp}')
+      if int(tyler_login_resp.response_code) != 403:
+        log_error_and_notify('Failed to login', tyler_login_resp)
+      else:
+        log(f'Failed to login: {tyler_login_resp}')
       login_failed_screen
     else:
       log(word("You are now connected to your e-filing account"), "primary")
