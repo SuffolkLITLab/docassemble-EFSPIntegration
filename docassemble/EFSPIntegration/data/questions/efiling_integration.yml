@@ -892,15 +892,6 @@ subquestion: |
   There are no fees associated with this filing.
 continue button field: review_fees_screen
 ---
-id: bad fees
-event: bad_fees
-question: |
-  Something went wrong
-subquestion: |
-  Sorry, something went wrong when trying to figure out if you have to pay fees.
- 
-  More details: ${ debug_display(fees_resp) }
----
 depends on:
   - fees_resp
 code: |
@@ -940,7 +931,7 @@ code: |
   if fees_resp.is_ok():
     review_fees_screen
   else:
-    bad_fees
+    raise Exception(f"Was not able to calculate fees: {fees_resp}")
   review_fees = True
 ---
 #############################
