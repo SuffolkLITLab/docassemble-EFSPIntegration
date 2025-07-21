@@ -12,6 +12,7 @@ from docassemble.base.util import (
     DAObject,
     DADateTime,
     as_datetime,
+    current_context,
     validation_error,
     log,
     as_datetime,
@@ -49,7 +50,7 @@ __all__ = [
 TypeType = type(type(None))
 
 
-def error_notification(err, message=None, trace=None, referer=None, the_vars=None):
+def error_notification(err, message=None, trace=None, referer=None):
     """Copied from docassemble.webapp.server.error_notification, since:
     1) things from webapp.* are unstable
     2) it breaks the unit tests and the mypy
@@ -79,31 +80,6 @@ def error_notification(err, message=None, trace=None, referer=None, the_vars=Non
         email_address = user_info().email
     except:
         email_address = None
-    referer = None
-    if get_config("error notification variables", get_config("debug", True)):
-        if the_vars is None:
-            try:
-                the_vars = docassemble.base.functions.all_variables(
-                    include_internal=True
-                )
-            except:
-                pass
-    else:
-        the_vars = None
-    json_filename = None
-    if the_vars is not None and len(the_vars):
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                prefix="datemp",
-                suffix=".json",
-                delete=False,
-                encoding="utf-8",
-            ) as fp:
-                fp.write(json.dumps(the_vars, sort_keys=True, indent=2))
-                json_filename = fp.name
-        except:
-            pass
     interview_path = docassemble.base.functions.interview_path()
     try:
         try:
@@ -152,29 +128,28 @@ def error_notification(err, message=None, trace=None, referer=None, the_vars=Non
             html += "\n  </body>\n</html>"
             log(f"Trying to send error message {body}")
             send_email(
-                subject=appname + " error: " + err.__class__.__name,
+                subject=appname + " error: " + err.__class__.__name__,
                 to=email_recipients,
                 body=body,
                 html=html,
-                attachments=[json_filename],
             )
         except Exception as zerr:
-            log(str(zerr))
+            log(f"Failed to send original message: {zerr}")
             body = "There was an error in the " + appname + " application."
             html = (
                 "<html>\n  <body>\n    <p>There was an error in the "
                 + appname
                 + " application.</p>\n  </body>\n</html>"
             )
-            log(f"Trying to send error message {body}")
+            log(f"Trying to send (lesser) error message {body}")
             send_email(
                 subject=appname + " error: " + err.__class__.__name__,
                 to=email_recipients,
                 body=body,
                 html=html,
-                attachments=[json_filename],
             )
-    except:
+    except Exception as all_err:
+        log(f"Big ol err: {all_err}")
         pass
 
 
@@ -183,7 +158,7 @@ def log_error_and_notify(context: str, resp: Optional[ApiResponse] = None):
     the `error_notification_email` in the config."""
     message = f"context: {context};; resp: {resp}"
     log(f"EFSPIntegration ERROR: {message}")
-    error_notification(resp, message=message)
+    error_notification(resp, message=message, referer=current_context().filename)
 
 
 def convert_court_to_id(trial_court) -> str:
