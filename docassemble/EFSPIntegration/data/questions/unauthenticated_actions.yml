@@ -161,7 +161,7 @@ fields:
   - note: |
       ---
   - code: |
-      person_to_reg.address_fields(required={"zip": True})
+      person_to_reg.address_fields(required={"person_to_reg.address.zip": True})
 ---
 code: |
   password_rules_resp = proxy_conn.get_password_rules()
