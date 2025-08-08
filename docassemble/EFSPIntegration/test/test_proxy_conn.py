@@ -11,8 +11,8 @@ Env vars needed to run:
 
 import os
 import json
-import sys
 import random
+from requests import Request
 import subprocess
 from docassemble.EFSPIntegration.py_efsp_client import EfspConnection, ApiResponse
 from pathlib import Path
@@ -119,8 +119,8 @@ class TestClass(unittest.TestCase):
     def test_hateos(self):
         print("\n\n### Hateos ###\n\n")
         base_url = self.proxy_conn.base_url
-        base_send = lambda: self.proxy_conn.proxy_client.get(base_url)
-        next_level_urls = self.basic_assert(self.proxy_conn._call_proxy(base_send)).data
+        req = Request("GET", base_url)
+        next_level_urls = self.basic_assert(self.proxy_conn._send(req)).data
         all_urls = [url for url in next_level_urls.values()]
         visited_urls = set()
         while len(all_urls) > 0:
@@ -150,8 +150,8 @@ class TestClass(unittest.TestCase):
             ):
                 continue
             print(f"visiting {url}")
-            send = lambda: self.proxy_conn.proxy_client.get(url)
-            resp = self.basic_assert(self.proxy_conn._call_proxy(send)).data
+            req = Request("GET", url)
+            resp = self.basic_assert(self.proxy_conn._send(req)).data
             if isinstance(resp, dict):
                 for url in resp.values():
                     if isinstance(url, str) and url.startswith("http"):

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-import json
+import logging
+import re
 import pycountry
-from typing import Callable, Dict, Union
+from typing import Dict, Union
 
 import requests
-from requests import Response
+from logging import LoggerAdapter
+from requests import Response, PreparedRequest
 from docassemble.base.functions import all_variables, get_config
 from docassemble.base.util import (
     DAObject,
@@ -21,6 +23,23 @@ from docassemble.AssemblyLine.al_general import ALIndividual
 from .py_efsp_client import ApiResponse, EfspConnection, _user_visible_resp
 
 __all__ = ["ApiResponse", "ProxyConnection", "state_name_to_code"]
+
+
+class DALogger(LoggerAdapter):
+    def __init__(self, logger):
+        super().__init__(logger)
+
+    def log(self, level, msg, *args, **kwargs):
+        """
+        Delegate a log call to Docassemble's `log` function, after adding
+        contextual information from this adapter instance.
+        """
+        kwargs
+        if not self.isEnabledFor(level):
+            return
+
+        msg = re.sub(r"\n", " ", msg)
+        log(f"[{args}, {kwargs}] {msg}")
 
 
 def state_name_to_code(state_name: str) -> str:
@@ -147,12 +166,15 @@ class ProxyConnection(EfspConnection):
         self.credentials_code_block = credentials_code_block
 
         super().__init__(
-            url=url, api_key=api_key, default_jurisdiction=default_jurisdiction
+            url=url,
+            api_key=api_key,
+            default_jurisdiction=default_jurisdiction,
+            logger=DALogger(logging.getLogger("docassemble")),
         )
 
-    def _call_proxy(self, send_func: Callable[[], Response]) -> ApiResponse:
+    def _call_proxy(self, req: PreparedRequest) -> ApiResponse:
         try:
-            resp = send_func()
+            resp = self.proxy_client.send(req)
             if resp.status_code == 401 and self.credentials_code_block:
                 reconsider(self.credentials_code_block)
         except requests.ConnectionError as ex:
