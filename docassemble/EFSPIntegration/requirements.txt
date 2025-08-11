@@ -1,7 +1,0 @@
-docassemble.base==1.6.5
-docassemble.webapp==1.6.5
-docassemble.AssemblyLine>2.10.1
-requests>2.25.1
-types-requests
-mypy
-types-python-dateutil
