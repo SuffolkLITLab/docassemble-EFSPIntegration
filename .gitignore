@@ -9,6 +9,7 @@
 rcfile
 **/.mypy_cache/**
 build/
+.DS_Store
 
 # Kiln stuff
 alkiln_tests_*
@@ -16,3 +17,7 @@ alkiln-*
 cucumber-report.txt
 debug_log.txt
 runtime_config.json
+
+# Python Test stuff
+.coverage
+coverage_html
