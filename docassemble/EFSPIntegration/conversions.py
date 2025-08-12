@@ -216,11 +216,15 @@ def choices_and_map(
     if backing is None:
         backing = "code"
 
-    if codes_list is None:
-        return [], SafeDict({})
-
     if isinstance(codes_list, str):
         log(f"choices_and_map codes_list is a string? {codes_list}")
+        return [], SafeDict({})
+
+    if not codes_list:
+        return [], SafeDict({})
+
+    if not isinstance(next(iter(codes_list)), dict):
+        log(f"choices_and_map codes_list entries aren't dicts? {codes_list}")
         return [], SafeDict({})
 
     choices_list = [

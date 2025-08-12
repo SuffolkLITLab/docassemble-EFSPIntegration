@@ -5,7 +5,7 @@ from pathlib import Path
 from docassemble.base.core import DAObject
 from docassemble.AssemblyLine.al_general import ALIndividual
 from ..efm_client import ProxyConnection, ApiResponse
-from ..conversions import parse_case_info, parse_service_contacts
+from ..conversions import choices_and_map, parse_case_info, parse_service_contacts
 
 
 class TestConversions(unittest.TestCase):
@@ -120,3 +120,45 @@ class TestConversionIgnoreAttorneys(unittest.TestCase):
         self.assertEqual(len(case.attorneys.keys()), 2)
         self.assertTrue("e650827f-3a2b-4550-b76c-f7d22ed479ff" in case.attorneys.keys())
         self.assertTrue("7ff43f9b-53ff-4e6d-9253-e393318549d0" in case.attorneys.keys())
+
+
+class TestChoicesAndMap(unittest.TestCase):
+    def setUp(self):
+        self.data = [
+            {
+                "code": "169",
+                "name": "Probate or Mental Health",
+                "ecfcasetype": "CivilCase",
+                "procedureremedyinitial": "Not Available",
+                "procedureremedysubsequent": "Not Available",
+                "damageamountinitial": "Not Available",
+                "damageamountsubsequent": "Not Available",
+            },
+            {
+                "code": "7405",
+                "name": "Adoption",
+                "ecfcasetype": "CivilCase",
+                "procedureremedyinitial": "Not Available",
+                "procedureremedysubsequent": "Not Available",
+                "damageamountinitial": "Not Available",
+                "damageamountsubsequent": "Not Available",
+            },
+        ]
+
+    def test_choices_and_map_nones(self):
+        # As long as nothing throws, we're good.
+        choices_and_map(None)
+        choices_and_map([])
+        choices_and_map([None, None])
+        choices_and_map(["blah", "blah"])
+        choices_and_map("blah")
+
+        # Note: we still fail on empty dicts in the list. No good fallback for that.
+        # choices_and_map([{}])
+
+    def test_choices_and_map_success(self):
+        choices, code_map = choices_and_map(self.data)
+        self.assertEqual(len(choices), 2)
+        self.assertEqual(len(code_map), 2)
+        self.assertEqual(choices[0], ("169", "Probate or Mental Health"))
+        self.assertEqual(code_map["169"]["name"], "Probate or Mental Health")
