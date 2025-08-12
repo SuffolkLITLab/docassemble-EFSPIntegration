@@ -20,7 +20,12 @@ from docassemble.base.util import (
 )
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
-from .py_efsp_client import ApiResponse, EfspConnection, _user_visible_resp
+from .py_efsp_client import (
+    ApiResponse,
+    LoggerWithContext,
+    EfspConnection,
+    _user_visible_resp,
+)
 
 __all__ = ["ApiResponse", "ProxyConnection", "state_name_to_code"]
 
@@ -186,6 +191,16 @@ class ProxyConnection(EfspConnection):
         except requests.exceptions.InvalidURL as ex:
             return _user_visible_resp(f"Url {self.base_url} is not valid: {ex}")
         return _user_visible_resp(resp)
+
+    def get_logger(self):
+        if not hasattr(self, "logger"):
+            # Copying what we do in `EfspConnection.get_logger` because it needs to
+            # wrap the logger we're trying to make here.
+            self.logger = LoggerWithContext(
+                DALogger(logging.getLogger("docassemble")),
+                {"session_id": self.get_session_id()},
+            )
+        return self.logger
 
     def authenticate_user(
         self,

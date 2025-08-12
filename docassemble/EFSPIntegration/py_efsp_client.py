@@ -64,10 +64,10 @@ class ApiResponse(object):
         else:
             err_str = ""
         msg = f"response_code: {self.response_code}, {err_str}data: {self.data}"
-        if self.session_id:
-            msg += f", session_id: {self.session_id}"
-        if self.req_id:
-            msg += f", req_id: {self.req_id}"
+        if self.get_session_id():
+            msg += f", session_id: {self.get_session_id()}"
+        if self.get_req_id():
+            msg += f", req_id: {self.get_req_id()}"
         return msg
 
     def __repr__(self):
@@ -75,6 +75,16 @@ class ApiResponse(object):
 
     def is_ok(self):
         return self.response_code in [200, 201, 202, 203, 204, 205]
+
+    def get_session_id(self):
+        if not hasattr(self, "session_id"):
+            self.session_id = None
+        return self.session_id
+
+    def get_req_id(self):
+        if not hasattr(self, "req_id"):
+            self.req_id = None
+        return self.req_id
 
 
 def _user_visible_resp(resp: Union[Response, str, None]) -> ApiResponse:
@@ -159,11 +169,24 @@ class EfspConnection:
         if req_id is None:
             req_id = uuid4()
         to_send.headers["efsp-request-id"] = str(req_id)
-        to_send.headers["efsp-session-id"] = self.session_id
-        self.logger.info(
+        to_send.headers["efsp-session-id"] = self.get_session_id()
+        self.get_logger().info(
             f"Calling {to_send.method} on {to_send.url}", extra={"req-id": str(req_id)}
         )
         return self._call_proxy(self.proxy_client.prepare_request(to_send))
+
+    def get_session_id(self):
+        if not hasattr(self, "session_id"):
+            # Migration from older interviews, to start passing observability headers
+            self.session_id = str(uuid4())
+        return self.session_id
+
+    def get_logger(self):
+        if not hasattr(self, "logger"):
+            self.logger = LoggerWithContext(
+                logging.getLogger(), {"session_id": self.get_session_id()}
+            )
+        return self.logger
 
     @staticmethod
     def verbose_logging(turn_on: bool) -> None:
@@ -222,7 +245,7 @@ class EfspConnection:
 
         if jurisdiction is None:
             jurisdiction = self.default_jurisdiction
-        self.logger.info(
+        self.get_logger().info(
             f"authenticating with jurisdiction: {jurisdiction}",
             extra={"req-id": str(req_id)},
         )
@@ -274,7 +297,7 @@ class EfspConnection:
         If it's FIRM_ADMINISTRATOR or FIRM_ADMIN_NEW_MEMBER, you need a firm_name_or_id
         """
         req_id = uuid4()
-        self.logger.info("Attempting to register user", extra={"req-id": req_id})
+        self.get_logger().info("Attempting to register user", extra={"req-id": req_id})
         registration_type = registration_type.upper()
         if "phone_number" in person:
             phone_number = person["phone_number"]
@@ -319,7 +342,7 @@ class EfspConnection:
         if results.data:
             password_regex = results.data.get("regularexpression", ".*")
         else:
-            self.logger.warning(f"No password rules found: {results}")
+            self.get_logger().warning(f"No password rules found: {results}")
             password_regex = ".*"
 
         try:
@@ -778,12 +801,12 @@ class EfspConnection:
             range_after_str = range_after.isoformat()
         else:
             range_after_str = range_after or ""
-        self.logger.debug(f"after: {range_after}", extra={"req-id": req_id})
+        self.get_logger().debug(f"after: {range_after}", extra={"req-id": req_id})
         if range_before is not None and not isinstance(range_before, str):
             range_before_str = range_before.isoformat()
         else:
             range_before_str = range_before or ""
-        self.logger.debug(f"before: {range_before}", extra={"req-id": req_id})
+        self.get_logger().debug(f"before: {range_before}", extra={"req-id": req_id})
         if estimated_duration is not None:
             estimated_duration = int(estimated_duration) * 60 * 60
         req = Request(
