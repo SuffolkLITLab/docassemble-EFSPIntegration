@@ -458,8 +458,14 @@ def filter_codes(
     if len(codes) == 1:
         return codes, codes[0][0]
     elif len(codes) == 0:
+        log_error_and_notify(
+            f"Warning! No existing codes matched filters ({filters})! Falling back to default, but this is unchecked and dangerous. It will be removed in the future. (all of the options: {options})"
+        )
         return list(options), default
     else:
+        log(
+            f"Warning! More than one code matched filters ({filters})! This can result in a worse UX for users. (the found options ({codes}))"
+        )
         return codes, None
 
 
