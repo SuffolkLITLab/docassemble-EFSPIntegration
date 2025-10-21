@@ -774,6 +774,9 @@ fields:
     code: |
       all_case_parties
 ---
+code: |
+  needs_all_info = is_initial_filing or is_nonindexed_filing
+---
 generic object: DAObject
 code: |
   if needs_all_info and len(users) == 1:

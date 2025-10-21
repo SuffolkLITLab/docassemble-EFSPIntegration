@@ -408,9 +408,6 @@ code: |
   is_nonindexed_filing = not is_initial_filing and (not case_search.case_was_found and case_search.can_file_non_indexed_case)
 ---
 code: |
-  needs_all_info = is_initial_filing or is_nonindexed_filing
----
-code: |
   selected_existing_case = case_search.found_case
 ---
 code: |
