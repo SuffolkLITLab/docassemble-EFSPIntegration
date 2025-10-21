@@ -57,13 +57,15 @@ code: |
 need:
   - proxy_conn
   - da_store
+  - tyler_header_name
+  - tyler_id_name
+  - sql_header_name
+  - sql_id_name
 code: |
-    tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
-    tyler_id_name = f"TYLER-ID-{jurisdiction_id}"
     try:
-      if da_store.defined("EFSP-" + tyler_header_name):
-        proxy_conn.proxy_client.headers[tyler_header_name] = da_store.get("EFSP-" + tyler_header_name)
-        proxy_conn.proxy_client.headers[tyler_id_name] = da_store.get("EFSP-" + tyler_id_name)
+      if da_store.defined(sql_header_name):
+        proxy_conn.proxy_client.headers[tyler_header_name] = da_store.get(sql_header_name)
+        proxy_conn.proxy_client.headers[tyler_id_name] = da_store.get(sql_id_name)
         tyler_user = proxy_conn.get_user()
         if tyler_user.is_ok():
           my_username = tyler_user.data.get('email')
@@ -72,13 +74,16 @@ code: |
             logged_in_user_is_admin, logged_in_user_is_global_admin = get_tyler_roles(proxy_conn, None, tyler_user)
             tyler_login = True
           else:
-            da_store.set("EFSP-" + tyler_header_name, '')
-            da_store.set(tyler_user_id_key, '')
+            da_store.delete(sql_header_name)
+            da_store.delete(sql_id_name)
     except NameError as err:
       # Re-raise only name errors, so DA can work correctly
       raise err
     except Exception as ex:
       log_error_and_notify(f"Error when trying to get da_store Tyler token: {ex}")
+      # Don't try it again
+      da_store.delete(sql_header_name)
+      da_store.delete(sql_id_name)
 ---
 id: login with redis
 continue button field: continue_stored_login
@@ -95,6 +100,13 @@ fields:
       - No, I want to use a different login email.: False
 ---
 code: |
+  tyler_header_name = f"TYLER-TOKEN-{jurisdiction_id.upper()}"
+  tyler_id_name = f"TYLER-ID-{jurisdiction_id.upper()}"
+  sql_header_name = "EFSP-" + tyler_header_name
+  sql_id_name = "EFSP-" + tyler_id_name
+---
+code: |
+  # Leaving in until MAPetitionToSealEviction is refactored
   tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
 ---
 only sets:
