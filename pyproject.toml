@@ -1,3 +1,44 @@
+# Just for local builds:
+# for publishing / installing to docassemble < 1.8.0
+# setup.py is still used.
+[project]
+name = "docassemble.EFSPIntegration"
+version = "1.6.0"
+readme = "README.md"
+requires-python=">=3.10,>=3.12.3,<3.13"
+dependencies = [
+  "docassemble.AssemblyLine>=3.5.0",
+  "docassemble.ALToolbox>=0.6.2",
+  "requests>2.25.1"
+]
+license="MIT"
+license-files = ["LICEN[CS]E*"]
+authors = [
+  { name="Bryce Willey", email="bryce.willey@suffolk.edu" },
+]
+
+[project.urls]
+GitHub = "https://github.com/SuffolkLITLab/docassemble-EFSPIntegration"
+
+[build-system]
+requires = [
+    "setuptools>=60",
+    "setuptools-scm>=8.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["docassemble.EFSPIntegration"]
+
+[dependency-groups]
+dev = [
+    "docassemble.base==1.8.4",
+    "docassemble.webapp==1.8.4",
+    "types-requests",
+    "types-python-dateutil",
+    "mypy",
+    "black",
+]
+
 [tool.black]
 extend-exclude = '(__init__.py|setup.py)'
 
