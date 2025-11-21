@@ -261,19 +261,19 @@ def pretty_display(data, tab_depth=0, skip_xml=True, item_name=None) -> str:
 
     elif isinstance(data, dict):
         if "declaredType" in data:
-            if data["declaredType"] == "gov.niem.niem.niem_core._2.TextType":
+            if "gov.niem.niem.niem_core._2.TextType" in data["declaredType"]:
                 out += (
                     tab_str
                     + f"* {data['name'].replace(':', '/')}: {data['value']['value']}\n"
                 )
                 return out
-            if data["declaredType"] == "gov.niem.niem.proxy.xsd._2.Boolean":
+            if "gov.niem.niem.proxy.xsd._2.Boolean" in data["declaredType"]:
                 out += (
                     tab_str
                     + f"* {data['name'].replace(':', '/')}: {data['value']['value']}\n"
                 )
                 return out
-            if data["declaredType"] == "gov.niem.niem.proxy.xsd._2.DateTime":
+            if "gov.niem.niem.proxy.xsd._2.DateTime" in data["declaredType"]:
                 out += (
                     tab_str
                     + f"* date: {datetime.fromtimestamp(float(data['value']['value'])/1000)}\n"
@@ -764,10 +764,7 @@ def fetch_case_info(
         if "AppellateCaseOriginalCase" in aug.get("declaredType"):
             new_case.lower_docket_number = aug.get("value", {}).get("caseDocketID")
             new_case.lower_case_title = aug.get("value", {}).get("caseTitleText")
-        if (
-            aug.get("declaredType")
-            == "tyler.ecf.extensions.common.CaseAugmentationType"
-        ):
+        if aug.get("name") == r"{urn:tyler:ecf:extensions:Common}CaseAugmentation":
             new_case.lower_judge = aug.get("value", {}).get("lowerCourtJudgeText")
             participant_xml = aug.get("value", {}).get("caseParticipant", [])
             for participant in participant_xml:
