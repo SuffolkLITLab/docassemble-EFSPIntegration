@@ -1,10 +1,11 @@
-# Just for local builds: for publishing / installing to docassemble < 1.8.0
+# Just for local builds:
+# for publishing / installing to docassemble < 1.8.0
 # setup.py is still used.
 [project]
 name = "docassemble.EFSPIntegration"
-version = "1.6.0"
+version = "1.7.2"
 readme = "README.md"
-requires-python=">=3.10,>=3.12.7,<3.13"
+requires-python=">=3.10,>=3.12.3,<3.13"
 dependencies = [
   "docassemble.AssemblyLine>=3.5.0",
   "docassemble.ALToolbox>=0.6.2",
@@ -37,7 +38,6 @@ dev = [
     "mypy",
     "black",
 ]
-
 
 [tool.black]
 extend-exclude = '(__init__.py|setup.py)'

@@ -51,7 +51,7 @@ code: |
     tyler_login
     lead_contact = users[0]
     main_document.completed
-    tyler_payment_id = get_config('efile proxy', {}).get('global waiver', '')
+    tyler_payment_id = get_config('efile proxy', {}).get('global waivers', [''])[0]
     ready_to_efile
     efile
     ending_screen

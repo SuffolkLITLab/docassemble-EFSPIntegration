@@ -72,7 +72,7 @@ data:
   texas: Texas
   california: California
   indiana: Indiana
-
+  vermont: Vermont
 ---
 code: |
   can_connect_to_proxy = proxy_conn.get_server_name().is_ok()
