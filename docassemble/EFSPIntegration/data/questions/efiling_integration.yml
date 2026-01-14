@@ -1222,3 +1222,8 @@ code: |
   if efile_case_type is None:
     del efile_case_type
     efile_case_type = user_chosen_case_type
+---
+code: |
+  tyler_filing_attorney_options, tyler_filing_attorney_map = choices_and_map(proxy_conn.get_attorney_list().data, 
+      display='{firstName} {middleName} {lastName}',
+      backing='attorneyID')

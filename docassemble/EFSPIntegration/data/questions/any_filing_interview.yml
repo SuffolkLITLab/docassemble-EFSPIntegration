@@ -860,11 +860,6 @@ code: |
   case_subtype_options, case_subtype_map = choices_and_map(proxy_conn.get_case_subtypes(court_id, efile_case_type).data)
 ---
 code: |
-  tyler_filing_attorney_options, tyler_filing_attorney_map = choices_and_map(proxy_conn.get_attorney_list().data, 
-      display='{firstName} {middleName} {lastName}',
-      backing='attorneyID')
----
-code: |
   attached_service_contacts = []
   if not needs_all_info:
     resp_data = proxy_conn.get_service_information(court_id, case_search.found_case.tracking_id).data

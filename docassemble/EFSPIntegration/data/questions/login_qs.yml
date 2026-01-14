@@ -172,16 +172,16 @@ code: |
 ---
 code: |
   # Leaving in until MAPetitionToSealEviction is refactored
-  tyler_user_id_key = f"EFSP-TYLER-ID-{jurisdiction_id.lower()}"
+  tyler_user_id_key = sql_id_name
 ---
 only sets:
   - tyler_user_id
 code: |
-  if da_store.defined(tyler_user_id_key):
-    tyler_user_id = da_store.get(tyler_user_id_key)
+  if da_store.defined(sql_id_name):
+    tyler_user_id = da_store.get(sql_id_name)
   else:
     # not there: will need to login to get the same info
-    tyler_user_id = tyler_login_resp.data
+    tyler_user_id = tyler_login_resp.data.get('tokens', {}).get(f"TYLER-ID-{jurisdiction_id.upper()}")
 ---
 code: |
   change_resp = proxy_conn.self_change_password(current_password, new_user_password)
