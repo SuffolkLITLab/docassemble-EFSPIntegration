@@ -460,7 +460,11 @@ class ProxyConnection(EfspConnection):
     ) -> ApiResponse:
         """Checks the court info: if it has conditional service types, call a special API with all filing info so far to get service types"""
         court_info = self.get_court(court_id)
-        if court_info.data.get("hasconditionalservicetypes") and court_bundle:
+        if (
+            court_info.data
+            and court_info.data.get("hasconditionalservicetypes")
+            and court_bundle
+        ):
             all_vars = (
                 _get_all_vars(court_bundle)
                 if isinstance(court_bundle, ALDocumentBundle)
