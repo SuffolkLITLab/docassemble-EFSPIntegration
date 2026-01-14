@@ -14,6 +14,7 @@ from docassemble.base.util import (
     Person,
     Individual,
     DAStore,
+    DAEmpty,
     DADateTime,
     as_datetime,
     reconsider,
@@ -93,6 +94,16 @@ def _give_data_url(bundle: ALDocumentBundle, key: str = "final") -> None:
                 doc.page_count = doc_pdf.num_pages()
 
 
+def _remove_all_da_emptys(json_val):
+    if isinstance(json_val, DAEmpty):
+        return None
+    if isinstance(json_val, list):
+        return [_remove_all_da_emptys(v) for v in json_val]
+    if isinstance(json_val, dict):
+        return {k: _remove_all_da_emptys(v) for k, v in json_val.items()}
+    return json_val
+
+
 def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
     """Strips out some extra big variables that we don't need to serialize and send across the network"""
     _give_data_url(bundle, key=key)
@@ -131,6 +142,8 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
     )
     for var in vars_to_pop:
         all_vars_dict.pop(var, None)
+
+    all_vars_dict = _remove_all_da_emptys(all_vars_dict)
 
     for doc in all_vars_dict.get("al_court_bundle", {}).get("elements", []):
         doc.pop("optional_service_options", None)
