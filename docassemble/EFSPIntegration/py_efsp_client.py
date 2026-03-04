@@ -235,7 +235,6 @@ class EfspConnection:
         *,
         tyler_email: Optional[str] = None,
         tyler_password: Optional[str] = None,
-        jeffnet_key: Optional[str] = None,
         jurisdiction: str = None,
     ) -> ApiResponse:
         """
@@ -251,8 +250,6 @@ class EfspConnection:
         )
         auth_obj: Dict[str, Union[str, Dict[str, str]]] = {}
         auth_obj["api_key"] = self.api_key
-        if jeffnet_key:
-            auth_obj["jeffnet"] = {"key": jeffnet_key}
         if tyler_email and tyler_password:
             auth_obj[f"tyler-{jurisdiction}"] = {
                 "username": tyler_email,
