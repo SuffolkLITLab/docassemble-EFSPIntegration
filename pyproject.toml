@@ -22,7 +22,7 @@ GitHub = "https://github.com/SuffolkLITLab/docassemble-EFSPIntegration"
 
 [build-system]
 requires = [
-    "setuptools>=60",
+    "setuptools>=60,<82.0.0",
     "setuptools-scm>=8.1"]
 build-backend = "setuptools.build_meta"
 
