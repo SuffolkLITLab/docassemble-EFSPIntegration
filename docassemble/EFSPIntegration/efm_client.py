@@ -219,7 +219,6 @@ class ProxyConnection(EfspConnection):
         self,
         tyler_email: str = None,
         tyler_password: str = None,
-        jeffnet_key: str = None,
         *,
         jurisdiction: str = None,
     ) -> ApiResponse:
@@ -227,19 +226,15 @@ class ProxyConnection(EfspConnection):
         Params:
             tyler_email (str)
             tyler_password (str)
-            jeffnet_key (str)
         """
         temp_efile_config = get_config("efile proxy", {})
         if tyler_email is None:
             tyler_email = temp_efile_config.get("tyler email")
         if tyler_password is None:
             tyler_password = temp_efile_config.get("tyler password")
-        if jeffnet_key is None:
-            jeffnet_key = temp_efile_config.get("jeffnet api token")
         resp = super().authenticate_user(
             tyler_email=tyler_email,
             tyler_password=tyler_password,
-            jeffnet_key=jeffnet_key,
             jurisdiction=jurisdiction,
         )
         if resp.is_ok():
