@@ -177,14 +177,12 @@ def contact_fields_with_defaults(
             "field": person.attr_name("other_contact_method"),
             "input type": "area",
             "required": False,
-            "help": word(
-                """
+            "help": word("""
 If you do not have a phone number or email, provide
 specific contact instructions. For example, use a friend's phone number.
 But the friend must be someone you can rely on to give you a
 message.
-      """
-            ),
+      """),
         },
     ]
     if is_admin or not can_check_efile:
