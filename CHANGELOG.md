@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Versions Above v1.2.0
+
+See [the GitHub Releases page](https://github.com/SuffolkLITLab/docassemble-EFSPIntegration/releases).
+
 ## Version v1.2.0
 
 ### Added
