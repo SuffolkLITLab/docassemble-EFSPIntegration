@@ -9,6 +9,7 @@
 rcfile
 **/.mypy_cache/**
 build/
+dist/**
 .DS_Store
 
 # Kiln stuff
