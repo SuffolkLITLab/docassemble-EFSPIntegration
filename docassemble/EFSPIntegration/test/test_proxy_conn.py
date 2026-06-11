@@ -79,8 +79,8 @@ class TestClass(unittest.TestCase):
         # Constants
         self.jurisdiction = jurisdiction
         self.court = "adams"  # "appeals:acsj"
-        self.record_court = "tazewell"  # "535"
-        self.docket_number = "2022-SC-000005"  # "99H85SC000016"
+        self.record_court = "sangamon"  # "535"
+        self.docket_number = "2019LM999999"  # "99H85SC000016"
         self.bar_number = "6224951"  # "012345A" # This MA value is still not correct
         self.filing_filename = "opening_affidavit_adams.json"  # no MA equivalent yet
         self.verbose = False
