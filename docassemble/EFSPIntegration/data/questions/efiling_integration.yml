@@ -849,6 +849,33 @@ code: |
 code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
 ---
+if: can_check_efile
+only sets:
+  - max_total_exhibit_size
+  - max_mb_per_file
+code: |
+  allowed_sizes = get_max_allowed_sizes(proxy_conn, court_id)
+  one_mb = 1024 * 1024
+  if allowed_sizes:
+    max_mb_per_file = allowed_sizes[0] / 1024 / 1024
+    if allowed_sizes[0] > one_mb:
+      # OCR will increase file sizes a bit, so save some room
+      max_per_file = allowed_sizes[0] - one_mb
+    else:
+      max_per_file = allowed_sizes[0]
+    max_total_exhibit_size = allowed_sizes[1] - one_mb
+  else:
+    max_mb_per_file = 15
+    max_total_exhibit_size = 50 * 1024 * 1024
+---
+if: not can_check_efile
+only sets:
+  - max_total_exhibit_size
+  - max_mb_per_file
+code: |
+  max_mb_per_file = 15
+  max_total_exhibit_size = 50 * 1024 * 1024
+---
 code: |
   filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
 ---
