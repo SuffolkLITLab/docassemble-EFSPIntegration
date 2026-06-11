@@ -11,7 +11,7 @@ mandatory: True
 id: main-unauth-page
 event: main_unauth_page
 question: |
-  eFile${ state_name_to_code(jurisdiction_id) } User Management
+  ${ efiling_system_name } User Management
 subquestion: |
   % if can_connect_to_proxy:
   You are not logged in. Please select one of the options below.
