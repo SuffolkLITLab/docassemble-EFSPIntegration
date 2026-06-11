@@ -23,7 +23,7 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
 ---
 objects:
-  person_to_reg: ALIndividual
+  - person_to_reg: ALIndividual
 ---
 variable name: account_action_list
 data: !!omap
@@ -141,7 +141,7 @@ fields:
     default: INDIVIDUAL
   - note: |
       ---
-  - Email address: person_to_reg.email
+  - "Email address (required)": person_to_reg.email
     datatype: email
     required: True
   - Phone number: person_to_reg.phone_number

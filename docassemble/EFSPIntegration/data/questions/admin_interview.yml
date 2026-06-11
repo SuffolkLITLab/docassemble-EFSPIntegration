@@ -686,6 +686,7 @@ fields:
   - Last name: updated_attorney.name.last  
     default: ${ updated_attorney.default_last }
 ---
+id: admin search dates
 question: |
   Search dates
 fields:
@@ -784,6 +785,7 @@ code: |
   resp = proxy_conn.get_user_roles(user_id)
   get_user_roles = True
 ---
+id: admin update user roles
 reconsider:
   - user_role_resp
 question: |
@@ -1296,6 +1298,7 @@ subquestion: |
 
 continue button field: show_role_resp
 ---
+id: admin show error
 event: show_error_event
 question: |
   Error

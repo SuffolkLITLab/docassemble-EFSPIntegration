@@ -58,9 +58,11 @@ code: |
   else:
     cannot_efile
 ---
+id: cannot efile
 event: cannot_efile
 question: Cannot Efile
 ---
+id: minimal all done
 event: ending_screen
 question: All Done!
 ---
