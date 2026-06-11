@@ -699,10 +699,17 @@ class EfspConnection:
         return self._send(Request("GET", url))
 
     def get_courts(
-        self, fileable_only: bool = False, with_names: bool = False
+        self,
+        fileable_only: bool = False,
+        fileable_type: str = "",
+        with_names: bool = False,
     ) -> ApiResponse:
         """Gets the list of courts."""
-        params = {"fileable_only": fileable_only, "with_names": with_names}
+        params = {
+            "fileable_only": fileable_only,
+            "fileable_type": fileable_type,
+            "with_names": with_names,
+        }
         req = Request("GET", self.full_url("codes/courts"), params=params)
         return self._send(req)
 
