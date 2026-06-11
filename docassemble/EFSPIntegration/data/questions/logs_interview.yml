@@ -8,7 +8,7 @@ modules:
   - .efm_client
 ---
 objects:
-  da_file: DAFile
+  - da_file: DAFile
 ---
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login')
@@ -44,14 +44,20 @@ code: |
   da_file_written = True
 ---
 mandatory: True
+code: |
+  start_screen
+  show_downloaded_logs
+---
+id: get logs from proxy
 question: Get logs from ${ proxy_conn.base_url }
 subquestion: |
   Press continue to get logs relating to your server traffic from ${ proxy_conn.base_url }.
 continue button field: start_screen
 ---
+id: show logs from proxy
 need:
   - da_file_written
-mandatory: True
+event: show_downloaded_logs
 question: Logs from ${ proxy_conn.base_url }
 subquestion: |
   Right click to download [the logs here](${ da_file.url_for() }).

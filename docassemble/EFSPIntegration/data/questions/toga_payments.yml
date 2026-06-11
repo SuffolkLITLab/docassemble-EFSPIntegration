@@ -243,7 +243,7 @@ reconsider:
   - global_account_id_resp
 depends on:
   - global_payment_account_id
-id: update payment method 
+id: update global payment method 
 question: |
   Update global payment method
 fields:
@@ -372,6 +372,7 @@ code: |
     log_error_and_notify(f"Wasn't able to remove payment method: {rm_payment_account_resp}")
     log(word("Wasn't able to remove payment method"), "error")
 ---
+id: confirm remove payment method
 question: Are you sure you want to remove your ${ _payment_labels(proxy_conn.get_payment_account(payment_account_id).data) }?
 subquestion: |
   You won't be able to get it back, and will have to enter all of its details again.
@@ -426,6 +427,7 @@ fields:
 ---
 reconsider:
   - tyler_payment_account_options
+id: create a payment method
 if: len(tyler_payment_account_options) == 0
 question: |
   Create a payment method

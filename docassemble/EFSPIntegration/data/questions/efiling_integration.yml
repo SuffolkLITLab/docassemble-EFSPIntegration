@@ -599,7 +599,7 @@ code: |
     del x.filing_component
     x.filing_component = x.user_chosen_filing_component
 ---
-id: document type
+id: user chosen document type
 generic object: DAObject
 question: |
   What type of document is this?
