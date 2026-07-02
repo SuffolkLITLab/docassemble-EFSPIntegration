@@ -222,6 +222,7 @@ need:
 id: ready_to_efile
 code: |
   # Ask for the clerk comments, they'll go in the lead filing doc comments
+  is_initial_filing
   ready_to_efile_user_hook
   check_resp
   remaining_to_check = check_resp.data
@@ -479,6 +480,24 @@ fields:
     datatype: yesnoradio
 ---
 generic object: DAObject
+id: filing courtesy copy info
+question: |
+  Would you like to send anyone a copy of your ${ x.title } by email?
+fields:
+  - I would like to send someone a copy: x.has_courtesy_copies
+    datatype: yesnoradio
+  - What emails do you want to send to? (one per line): x.courtesy_copies_raw
+    datatype: area
+    show if: x.has_courtesy_copies
+validation code: |
+  if x.has_courtesy_copies:
+    x.courtesy_copies = x.courtesy_copies_raw.splitlines()
+    for copy in x.courtesy_copies:
+      if not '@' in copy:
+        validation_error("Enter a valid email address.", field="x.courtesy_copies_raw")
+        break     
+---
+generic object: DAObject
 code: |
   if not x.optional_service_options:
     x.optional_services.there_are_any = False
@@ -524,11 +543,11 @@ code: |
 ---
 generic object: DAObject
 code: |
-  x.optional_services_defaults = []
+  x.optional_services_defaults = [None]
 ---
 generic object: DAObject
 code: |
-  x.optional_services_filters = []
+  x.optional_services_filters = [[]]
 ---
 generic object: DAObject
 code: |
@@ -806,6 +825,18 @@ code: |
   case_type_options, case_type_map = choices_and_map(proxy_conn.get_case_types(court_id, efile_case_category, timing=timing).data)
 ---
 code: |
+  efile_case_category_default = None
+---
+code: |
+  efile_case_type_default = None
+---
+code: |
+  efile_case_category_exclude = None
+---
+code: |
+  efile_case_type_exclude = None
+---
+code: |
   party_type_options, party_type_map = \
     choices_and_map(proxy_conn.get_party_types(court_id, efile_case_type).data)
   party_type_new_options = [p_type for p_type in party_type_options] 
@@ -817,6 +848,33 @@ code: |
 ---
 code: |
   court_policy = proxy_conn.get_policy(court_id).data or {}
+---
+if: can_check_efile
+only sets:
+  - max_total_exhibit_size
+  - max_mb_per_file
+code: |
+  allowed_sizes = get_max_allowed_sizes(proxy_conn, court_id)
+  one_mb = 1024 * 1024
+  if allowed_sizes:
+    max_mb_per_file = allowed_sizes[0] / 1024 / 1024
+    if allowed_sizes[0] > one_mb:
+      # OCR will increase file sizes a bit, so save some room
+      max_per_file = allowed_sizes[0] - one_mb
+    else:
+      max_per_file = allowed_sizes[0]
+    max_total_exhibit_size = allowed_sizes[1] - one_mb
+  else:
+    max_mb_per_file = 15
+    max_total_exhibit_size = 50 * 1024 * 1024
+---
+if: not can_check_efile
+only sets:
+  - max_total_exhibit_size
+  - max_mb_per_file
+code: |
+  max_mb_per_file = 15
+  max_total_exhibit_size = 50 * 1024 * 1024
 ---
 code: |
   filing_attorney_required_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingAttorneyView').data or {}
@@ -980,6 +1038,12 @@ code: |
     users[i].attorney_ids
   users[i].complete = True
 ---
+code: |
+  users[i].party_type_default = None
+---
+code: |
+  other_parties[i].party_type_default = None
+---
 if: not can_check_efile
 code: |
   users[i].is_form_filler
@@ -1011,6 +1075,10 @@ fields:
     datatype: yesnoradio
 ---
 if: full_court_info.get("efmType", "ecf") != "ecf"
+code: |
+  users[0].is_form_filler = False
+---
+if: not can_check_efile
 code: |
   users[0].is_form_filler = False
 ---

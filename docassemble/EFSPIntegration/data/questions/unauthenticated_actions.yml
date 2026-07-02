@@ -123,6 +123,7 @@ question: |
   What is your account email?
 fields:
   - Email: unauthed_user_email
+# TODO: should be an email datatype?
 ---
 only sets: reset_user_password
 code: |
