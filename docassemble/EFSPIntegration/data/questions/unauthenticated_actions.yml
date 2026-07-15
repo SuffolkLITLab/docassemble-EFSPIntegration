@@ -77,6 +77,12 @@ data:
 code: |
   can_connect_to_proxy = proxy_conn.get_server_name().is_ok()
 ---
+code: |
+  efiling_system_name = f"eFile{ state_name_to_code(jurisdiction_id) }"
+---
+code: |
+  interview_allows_firm_account = True
+---
 if: can_connect_to_proxy
 id: unauth-intro
 question: |
@@ -88,22 +94,32 @@ continue button field: register_introduction
 if: can_connect_to_proxy
 id: unauth-register-done
 question: |
-  % if register_resp.is_ok():
+  % if tyler_register_resp.is_ok():
   Successfully registered
   % else:
   Something went wrong when we tried to register your account
   % endif
 subquestion: |
-  % if register_resp.is_ok():
-  You will get an email from efile${ state_name_to_code(jurisdiction_id) } asking you to activate your account.
+  % if tyler_register_resp.is_ok():
+  You will get an email from ${ efiling_system_name } asking you to activate your account.
+
+  **You will need to activate your account before proceeding further**.
 
   You can resend this activation email from the next screen.
 
   % else:
-  ${ debug_display(register_resp) }
+  ${ debug_display(tyler_register_resp) }
   % endif
-
+fields:
+  - Did you activate your email?: did_activate_email
+    datatype: yesnoradio
 continue button field: register_status
+validation code: |
+  if not did_activate_email:
+    validation_error(
+      "You must activate you account to continue.",
+      field="did_activate_email",
+    )
 ---
 id: unauth-resend-completed
 question: |
@@ -131,26 +147,37 @@ code: |
   del unauthed_user_email
   reset_user_password = True
 ---
+# if: interview_allows_firm_account
 id: registration info
+sets:
+  - person_to_reg.name.first
+  - person_to_reg.address.address
 question: |
-  Create an efile${ state_name_to_code(jurisdiction_id) } account
+  Create an ${ efiling_system_name } account
 fields:
   - Registration type: reg_type
     datatype: radio
     code: |
       account_registration_choices
     default: INDIVIDUAL
+    show if:
+      code: |
+        interview_allows_firm_account
   - note: |
       ---
+    show if:
+      code: |
+        interview_allows_firm_account
   - "Email address (required)": person_to_reg.email
     datatype: email
+    default: ${ user_info().email if user_logged_in() else ''}
     required: True
   - Phone number: person_to_reg.phone_number
     datatype: al_international_phone
-  - note: |
-      ${ password_rules.get("validationmessage") }
   - Password: new_password
     datatype: ALVisiblePassword
+    under text: |
+      ${ password_rules.get("validationmessage") }
     validate: proxy_conn.is_valid_password
   - note: |
       ---
@@ -158,11 +185,25 @@ fields:
     show if:
       variable: reg_type
       is: FIRM_ADMINISTRATOR
-  - code: person_to_reg.name_fields()
+  # Can't use name_fields() until this issue is fixed: https://github.com/SuffolkLITLab/docassemble/issues/65
+  - First: person_to_reg.name.first
+  - Middle: person_to_reg.name.middle
+    required: False
+  - Last: person_to_reg.name.last
+  - Suffix: person_to_reg.name.suffix
+    required: False
+    code: name_suffix()
   - note: |
       ---
-  - code: |
-      person_to_reg.address_fields(required={"person_to_reg.address.zip": True})
+  # Can't use address_fields() until this issue is fixed: https://github.com/SuffolkLITLab/docassemble/issues/65
+  - Address: person_to_reg.address.address
+    address autocomplete: True
+  - Unit: person_to_reg.address.unit
+    required: False
+  - City: person_to_reg.address.city
+  - State: person_to_reg.address.state
+    code: states_list()
+  - Zip: person_to_reg.address.zip
 ---
 code: |
   password_rules_resp = proxy_conn.get_password_rules()
@@ -177,8 +218,10 @@ code: |
   self_resend_activation = True
 ---
 code: |
-  register_resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=showifdef('person_to_reg.firm_name', ''))
-  del new_password
+  tyler_register_resp = proxy_conn.register_user(person_to_reg, registration_type=reg_type, password=new_password, firm_name_or_id=showifdef('person_to_reg.firm_name', ''))
+  if not tyler_register_resp.is_ok():
+    log(f'Failed to register: {tyler_register_resp}')
+  # del new_password
   register = True
 ---
 id: unauth-reset-completed

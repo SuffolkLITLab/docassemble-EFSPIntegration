@@ -29,12 +29,13 @@ version = {attr = "docassemble.EFSPIntegration.__version__"}
 
 [dependency-groups]
 dev = [
-    "docassemble.base==1.9.2",
-    "docassemble.webapp==1.9.2",
+    "suffolklitlab-docassemble.base==1.9.8.post3",
+    "suffolklitlab-docassemble.webapp==1.9.8.post3",
     "types-requests",
     "types-python-dateutil",
     "mypy",
     "black",
+    "pytest"
 ]
 
 [tool.black]

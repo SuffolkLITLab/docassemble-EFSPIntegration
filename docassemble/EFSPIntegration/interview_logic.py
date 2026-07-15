@@ -150,6 +150,26 @@ FieldEntry = TypedDict(
 Fields = List[FieldEntry]
 
 
+def name_fields_with_defaults(
+    proxy_conn, person: ALIndividual, is_admin: bool, can_check_efile: bool, **kwargs
+):
+    name_fields = person.name_fields(**kwargs)
+    if is_admin or not can_check_efile:
+        return name_fields
+
+    user_info = proxy_conn.get_user()
+    for data_key, field_key in [
+        ("firstName", ".first"),
+        ("middleName", ".middle"),
+        ("lastName", ".last"),
+    ]:
+        if user_info.is_ok() and data_key in user_info.data:
+            for field in name_fields:
+                if field.get("field", "").endswith(field_key):
+                    field["default"] = user_info.data.get(data_key)
+    return name_fields
+
+
 def contact_fields_with_defaults(
     proxy_conn, person: ALIndividual, is_admin: bool, can_check_efile: bool
 ):

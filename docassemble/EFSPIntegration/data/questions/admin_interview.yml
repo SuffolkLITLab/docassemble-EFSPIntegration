@@ -22,6 +22,10 @@ default screen parts:
 metadata:
   title: |
     EFSP Admin Interface
+  short title: |
+    EFSP Admin
+  description: |
+    Administrator-focused interface to EFSP functions
 ---
 code: |
   proxy_conn = ProxyConnection(credentials_code_block='tyler_login', default_jurisdiction=jurisdiction_id)
