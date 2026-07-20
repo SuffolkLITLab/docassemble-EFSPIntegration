@@ -83,7 +83,7 @@ class TestClass(unittest.TestCase):
         self.docket_number = "2019LM999999"  # "99H85SC000016"
         self.bar_number = "6224951"  # "012345A" # This MA value is still not correct
         self.filing_filename = "opening_affidavit_adams.json"  # no MA equivalent yet
-        self.verbose = False
+        self.verbose = True
 
         # Actual setup
         self.user_email = os.getenv("TYLER_USER_EMAIL")
