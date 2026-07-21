@@ -469,6 +469,10 @@ fields:
       - Efile and Serve: efile_and_serve
       - Serve: serve
 ---
+################
+## Optional Services
+################
+---
 generic object: DAObject
 id: any optional services
 question: |
@@ -479,23 +483,25 @@ fields:
   - no label: x.optional_services.there_are_any
     datatype: yesnoradio
 ---
-generic object: DAObject
-id: filing courtesy copy info
+id: optional service type
+generic object: ALDocument
 question: |
-  Would you like to send anyone a copy of your ${ x.title } by email?
+  ${ str(ordinal_number(i + 1)).title() } optional service for ${ x.title }
 fields:
-  - I would like to send someone a copy: x.has_courtesy_copies
-    datatype: yesnoradio
-  - What emails do you want to send to? (one per line): x.courtesy_copies_raw
-    datatype: area
-    show if: x.has_courtesy_copies
-validation code: |
-  if x.has_courtesy_copies:
-    x.courtesy_copies = x.courtesy_copies_raw.splitlines()
-    for copy in x.courtesy_copies:
-      if not '@' in copy:
-        validation_error("Enter a valid email address.", field="x.courtesy_copies_raw")
-        break     
+  - Optional Services: x.optional_services[i].code
+    datatype: dropdown
+    code: |
+      x.optional_service_options
+---
+id: optional service fee amount
+generic object: ALDocument
+question: |
+  Optional Service ${ i + 1 } fee amount?
+subquestion: |
+  ${ x.optional_service_map.get(x.optional_services[i].code).get('feeprompttext') }
+fields:
+  - Fee Amount: x.optional_services[i].fee_amount
+    datatype: currency
 ---
 generic object: DAObject
 code: |
@@ -569,6 +575,24 @@ fields:
     min: 1
     validate: |
       validate_tyler_regex(multiplier_datafield)
+---
+generic object: DAObject
+id: filing courtesy copy info
+question: |
+  Would you like to send anyone a copy of your ${ x.title } by email?
+fields:
+  - I would like to send someone a copy: x.has_courtesy_copies
+    datatype: yesnoradio
+  - What emails do you want to send to? (one per line): x.courtesy_copies_raw
+    datatype: area
+    show if: x.has_courtesy_copies
+validation code: |
+  if x.has_courtesy_copies:
+    x.courtesy_copies = x.courtesy_copies_raw.splitlines()
+    for copy in x.courtesy_copies:
+      if not '@' in copy:
+        validation_error("Enter a valid email address.", field="x.courtesy_copies_raw")
+        break     
 ---
 code: |
   multiplier_datafield = proxy_conn.get_datafield(court_id, 'OptionalServicesMultipleCopies').data or {}
@@ -760,6 +784,20 @@ code: |
 ---
 code: |
   filing_description_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingDescription').data or {}
+---
+# Gets set to '' in most interviews; IIRC, setting it overrides what title the clerks
+# are given for a filing, and was undesireable for some jurisdictions.
+generic object: DAObject 
+code: |
+  x.filing_description = ''
+---
+generic object: DAObject
+code: |
+  x.reference_number = None
+---
+generic object: DAObject
+code: |
+  x.filing_action = 'efile'
 ---
 code: |
   filing_comment_datafield = proxy_conn.get_datafield(court_id, 'FilingFilingComments').data or {}

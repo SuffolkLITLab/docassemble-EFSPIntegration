@@ -693,33 +693,12 @@ fields:
     min: ${ today() }
     default: ${ today() }
 ---
-id: optional service type
-generic object: ALDocument
-question: |
-  ${ ordinal_number(i) } optional services for ${ x.title }
-fields:
-  - Optional Services: x.optional_services[i].code
-    datatype: dropdown
-    code: |
-      x.optional_service_options
----
----
 id: another cross reference
 question: |
   Do you have any other types of cross references?
 fields:
   - no label: cross_references.there_is_another
     datatype: yesnoradio
----
-id: optional service fee amount
-generic object: ALDocument
-question: |
-  Optional Service ${ i } fee amount?
-subquestion: |
-  ${ x.optional_service_map.get(x.optional_services[i].code).get('feeprompttext') }
-fields:
-  - Fee Amount: x.optional_services[i].fee_amount
-    datatype: currency
 ---
 id: you are responsible for payment
 question: |
