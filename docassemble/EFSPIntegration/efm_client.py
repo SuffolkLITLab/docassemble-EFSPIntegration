@@ -18,6 +18,7 @@ from docassemble.base.util import (
     DADateTime,
     as_datetime,
     reconsider,
+    current_context,
 )
 from docassemble.AssemblyLine.al_document import ALDocumentBundle
 from docassemble.AssemblyLine.al_general import ALIndividual
@@ -183,10 +184,13 @@ class ProxyConnection(EfspConnection):
 
         self.credentials_code_block = credentials_code_block
 
+        interview_id = current_context().package + current_context().filename
+        interview_id = interview_id.replace(".", "-").replace(":", "-").replace("/", "-")[:72]
         super().__init__(
             url=url,
             api_key=api_key,
             default_jurisdiction=default_jurisdiction,
+            interview_id=interview_id,
             logger=DALogger(logging.getLogger("docassemble")),
         )
 
