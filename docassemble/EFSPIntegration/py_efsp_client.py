@@ -113,7 +113,13 @@ class EfspConnection:
     """A python client that communicates with the E-file proxy server."""
 
     def __init__(
-        self, *, url: str, api_key: str, default_jurisdiction: str = None, logger=None
+        self,
+        *,
+        url: str,
+        api_key: str,
+        default_jurisdiction: str = None,
+        interview_name: str = None,
+        logger=None,
     ):
         """
         Args:
@@ -133,6 +139,7 @@ class EfspConnection:
         self.active_token = None
         # Keep one uuid for the whole of this class's life, i.e. the session
         self.session_id = str(uuid4())
+        self.interview_name = interview_name
         if logger is None:
             logger = logging.getLogger()
         self.logger = LoggerWithContext(logger, {"session_id": self.session_id})
@@ -170,6 +177,7 @@ class EfspConnection:
             req_id = uuid4()
         to_send.headers["efsp-request-id"] = str(req_id)
         to_send.headers["efsp-session-id"] = self.get_session_id()
+        to_send.headers["efsp-interview-name"] = self.get_interview_name()
         self.get_logger().info(
             f"Calling {to_send.method} on {to_send.url}", extra={"req-id": str(req_id)}
         )
@@ -180,6 +188,12 @@ class EfspConnection:
             # Migration from older interviews, to start passing observability headers
             self.session_id = str(uuid4())
         return self.session_id
+
+    def get_interview_name(self):
+        if hasattr(self, "interview_name"):
+            return self.interview_name
+        else:
+            return None
 
     def get_logger(self):
         if not hasattr(self, "logger"):
