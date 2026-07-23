@@ -83,7 +83,7 @@ def _give_data_url(bundle: ALDocumentBundle, key: str = "final") -> None:
                             "http://localhost/",
                             "http://" + get_config("external hostname") + "/",
                         )
-                    attachment.page_court = attachment_pdf.num_pages()
+                    attachment.page_count = attachment_pdf.num_pages()
             else:
                 doc_pdf = doc.as_pdf(key)
                 doc.data_url = doc_pdf.url_for(external=True, temporary=True)
@@ -109,52 +109,146 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
     """Strips out some extra big variables that we don't need to serialize and send across the network"""
     _give_data_url(bundle, key=key)
     all_vars_dict = all_variables()
-    vars_to_pop = set(
-        [
-            "trial_court_resp",
-            "x",
-            "trial_court_options",
-            "found_case",
-            "selected_existing_case",
-            "multi_user",
-            "url_args",
-            "nav",
-            "allow_cron",
-            "speak_text",
-            "filing_type_options",
-            "filing_type_map",
-            "party_type_options",
-            "available_efile_courts",
-            "case_category_map",
-            "full_court_info",
-            "tyler_login_resp",
-            "case_type_map",
-            "all_courts",
-            "al_user_bundle",
-            "court_emails",
-            "party_type_map",
-            "case_search",
-            "subdoc",
-            "target_case",
-            "menu_items",
-            "device_local",
-            "session_local",
-        ]
-    )
-    for var in vars_to_pop:
-        all_vars_dict.pop(var, None)
 
-    all_vars_dict = _remove_all_da_emptys(all_vars_dict)
+    to_send_dict = {}
+    # TODO: mark any of the below as required, ask for them now!
+    for key in (
+        "efile_case_category",
+        "efile_case_type",
+        "efile_case_subtype",
+        "previous_case_id",
+        "docket_number",
+        "user_preferred_language",
+        "user_started_case",
+        "user_role",
+        "comments_to_clerk",
+        "tyler_payment_id",
+        "return_date",
+        "amount_in_controversy",
+        "out_of_state",
+        "filer_type",
+        "max_fee_amount",
+        "procedure_remedy",
+        "damage_amount",
+        "is_contested_case",
+        "email_confirmation_subject",
+        "email_confirmation_contents",
+        "acceptance_subject",
+        "acceptance_contents",
+        "rejected_subject",
+        "rejected_contents",
+        "neutral_subject",
+        "neutral_contents",
+    ):
+        to_send_dict[key] = all_vars_dict.get(key)
 
-    for doc in all_vars_dict.get("al_court_bundle", {}).get("elements", []):
-        doc.pop("optional_service_options", None)
-        doc.pop("document_type_options", None)
-        doc.pop("document_type_map", None)
-        doc.pop("filing_component_map", None)
-        doc.pop("filing_component_options", None)
-        doc.pop("optional_service_map", None)
+    # Simple lists or dicts (i.e. not people or filings)
+    for key in (
+        "attorney_ids",
+        "party_to_attorneys",
+        "service_contacts",
+        "lower_court_case",
+        "trial_court",
+        "cross_references",
+    ):
+        to_send_dict[key] = all_vars_dict.get(key)
 
-    return all_vars_dict
+    def person_convert(person):
+        new_person = {
+            person_key: person.get(person_key)
+            for person_key in (
+                "mobile_number",
+                "phone_number",
+                "email",
+                "party_type",
+                "prefered_language",
+                "gender",
+                "date_of_birth",
+                "person_type",
+                "is_form_filler",
+                "name",
+                "tyler_id",
+                "is_new",
+            )
+        }
+        old_address = person.get("address") or {}
+        new_person["address"] = {
+            key: old_address.get(key)
+            for key in ("address", "unit", "city", "state", "country", "county")
+        }
+        return new_person
+
+    # The people
+    for key in (
+        "users",
+        "other_parties",
+    ):
+        people = all_vars_dict.get(key)
+        people_list = people.get("elements")
+        new_people_list = []
+        for person in people_list:
+            new_person = person_convert(person)
+            new_people_list.append(new_person)
+        to_send_dict[key] = new_people_list
+
+    if "lead_contact" in all_vars_dict:
+        to_send_dict["lead_contact"] = person_convert(
+            all_vars_dict.get("lead_contact") or {}
+        )
+
+    court_bundle = all_vars_dict.get("al_court_bundle")
+    bundle_list = court_bundle.get("elements")
+    new_bundle_list = []
+    ATTACHMENT_KEYS = [
+        "document_type",
+        "filing_component",
+        "filename",
+        "document_description",
+        "data_url",
+        "proxy_enabled",
+        "page_count",
+    ]
+    for doc in bundle_list:
+        if doc.get("proxy_enabled"):
+            new_doc = {
+                doc_key: doc.get(doc_key)
+                for doc_key in (
+                    "proxy_enabled",
+                    "filing_type",
+                    "motion_type",
+                    "optional_services",
+                    "due_date",
+                    "filing_description",
+                    "reference_number",
+                    "filing_attorney",
+                    "filing_comment",
+                    "courtesy_copies",
+                    "preliminary_copies",
+                    "filing_parties",
+                    "filing_action",
+                    "tyler_merge_attachments",
+                )
+            }
+            for maybe_key in ATTACHMENT_KEYS:
+                if maybe_key in doc:
+                    new_doc[maybe_key] = doc.get(maybe_key)
+
+            new_doc["elements"] = []
+            for old_elem in doc.get("elements") or []:
+                if old_elem.get("proxy_enabled"):
+                    new_doc["elements"].append(
+                        {
+                            elem_key: old_elem.get(elem_key)
+                            for elem_key in ATTACHMENT_KEYS
+                        }
+                    )
+            new_bundle_list.append(new_doc)
+
+    to_send_dict["al_court_bundle"] = new_bundle_list
+
+    # TODO: needed?
+    to_send_dict = _remove_all_da_emptys(to_send_dict)
+    return to_send_dict
 
 
 class ProxyConnection(EfspConnection):
