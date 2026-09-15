@@ -131,6 +131,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
         "procedure_remedy",
         "damage_amount",
         "is_contested_case",
+        "allow_anon_user",
         "email_confirmation_subject",
         "email_confirmation_contents",
         "acceptance_subject",
@@ -235,7 +236,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
 
             new_doc["elements"] = []
             for old_elem in doc.get("elements") or []:
-                if old_elem.get("proxy_enabled"):
+                if not isinstance(old_elem, str) and old_elem.get("proxy_enabled"):
                     new_doc["elements"].append(
                         {
                             elem_key: old_elem.get(elem_key)
