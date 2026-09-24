@@ -161,11 +161,14 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
             for person_key in (
                 "mobile_number",
                 "phone_number",
+                "home_number",
+                "work_number",
                 "email",
                 "party_type",
                 "prefered_language",
                 "gender",
                 "date_of_birth",
+                "birthdate",
                 "person_type",
                 "is_form_filler",
                 "name",
@@ -176,7 +179,12 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
         old_address = person.get("address") or {}
         new_person["address"] = {
             key: old_address.get(key)
-            for key in ("address", "unit", "city", "state", "country", "county")
+            for key in ("address", "unit", "city", "state", "zip", "country", "county")
+        }
+        old_mailing_address = person.get("mailing_address") or {}
+        new_person["mailing_address"] = {
+            key: old_mailing_address.get(key)
+            for key in ("address", "unit", "city", "state", "zip", "country", "county")
         }
         return new_person
 
@@ -190,6 +198,12 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
         new_people_list = []
         for person in people_list:
             new_person = person_convert(person)
+            new_people_list.append(new_person)
+        if key == "users" and "advocate" in all_vars_dict:
+            new_person = person_convert(all_vars_dict["advocate"])
+            new_people_list.append(new_person)
+        if key == "other_parties" and "adult_for_respondent" in all_vars_dict:
+            new_person = person_convert(all_vars_dict["adult_for_respondent"])
             new_people_list.append(new_person)
         to_send_dict[key] = new_people_list
 
