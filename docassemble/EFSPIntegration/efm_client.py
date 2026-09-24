@@ -132,6 +132,7 @@ def _get_all_vars(bundle: ALDocumentBundle, key: str = "final") -> Dict:
         "damage_amount",
         "is_contested_case",
         "allow_anon_user",
+        "cause_of_action_code",
         "email_confirmation_subject",
         "email_confirmation_contents",
         "acceptance_subject",
