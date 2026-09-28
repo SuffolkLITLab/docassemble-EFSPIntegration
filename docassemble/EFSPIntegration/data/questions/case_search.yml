@@ -11,6 +11,7 @@ modules:
 ---
 include:
   - login_qs.yml
+  - case_metadata.yml
 ---
 generic object: EFCaseSearch
 objects:

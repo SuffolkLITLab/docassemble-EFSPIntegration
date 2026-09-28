@@ -32,6 +32,7 @@ dev = [
     "suffolklitlab-docassemble.base==1.9.8.post3",
     "suffolklitlab-docassemble.webapp==1.9.8.post3",
     "types-requests",
+    "types-PyYAML",
     "types-python-dateutil",
     "mypy",
     "black",
