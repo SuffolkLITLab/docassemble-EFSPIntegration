@@ -76,7 +76,7 @@ def _give_data_url(bundle: ALDocumentBundle, key: str = "final") -> None:
                     attachment.proxy_enabled = attachment.is_enabled()
                     attachment_pdf = attachment.as_pdf(key)
                     attachment.data_url = attachment_pdf.url_for(
-                        external=True, temporary=True
+                        external=True, temporary=True, seconds=60
                     )
                     if attachment.data_url.startswith("http://localhost/"):
                         attachment.data_url = attachment.data_url.replace(
