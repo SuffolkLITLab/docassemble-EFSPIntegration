@@ -135,6 +135,12 @@ class TestClass(unittest.TestCase):
                 continue
             if "{" in url or "}" in url:
                 continue
+            # Only crawl the jurisdiction we have credentials for
+            if (
+                "/jurisdictions/" in url
+                and f"/jurisdictions/{self.jurisdiction}" not in url
+            ):
+                continue
             # TODO(brycew): scheduling is broken, /service-contacts/public isn't RESTful
             if (
                 "scheduling" in url
