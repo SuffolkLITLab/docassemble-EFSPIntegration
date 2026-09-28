@@ -2,6 +2,7 @@
 
 """Court consumers require an object even when the proxy returns no data."""
 
+from collections import UserDict
 import unittest
 from unittest.mock import Mock, patch
 
@@ -10,7 +11,7 @@ from ..py_efsp_client import ApiResponse
 
 
 class CourtInfoTests(unittest.TestCase):
-    @patch("docassemble.EFSPIntegration.interview_logic.log")
+    @patch(f"{get_full_court_info.__module__}.log")
     def test_empty_failed_and_malformed_responses(self, log):
         for status in (200, 204, 205, 404, 500, -1):
             for data in (None, [], "bad", 42):
@@ -25,10 +26,16 @@ class CourtInfoTests(unittest.TestCase):
 
     def test_valid_court(self):
         data = {"name": "Test court", "allowfilingintononindexedcase": True}
-        proxy = Mock(get_court=Mock(return_value=ApiResponse(200, None, data)))
-        self.assertEqual(get_full_court_info(proxy, "537"), data)
+        for payload in (data, UserDict(data)):
+            with self.subTest(payload_type=type(payload).__name__):
+                proxy = Mock(
+                    get_court=Mock(return_value=ApiResponse(200, None, payload))
+                )
+                result = get_full_court_info(proxy, "537")
+                self.assertEqual(result, data)
+                self.assertIsInstance(result, dict)
 
-    @patch("docassemble.EFSPIntegration.interview_logic.log")
+    @patch(f"{get_full_court_info.__module__}.log")
     def test_failed_payload_is_not_court_metadata(self, log):
         proxy = Mock(
             get_court=Mock(return_value=ApiResponse(500, None, {"name": "Error"}))
