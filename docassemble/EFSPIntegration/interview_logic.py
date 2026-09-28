@@ -330,8 +330,12 @@ def fee_total(fee_resp) -> Optional[float]:
 def get_full_court_info(proxy_conn, court_id: str) -> Dict:
     """Gets all of the information about the court from the id"""
     full_court_resp = proxy_conn.get_court(court_id)
-    if full_court_resp is not None and full_court_resp.is_ok() and isinstance(full_court_resp.data, Mapping):
-        return full_court_resp.data
+    if (
+        full_court_resp is not None
+        and full_court_resp.is_ok()
+        and isinstance(full_court_resp.data, Mapping)
+    ):
+        return dict(full_court_resp.data)
     else:
         log(
             f"efiling.court_info unavailable court={court_id} "
