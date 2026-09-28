@@ -16,6 +16,7 @@ from typing import (
     TypedDict,
 )
 from datetime import datetime
+from collections.abc import Mapping
 
 from docassemble.base.util import CustomDataType, DAObject, DAList, log, word
 from .conversions import (
@@ -329,11 +330,13 @@ def fee_total(fee_resp) -> Optional[float]:
 def get_full_court_info(proxy_conn, court_id: str) -> Dict:
     """Gets all of the information about the court from the id"""
     full_court_resp = proxy_conn.get_court(court_id)
-    if full_court_resp.is_ok():
+    if full_court_resp is not None and full_court_resp.is_ok() and isinstance(full_court_resp.data, Mapping):
         return full_court_resp.data
     else:
-        log_error_and_notify(
-            f"Couldn't get full court info for {court_id}", full_court_resp
+        log(
+            f"efiling.court_info unavailable court={court_id} "
+            f"status={full_court_resp.response_code if full_court_resp is not None else None} "
+            f"payload={type(full_court_resp.data).__name__ if full_court_resp is not None else 'NoneType'}"
         )
         return {}
 
