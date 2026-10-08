@@ -11,6 +11,7 @@ modules:
 ---
 include:
   - login_qs.yml
+  - case_metadata.yml
 ---
 generic object: EFCaseSearch
 objects:
@@ -116,11 +117,7 @@ only sets:
   - x.can_file_non_indexed_case
 generic object: EFCaseSearch
 code: |
-  x.court_code_results = proxy_conn.get_court(x.court_id)
-  if x.court_code_results and x.court_code_results.is_ok():
-    x.can_file_non_indexed_case = x.court_code_results.data.get('allowfilingintononindexedcase', False)
-  else:
-    x.can_file_non_indexed_case = False
+  x.can_file_non_indexed_case = get_full_court_info(proxy_conn, x.court_id).get('allowfilingintononindexedcase', False)
 ---
 generic object: EFCaseSearch
 id: no non-indexed cases

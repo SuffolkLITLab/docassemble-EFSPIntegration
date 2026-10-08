@@ -30,3 +30,21 @@ efile proxy:
 
 Quinten Steenhuis (qsteenhuis@suffolk.edu)
 Bryce Willey (bwilley@suffolk.edu)
+
+
+### Optional case metadata
+
+Including `case_search.yml` provides `case_type_name` and `case_category_name`
+for both `search.found_case` and `search.found_cases[i]`. Lookups use each found
+case's court, which may differ from the search court. Names are validated strings
+or `None` when the service fails or metadata is missing; raw filing codes are
+unchanged. Interview authors must distinguish unavailable metadata from a
+negative eligibility decision and decide whether to retry or offer manual filing.
+
+`case_metadata.case_labels(proxy, court_id, case_type, category)` exposes the same
+normalization to Python callers. `clear_case_labels(search)` removes cached labels
+from existing results without triggering missing docassemble variables. Call it
+once before consuming labels in a new request or retry, and invalidate the
+interview's derived decisions at the same time. Avoid repeatedly clearing labels
+during dependency resolution for multiple results. The library does not assume
+an interview-specific global object name or impose an eligibility policy.
