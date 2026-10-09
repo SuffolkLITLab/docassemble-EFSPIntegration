@@ -1469,5 +1469,6 @@
   "admin_interview": "docassemble.EFSPIntegration:admin_interview.yml",
   "tyler_payment_id": "75950d4b-f3c3-4748-8bfb-0e22790d19d7",
   "disclaimers": [],
-  "show_any_disclaimers": true
+  "show_any_disclaimers": true,
+  "from_email": "wowowowo@suffolklitlab.org"
 }

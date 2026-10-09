@@ -91,7 +91,11 @@ question: |
 subquestion: |
   
   % if ready_to_efile:
-  Below is your ${comma_and_list(al_court_bundle.get_titles())} ${ noun_plural('form', al_court_bundle.get_titles()) } 
+  % if len(al_court_bundle.get_titles()) > 1:
+  Below are your ${comma_and_list(al_court_bundle.get_titles())} forms
+  % else:
+  Below is your ${comma_and_list(al_court_bundle.get_titles())} form
+  % endif
   that we will deliver to the ${trial_court} clerk.
 
   We will deliver it securely. Please allow up to 15 minutes for the filing to
