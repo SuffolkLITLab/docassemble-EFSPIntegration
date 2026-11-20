@@ -1,0 +1,24 @@
+---
+comment: |
+  Optional case labels for EFCaseSearch. Both paths use the found case's court.
+  A missing name is None, never a raw code that consumers might misclassify.
+  Include case_search.yml to obtain these blocks and the EFCaseSearch class.
+---
+modules:
+  - .case_metadata
+---
+id: resolve selected case labels
+generic object: EFCaseSearch
+only sets:
+  - x.found_case.case_type_name
+  - x.found_case.case_category_name
+code: |
+  x.found_case.case_type_name, x.found_case.case_category_name = case_labels(proxy_conn, x.found_case.court_id, x.found_case.case_type, x.found_case.category)
+---
+id: resolve search result labels
+generic object: EFCaseSearch
+only sets:
+  - x.found_cases[i].case_type_name
+  - x.found_cases[i].case_category_name
+code: |
+  x.found_cases[i].case_type_name, x.found_cases[i].case_category_name = case_labels(proxy_conn, x.found_cases[i].court_id, x.found_cases[i].case_type, x.found_cases[i].category)
